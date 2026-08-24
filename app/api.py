@@ -12,18 +12,17 @@ from sqlalchemy.orm import selectinload
 
 from .extensions import db
 from .models import (
+    DA,
+    PC,
+    PM,
     ActionPlan,
     ActionPlanType,
     AttendanceEntry,
     AuditAction,
     Committee,
     CommitteeMember,
-    DA,
-    PC,
-    PM,
     Role,
     SpecialsEntry,
-    User,
     Village,
 )
 from .scoping import (
@@ -36,7 +35,6 @@ from .scoping import (
     scoped_select,
 )
 from .services.audit import model_snapshot, record_audit
-from .timeutils import current_month
 from .services.entries import EntryValidationError, create_attendance, create_specials
 from .services.files import UploadProblem
 from .services.monitoring import (
@@ -45,7 +43,7 @@ from .services.monitoring import (
     dashboard_summary,
     map_markers,
 )
-
+from .timeutils import current_month
 
 bp = Blueprint("api", __name__, url_prefix="/api/v1")
 

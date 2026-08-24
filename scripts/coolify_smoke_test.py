@@ -2,9 +2,7 @@
 from __future__ import annotations
 
 import argparse
-import json
 import ssl
-import sys
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 

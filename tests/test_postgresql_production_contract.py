@@ -4,7 +4,6 @@ from pathlib import Path
 
 from app import config
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 

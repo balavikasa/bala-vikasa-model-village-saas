@@ -7,9 +7,9 @@ from pathlib import Path
 import pytest
 from sqlalchemy import func, select
 
-from app.extensions import db
-from app.models import Committee, CommitteeMember, DA, PC, PM, Village
 import app.services.workbook as workbook_service
+from app.extensions import db
+from app.models import DA, PC, PM, Committee, CommitteeMember, Village
 
 WORKBOOK = Path(__file__).resolve().parents[1] / "data" / "MV-Master-Data-26-27.xlsx"
 

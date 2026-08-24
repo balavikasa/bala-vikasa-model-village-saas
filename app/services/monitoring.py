@@ -4,17 +4,13 @@ from collections import Counter, defaultdict
 from datetime import date
 from typing import Any
 
-from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from ..extensions import db
 from ..models import (
-    ActionPlan,
-    AttendanceEntry,
-    Committee,
-    CommitteeMember,
     DA,
-    SpecialsEntry,
+    ActionPlan,
+    Committee,
     User,
     Village,
 )

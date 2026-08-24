@@ -89,8 +89,8 @@
       "assigned_date",
       "notes"
     ],
-    "records": 352,
-    "max_row": 354,
+    "records": 351,
+    "max_row": 352,
     "max_column": 10
   },
   "Attendance_Entries": {
@@ -116,8 +116,8 @@
       "gps_lat",
       "gps_long"
     ],
-    "records": 2,
-    "max_row": 4,
+    "records": 0,
+    "max_row": 1,
     "max_column": 19
   },
   "Specials_Entries": {
@@ -139,8 +139,8 @@
       "gps_lat",
       "gps_long"
     ],
-    "records": 2,
-    "max_row": 4,
+    "records": 0,
+    "max_row": 1,
     "max_column": 15
   },
   "PMs": {
@@ -152,8 +152,8 @@
       "email",
       "mobile"
     ],
-    "records": 3,
-    "max_row": 5,
+    "records": 2,
+    "max_row": 3,
     "max_column": 5
   },
   "PCs": {
@@ -165,8 +165,8 @@
       "email",
       "mobile"
     ],
-    "records": 3,
-    "max_row": 5,
+    "records": 2,
+    "max_row": 3,
     "max_column": 5
   },
   "PC_DA_Map": {
@@ -178,8 +178,8 @@
       "da_name",
       "cluster"
     ],
-    "records": 10,
-    "max_row": 12,
+    "records": 9,
+    "max_row": 10,
     "max_column": 5
   },
   "RBAC_Permissions": {
@@ -211,8 +211,8 @@
       "auto_purge_date",
       "status"
     ],
-    "records": 2,
-    "max_row": 4,
+    "records": 0,
+    "max_row": 1,
     "max_column": 8
   }
 }

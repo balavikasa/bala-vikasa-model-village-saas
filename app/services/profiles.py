@@ -4,21 +4,19 @@ from collections import Counter
 from datetime import date
 from typing import Any
 
-from sqlalchemy import func
 from sqlalchemy.orm import selectinload
 
 from ..extensions import db
 from ..models import (
-    ActionPlan,
-    Committee,
-    CommitteeMember,
     DA,
     PC,
     PM,
+    ActionPlan,
+    Committee,
     User,
     Village,
 )
-from ..scoping import inherited_cluster, scoped_select
+from ..scoping import scoped_select
 from ..timeutils import current_month
 from .monthly_plans import action_plan_status
 

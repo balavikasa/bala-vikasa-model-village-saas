@@ -7,7 +7,7 @@ import getpass
 import os
 import sys
 
-from sqlalchemy import Boolean, Date, DateTime, Integer, String
+from sqlalchemy import Boolean, Date, DateTime, String
 
 from app import create_app
 from app.extensions import db
@@ -27,7 +27,7 @@ def _required_value(column, email: str):
     if isinstance(column.type, Boolean):
         return name == "is_enabled"
     if isinstance(column.type, DateTime):
-        return dt.datetime.now(dt.timezone.utc)
+        return dt.datetime.now(dt.UTC)
     if isinstance(column.type, Date):
         return dt.date.today()
     if isinstance(column.type, String):

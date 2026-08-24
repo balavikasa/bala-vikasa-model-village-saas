@@ -11,7 +11,6 @@ from .extensions import db
 from .models import ActionPlan, ActionPlanType, AuditAction, Committee, Role
 from .scoping import ScopeError, can_manage_action_plan, json_role_required, require_scoped
 from .services.audit import model_snapshot, record_audit
-from .timeutils import current_month
 from .services.monthly_plans import (
     PlanningError,
     action_plan_status,
@@ -26,7 +25,7 @@ from .services.monthly_plans import (
     prepare_next_month,
     stage_import,
 )
-
+from .timeutils import current_month
 
 bp = Blueprint("planning", __name__)
 

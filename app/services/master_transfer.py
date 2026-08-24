@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import json
 import secrets
+from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from flask import current_app
 from openpyxl import Workbook, load_workbook
@@ -14,9 +15,8 @@ from openpyxl.utils import get_column_letter
 from sqlalchemy.exc import IntegrityError
 
 from ..extensions import db
-from ..models import AuditAction, Cluster, Committee, CommitteeMember, DA, PC, PM, User, Village
+from ..models import DA, PC, PM, AuditAction, Cluster, Committee, CommitteeMember, User, Village
 from .audit import model_snapshot, record_audit
-
 
 TEMPLATE_VERSION = "1.0"
 META_SHEET = "__META__"
@@ -226,7 +226,7 @@ def build_export_workbook(resource_key: str, user: User) -> Workbook:
         ("template_version", TEMPLATE_VERSION),
         ("resource", spec.key),
         ("exported_for_user_id", user.id),
-        ("exported_at_utc", datetime.now(timezone.utc).isoformat()),
+        ("exported_at_utc", datetime.now(UTC).isoformat()),
     ):
         meta.append([key, value])
     return wb
@@ -323,7 +323,6 @@ def _validate_relationship(col: ColumnSpec, value: Any) -> str | None:
 
 def _duplicate_error(spec: ResourceSpec, values: dict[str, Any], record_id: int | None) -> str | None:
     model = spec.model
-    filters = []
     if model in {PM, PC, DA}:
         for attr in ("email", "mobile"):
             value = values.get(attr)
@@ -508,7 +507,7 @@ def stage_import(path: Path, resource_key: str, user: User) -> tuple[str, dict[s
             {
                 "user_id": user.id,
                 "resource": resource_key,
-                "created_at": datetime.now(timezone.utc).isoformat(),
+                "created_at": datetime.now(UTC).isoformat(),
             }
         ),
         encoding="utf-8",
@@ -528,9 +527,9 @@ def _staged(token: str, resource_key: str, user: User) -> Path:
         created = datetime.fromisoformat(meta["created_at"])
     except Exception as exc:
         raise MasterTransferError("Import preview metadata is invalid.") from exc
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if created.tzinfo is None:
-        created = created.replace(tzinfo=timezone.utc)
+        created = created.replace(tzinfo=UTC)
     if now - created > STAGE_TTL:
         meta_path.unlink(missing_ok=True)
         data_path.unlink(missing_ok=True)

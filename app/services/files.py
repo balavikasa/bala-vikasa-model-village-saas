@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import io
 from pathlib import Path
-from typing import BinaryIO
 
 from flask import current_app
 from PIL import Image, ImageOps, UnidentifiedImageError

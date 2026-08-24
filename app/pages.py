@@ -1,12 +1,19 @@
 from __future__ import annotations
 
-from flask import Blueprint, current_app, make_response, redirect, render_template, send_from_directory, url_for
+from flask import (
+    Blueprint,
+    current_app,
+    make_response,
+    redirect,
+    render_template,
+    send_from_directory,
+    url_for,
+)
 from flask_login import current_user, login_required
 
 from .models import Role
-from .services.profiles import da_profile, pc_profile, pm_profile, village_profile
 from .scoping import role_required
-
+from .services.profiles import da_profile, pc_profile, pm_profile, village_profile
 
 bp = Blueprint("pages", __name__)
 

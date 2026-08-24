@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone, tzinfo
+from datetime import UTC, date, datetime, timedelta, timezone, tzinfo
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from flask import current_app
-
 
 DEFAULT_TIMEZONE = "Asia/Kolkata"
 IST_FALLBACK = timezone(timedelta(hours=5, minutes=30), name="IST")
@@ -32,7 +31,7 @@ def app_zone() -> tzinfo:
 
 
 def local_now() -> datetime:
-    return datetime.now(timezone.utc).astimezone(app_zone())
+    return datetime.now(UTC).astimezone(app_zone())
 
 
 def local_today() -> date:

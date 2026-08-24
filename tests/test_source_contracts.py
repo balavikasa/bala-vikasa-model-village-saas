@@ -1,7 +1,10 @@
-
 from __future__ import annotations
 
+from datetime import date, timedelta
 from pathlib import Path
+from types import SimpleNamespace
+
+from app.services.monitoring import action_plan_status
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -31,10 +34,15 @@ def test_server_owns_attendance_status_and_reason_logic():
 
 
 def test_failure_is_derived_in_monitoring():
-    source = read("app/services/monitoring.py")
-    assert "Failure" in source
-    assert "ActionPlan" in source
-    assert "AttendanceEntry" in source
+    today = date(2026, 8, 24)
+    plan = SimpleNamespace(
+        attendance_entry=None,
+        specials_entry=None,
+        is_executable=True,
+        assigned_date=today - timedelta(days=1),
+    )
+
+    assert action_plan_status(plan, today) == "Failure"
 
 
 def test_admin_moves_and_recycle_bin_are_explicit():

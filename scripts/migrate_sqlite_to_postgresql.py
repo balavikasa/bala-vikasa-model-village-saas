@@ -169,7 +169,7 @@ def main() -> int:
                 if len(primary_keys) != 1:
                     continue
                 pk = primary_keys[0]
-                if not getattr(pk.type, "python_type", None) is int:
+                if getattr(pk.type, "python_type", None) is not int:
                     continue
 
                 sequence_name = target_conn.execute(

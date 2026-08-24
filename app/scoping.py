@@ -1,31 +1,28 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from functools import wraps
 from typing import Any, TypeVar
 
 from flask import abort, jsonify
 from flask_login import current_user
 from sqlalchemy import Select, false, select
-from sqlalchemy.orm import joinedload
 
 from .extensions import db
 from .models import (
+    DA,
+    PC,
     ActionPlan,
     AttendanceEntry,
     AuditLog,
     Committee,
     CommitteeMember,
-    DA,
-    PC,
-    PM,
     RecycleBin,
     Role,
     SpecialsEntry,
     User,
     Village,
 )
-
 
 T = TypeVar("T")
 

@@ -3,10 +3,11 @@ from __future__ import annotations
 import json
 import re
 from collections import Counter, defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from openpyxl import load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
@@ -14,6 +15,9 @@ from sqlalchemy import func
 
 from ..extensions import db
 from ..models import (
+    DA,
+    PC,
+    PM,
     ActionPlan,
     AttendanceEntry,
     AuditAction,
@@ -21,9 +25,6 @@ from ..models import (
     Cluster,
     Committee,
     CommitteeMember,
-    DA,
-    PC,
-    PM,
     SpecialsEntry,
     User,
     Village,
@@ -372,6 +373,99 @@ def _profiles_from_mapping(workbook, mapping: dict[str, Any]) -> dict[str, Sheet
     return profiles
 
 
+def _pc_da_assignments(workbook) -> tuple[dict[str, str], dict[str, str]]:
+    """Read the workbook's authoritative PC_DA_Map without formula caches.
+
+    Returns two normalized lookup dictionaries:
+    - DA_ID -> PC_ID
+    - DA_Name -> PC_ID
+
+    The sheet is optional for backwards compatibility. When present, conflicting
+    duplicate mappings are rejected instead of silently choosing one.
+    """
+    sheet_title = next(
+        (title for title in workbook.sheetnames if normalize(title) == "pc da map"),
+        None,
+    )
+    if sheet_title is None:
+        return {}, {}
+
+    ws = workbook[sheet_title]
+    header_row: int | None = None
+    pc_index: int | None = None
+    da_index: int | None = None
+    da_name_index: int | None = None
+
+    for row_number, row in enumerate(
+        ws.iter_rows(min_row=1, max_row=min(ws.max_row, 30), values_only=True),
+        start=1,
+    ):
+        normalized_headers = {
+            normalize(value): index
+            for index, value in enumerate(row)
+            if normalize(value)
+        }
+
+        candidate_pc = normalized_headers.get("pc id")
+        candidate_da = normalized_headers.get("da id")
+
+        if candidate_pc is not None and candidate_da is not None:
+            header_row = row_number
+            pc_index = candidate_pc
+            da_index = candidate_da
+            da_name_index = normalized_headers.get("da name")
+            break
+
+    if header_row is None or pc_index is None or da_index is None:
+        raise WorkbookImportError(
+            f"{sheet_title}: expected PC_ID and DA_ID columns."
+        )
+
+    by_da_code: dict[str, str] = {}
+    by_da_name: dict[str, str] = {}
+
+    for row_number, row in enumerate(
+        ws.iter_rows(min_row=header_row + 1, values_only=True),
+        start=header_row + 1,
+    ):
+        pc_code = clean_text(row[pc_index]) if pc_index < len(row) else None
+        da_code = clean_text(row[da_index]) if da_index < len(row) else None
+        da_name = (
+            clean_text(row[da_name_index])
+            if da_name_index is not None and da_name_index < len(row)
+            else None
+        )
+
+        if not pc_code and not da_code and not da_name:
+            continue
+
+        if not pc_code or not da_code:
+            raise WorkbookImportError(
+                f"{sheet_title} row {row_number}: PC_ID and DA_ID are required."
+            )
+
+        da_key = normalize(da_code)
+        existing_pc = by_da_code.get(da_key)
+        if existing_pc and normalize(existing_pc) != normalize(pc_code):
+            raise WorkbookImportError(
+                f"{sheet_title} row {row_number}: DA_ID {da_code!r} is mapped "
+                f"to more than one PC."
+            )
+        by_da_code[da_key] = pc_code
+
+        if da_name:
+            name_key = normalize(da_name)
+            existing_name_pc = by_da_name.get(name_key)
+            if existing_name_pc and normalize(existing_name_pc) != normalize(pc_code):
+                raise WorkbookImportError(
+                    f"{sheet_title} row {row_number}: DA_Name {da_name!r} is "
+                    f"mapped to more than one PC."
+                )
+            by_da_name[name_key] = pc_code
+
+    return by_da_code, by_da_name
+
+
 def database_counts() -> dict[str, int]:
     models = {
         "pms": PM,
@@ -437,7 +531,7 @@ def import_workbook(
 
     try:
         pms: list[PM] = []
-        for row_no, row in _iter_records(workbook, profiles["pms"]):
+        for _row_no, row in _iter_records(workbook, profiles["pms"]):
             name = clean_text(row.get("full_name"))
             if not name:
                 continue
@@ -477,34 +571,70 @@ def import_workbook(
         db.session.flush()
         summary["counts"]["pcs"] = len(pcs)
 
+        pc_code_by_da_code, pc_code_by_da_name = _pc_da_assignments(workbook)
+
         das: list[DA] = []
         da_by_code: dict[str, DA] = {}
         for row_no, row in _iter_records(workbook, profiles["das"]):
             name = clean_text(row.get("full_name"))
             if not name:
                 continue
+
             context = f"{profiles['das'].title} row {row_no}"
-            pc_code = clean_text(row.get("pc_code"))
+            da_code = clean_text(row.get("da_code"))
+            sheet_pc_code = clean_text(row.get("pc_code"))
+
+            mapped_pc_code = None
+            if da_code:
+                mapped_pc_code = pc_code_by_da_code.get(normalize(da_code))
+            if mapped_pc_code is None:
+                mapped_pc_code = pc_code_by_da_name.get(normalize(name))
+
+            if (
+                sheet_pc_code
+                and mapped_pc_code
+                and normalize(sheet_pc_code) != normalize(mapped_pc_code)
+            ):
+                raise WorkbookImportError(
+                    f"{context}: PC_ID {sheet_pc_code!r} conflicts with "
+                    f"PC_DA_Map assignment {mapped_pc_code!r}."
+                )
+
+            # PC_DA_Map is authoritative when present. The DA-sheet PC_ID/PC_Name
+            # remains a backwards-compatible fallback for older workbooks.
+            pc_code = mapped_pc_code or sheet_pc_code
             pc = pc_by_code.get(normalize(pc_code)) if pc_code else None
+
             if pc is None and row.get("pc_name"):
                 pc = _unique_by_name(pcs, row.get("pc_name"), context)
+
             if pc is None:
-                raise WorkbookImportError(f"{context}: no matching PC for {pc_code or row.get('pc_name')!r}.")
+                raise WorkbookImportError(
+                    f"{context}: no matching PC for "
+                    f"{pc_code or row.get('pc_name')!r}. "
+                    "Provide PC_DA_Map or a populated DA PC_ID/PC_Name."
+                )
+
             _validate_cluster(row.get("cluster"), pc.cluster, context)
+
             da = DA(
                 full_name=name,
                 pc_id=pc.id,
-                email=clean_text(row.get("email")).casefold() if clean_text(row.get("email")) else None,
+                email=clean_text(row.get("email")).casefold()
+                if clean_text(row.get("email"))
+                else None,
                 mobile=clean_phone(row.get("mobile")),
                 notes=clean_text(row.get("notes")),
             )
             db.session.add(da)
             das.append(da)
-            code = clean_text(row.get("da_code"))
-            if code:
-                key = normalize(code)
+
+            if da_code:
+                key = normalize(da_code)
                 if key in da_by_code:
-                    raise WorkbookImportError(f"{context}: duplicate DA_ID {code!r}.")
+                    raise WorkbookImportError(
+                        f"{context}: duplicate DA_ID {da_code!r}."
+                    )
                 da_by_code[key] = da
         db.session.flush()
         summary["counts"]["das"] = len(das)

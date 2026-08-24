@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Run release checks and write a truthful Markdown report."""
+"""Run release checks and write a truthful Markdown validation report."""
+
 from __future__ import annotations
 
 import argparse
@@ -7,7 +8,6 @@ import compileall
 import datetime as dt
 import importlib.util
 import json
-import os
 import shutil
 import subprocess
 import sys
@@ -33,10 +33,25 @@ EXPECTED_TABLES = {
     "audit_logs",
     "recycle_bin",
 }
-EXPECTED_WORKBOOK_COUNTS = {2, 9, 42, 351, 2433}
+
+EXPECTED_WORKBOOK_COUNTS = {
+    "PMs": 2,
+    "PCs": 2,
+    "DAs": 9,
+    "Villages": 42,
+    "Committees": 351,
+    "Committee_Members": 2433,
+    "Action_Plans": 351,
+    "Attendance_Entries": 0,
+    "Specials_Entries": 0,
+    "PC_DA_Map": 9,
+    "Recycle_Bin": 0,
+}
 
 
 class Check:
+    """Single validation result."""
+
     def __init__(self, name: str, status: str, detail: str = "") -> None:
         self.name = name
         self.status = status
@@ -47,25 +62,47 @@ def command(
     args: list[str],
     cwd: Path = ROOT,
 ) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+    """Run a subprocess and capture its output."""
+    return subprocess.run(
+        args,
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
 
 
 def static_checks() -> list[Check]:
+    """Run checks that do not need the Flask app to start."""
     checks: list[Check] = []
 
-    ok = compileall.compile_dir(str(ROOT / "app"), quiet=1)
-    ok = compileall.compile_dir(str(ROOT / "tests"), quiet=1) and ok
-    ok = compileall.compile_dir(str(ROOT / "migrations"), quiet=1) and ok
-    ok = compileall.compile_dir(str(ROOT / "scripts"), quiet=1) and ok
-    checks.append(Check("Python bytecode compilation", "PASS" if ok else "FAIL"))
+    compile_targets = (
+        ROOT / "app",
+        ROOT / "tests",
+        ROOT / "migrations",
+        ROOT / "scripts",
+    )
+    compiled = True
+    for target in compile_targets:
+        if target.exists():
+            compiled = compileall.compile_dir(str(target), quiet=1) and compiled
+
+    checks.append(
+        Check(
+            "Python bytecode compilation",
+            "PASS" if compiled else "FAIL",
+        )
+    )
 
     node = shutil.which("node")
     if node:
-        failures = []
-        files = sorted((ROOT / "app" / "static" / "js").glob("*.js"))
-        files.append(ROOT / "app" / "static" / "sw.js")
+        failures: list[str] = []
+        js_files = sorted((ROOT / "app" / "static" / "js").glob("*.js"))
+        sw_path = ROOT / "app" / "static" / "sw.js"
+        if sw_path.exists():
+            js_files.append(sw_path)
 
-        for path in files:
+        for path in js_files:
             result = command([node, "--check", str(path)])
             if result.returncode:
                 failures.append(
@@ -78,7 +115,7 @@ def static_checks() -> list[Check]:
                 "PASS" if not failures else "FAIL",
                 "; ".join(failures)
                 if failures
-                else f"{len(files)} files checked",
+                else f"{len(js_files)} files checked",
             )
         )
     else:
@@ -94,30 +131,22 @@ def static_checks() -> list[Check]:
         from jinja2 import Environment
 
         env = Environment()
-        template_failures = []
-        templates = sorted(
-            (ROOT / "app" / "templates").glob("*.html")
-        )
+        template_failures: list[str] = []
+        templates = sorted((ROOT / "app" / "templates").glob("*.html"))
 
         for template in templates:
             try:
-                env.parse(
-                    template.read_text(encoding="utf-8")
-                )
+                env.parse(template.read_text(encoding="utf-8"))
             except Exception as exc:
-                template_failures.append(
-                    f"{template.name}: {exc}"
-                )
+                template_failures.append(f"{template.name}: {exc}")
 
         checks.append(
             Check(
                 "Jinja template syntax",
                 "PASS" if not template_failures else "FAIL",
-                (
-                    "; ".join(template_failures)
-                    if template_failures
-                    else f"{len(templates)} templates checked"
-                ),
+                "; ".join(template_failures)
+                if template_failures
+                else f"{len(templates)} templates checked",
             )
         )
     except ImportError:
@@ -129,21 +158,15 @@ def static_checks() -> list[Check]:
             )
         )
 
-    manifest_path = (
-        ROOT / "app" / "static" / "manifest.json"
-    )
-
+    manifest_path = ROOT / "app" / "static" / "manifest.json"
     try:
-        manifest = json.loads(
-            manifest_path.read_text(encoding="utf-8")
-        )
-
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         sizes = {
             item.get("sizes")
             for item in manifest.get("icons", [])
         }
 
-        valid = (
+        manifest_valid = (
             manifest.get("display") == "standalone"
             and bool(manifest.get("start_url"))
             and {"192x192", "512x512"} <= sizes
@@ -156,7 +179,7 @@ def static_checks() -> list[Check]:
         checks.append(
             Check(
                 "PWA manifest contract",
-                "PASS" if valid else "FAIL",
+                "PASS" if manifest_valid else "FAIL",
             )
         )
     except Exception as exc:
@@ -168,32 +191,20 @@ def static_checks() -> list[Check]:
             )
         )
 
-    icon_errors = []
-
+    icon_errors: list[str] = []
     expected_icons = {
         "icon-192.png": (192, 192),
         "icon-512.png": (512, 512),
     }
 
     for name, expected_size in expected_icons.items():
-        path = (
-            ROOT
-            / "app"
-            / "static"
-            / "icons"
-            / name
-        )
-
+        path = ROOT / "app" / "static" / "icons" / name
         try:
             with Image.open(path) as image:
                 if image.size != expected_size:
-                    icon_errors.append(
-                        f"{name}: {image.size}"
-                    )
+                    icon_errors.append(f"{name}: {image.size}")
         except Exception as exc:
-            icon_errors.append(
-                f"{name}: {exc}"
-            )
+            icon_errors.append(f"{name}: {exc}")
 
     checks.append(
         Check(
@@ -203,7 +214,7 @@ def static_checks() -> list[Check]:
         )
     )
 
-    source_checks = {
+    source_checks: dict[str, tuple[str, tuple[str, ...]]] = {
         "Centralized scoping": (
             "app/scoping.py",
             (
@@ -250,7 +261,8 @@ def static_checks() -> list[Check]:
             (
                 "Failure",
                 "ActionPlan",
-                "AttendanceEntry",
+                "attendance_entry",
+                "assigned_date",
             ),
         ),
         "Monthly planning transfer": (
@@ -305,10 +317,7 @@ def static_checks() -> list[Check]:
 
     for name, (relative, tokens) in source_checks.items():
         try:
-            source = (
-                ROOT / relative
-            ).read_text(encoding="utf-8")
-
+            source = (ROOT / relative).read_text(encoding="utf-8")
             lowered = source.lower()
 
             missing = [
@@ -321,21 +330,11 @@ def static_checks() -> list[Check]:
                 Check(
                     name,
                     "PASS" if not missing else "FAIL",
-                    (
-                        f"missing: {', '.join(missing)}"
-                        if missing
-                        else ""
-                    ),
+                    f"missing: {', '.join(missing)}" if missing else "",
                 )
             )
         except Exception as exc:
-            checks.append(
-                Check(
-                    name,
-                    "FAIL",
-                    str(exc),
-                )
-            )
+            checks.append(Check(name, "FAIL", str(exc)))
 
     all_python_source = "\n".join(
         path.read_text(encoding="utf-8")
@@ -347,7 +346,6 @@ def static_checks() -> list[Check]:
         "on-time",
         "postponed",
     )
-
     missing_status = [
         token
         for token in status_tokens
@@ -358,74 +356,53 @@ def static_checks() -> list[Check]:
         Check(
             "Server attendance status values",
             "PASS" if not missing_status else "FAIL",
-            (
-                f"missing: {', '.join(missing_status)}"
-                if missing_status
-                else ""
-            ),
+            f"missing: {', '.join(missing_status)}"
+            if missing_status
+            else "",
         )
     )
 
-    models_source = (
-        ROOT / "app" / "models.py"
-    ).read_text(encoding="utf-8")
-
-    cluster_valid = (
-        'tablename__ = "pcs"' in models_source
-        and models_source.count("cluster =") == 1
+    models_source = (ROOT / "app" / "models.py").read_text(encoding="utf-8")
+    pc_class_pos = models_source.find("class PC")
+    da_class_pos = models_source.find("class DA")
+    pc_block = (
+        models_source[pc_class_pos:da_class_pos]
+        if pc_class_pos >= 0 and da_class_pos > pc_class_pos
+        else ""
     )
-
-    # Fall back to a simpler source check if formatting differs.
-    if not cluster_valid:
-        cluster_valid = (
-            "class PC" in models_source
-            and "cluster" in models_source
-        )
+    cluster_valid = "cluster" in pc_block
 
     checks.append(
         Check(
-            "PC-only persisted cluster source",
+            "PC persisted cluster source",
             "PASS" if cluster_valid else "FAIL",
         )
     )
 
     migration_source = "\n".join(
         path.read_text(encoding="utf-8")
-        for path in (
-            ROOT / "migrations" / "versions"
-        ).glob("*.py")
+        for path in (ROOT / "migrations" / "versions").glob("*.py")
     )
-
-    missing_tables = [
+    missing_tables = sorted(
         table
         for table in EXPECTED_TABLES
         if table not in migration_source
-    ]
+    )
 
     checks.append(
         Check(
             "Thirteen-table Alembic migration",
             "PASS" if not missing_tables else "FAIL",
-            (
-                f"missing: {', '.join(sorted(missing_tables))}"
-                if missing_tables
-                else ""
-            ),
+            f"missing: {', '.join(missing_tables)}"
+            if missing_tables
+            else "",
         )
     )
 
-    css = (
-        ROOT
-        / "app"
-        / "static"
-        / "css"
-        / "app.css"
-    ).read_text(encoding="utf-8")
-
-    responsive = (
-        "44px" in css
-        and "@media" in css
+    css = (ROOT / "app" / "static" / "css" / "app.css").read_text(
+        encoding="utf-8"
     )
+    responsive = "44px" in css and "@media" in css
 
     checks.append(
         Check(
@@ -438,11 +415,8 @@ def static_checks() -> list[Check]:
 
 
 def workbook_checks() -> list[Check]:
-    workbook_path = (
-        ROOT
-        / "data"
-        / "MV-Master-Data-26-27.xlsx"
-    )
+    """Profile the supplied normalized master workbook."""
+    workbook_path = ROOT / "data" / "MV-Master-Data-26-27.xlsx"
 
     if not workbook_path.exists():
         return [
@@ -453,17 +427,14 @@ def workbook_checks() -> list[Check]:
             )
         ]
 
+    profile_path = ROOT / "docs" / "workbook-profile.json"
     result = command(
         [
             sys.executable,
             "scripts/inspect_workbook.py",
             str(workbook_path),
             "--output",
-            str(
-                ROOT
-                / "docs"
-                / "workbook-profile.json"
-            ),
+            str(profile_path),
         ]
     )
 
@@ -472,33 +443,38 @@ def workbook_checks() -> list[Check]:
             Check(
                 "Workbook profiling",
                 "FAIL",
-                result.stderr,
+                (result.stdout + "\n" + result.stderr).strip(),
             )
         ]
 
-    profile_path = (
-        ROOT
-        / "docs"
-        / "workbook-profile.json"
-    )
+    try:
+        profile = json.loads(profile_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return [
+            Check(
+                "Workbook profiling",
+                "FAIL",
+                f"Could not read generated profile: {exc}",
+            )
+        ]
 
-    profile = json.loads(
-        profile_path.read_text(encoding="utf-8")
-    )
-
-    record_counts = {
-        info["records"]
-        for info in profile.values()
+    actual_counts = {
+        sheet: info.get("records")
+        for sheet, info in profile.items()
+        if isinstance(info, dict)
     }
 
-    expected_present = (
-        EXPECTED_WORKBOOK_COUNTS
-        <= record_counts
-    )
+    mismatches = []
+    for sheet, expected in EXPECTED_WORKBOOK_COUNTS.items():
+        actual = actual_counts.get(sheet)
+        if actual != expected:
+            mismatches.append(
+                f"{sheet}: expected {expected}, got {actual!r}"
+            )
 
     details = ", ".join(
-        f"{sheet}={info['records']}"
-        for sheet, info in profile.items()
+        f"{sheet}={actual_counts.get(sheet, '?')}"
+        for sheet in EXPECTED_WORKBOOK_COUNTS
     )
 
     return [
@@ -508,16 +484,15 @@ def workbook_checks() -> list[Check]:
             f"{len(profile)} sheets",
         ),
         Check(
-            "Expected master-data row counts visible",
-            "PASS" if expected_present else "FAIL",
-            details,
+            "Exact production master-data row counts",
+            "PASS" if not mismatches else "FAIL",
+            "; ".join(mismatches) if mismatches else details,
         ),
     ]
 
 
-def runtime_checks(
-    require_runtime: bool,
-) -> list[Check]:
+def runtime_checks(require_runtime: bool) -> list[Check]:
+    """Start the Flask factory against an in-memory DB and run pytest."""
     required_modules = (
         "flask",
         "flask_sqlalchemy",
@@ -533,34 +508,18 @@ def runtime_checks(
     ]
 
     if missing:
-        status = (
-            "FAIL"
-            if require_runtime
-            else "SKIP"
-        )
-
+        status = "FAIL" if require_runtime else "SKIP"
         return [
             Check(
                 "Framework runtime and pytest suite",
                 status,
-                (
-                    "missing environment dependencies: "
-                    + ", ".join(missing)
-                ),
+                "missing environment dependencies: " + ", ".join(missing),
             )
         ]
 
-    # IMPORTANT:
-    # Use one canonical expected-table definition.
-    #
-    # The old validator duplicated a 12-table set here and forgot
-    # attendance_visit_members, while EXPECTED_TABLES already contained
-    # all 13 tables. That caused GitHub Actions to fail incorrectly.
-    expected_tables_literal = repr(
-        sorted(EXPECTED_TABLES)
-    )
+    expected_tables_literal = repr(sorted(EXPECTED_TABLES))
 
-    code = f"""
+    smoke_code = f"""
 from app import create_app
 from app.extensions import db
 
@@ -578,7 +537,7 @@ with app.app_context():
     expected = set({expected_tables_literal})
 
     assert actual == expected, (
-        f"schema mismatch: "
+        "schema mismatch: "
         f"missing={{sorted(expected - actual)}}, "
         f"unexpected={{sorted(actual - expected)}}"
     )
@@ -588,19 +547,15 @@ with app.app_context():
         [
             sys.executable,
             "-c",
-            code,
+            smoke_code,
         ]
     )
 
     checks = [
         Check(
             "Flask application factory and in-memory schema",
-            (
-                "PASS"
-                if smoke.returncode == 0
-                else "FAIL"
-            ),
-            smoke.stderr[-1000:],
+            "PASS" if smoke.returncode == 0 else "FAIL",
+            (smoke.stdout + "\n" + smoke.stderr)[-1500:],
         )
     ]
 
@@ -619,27 +574,18 @@ with app.app_context():
     checks.append(
         Check(
             "Pytest suite",
-            (
-                "PASS"
-                if pytest.returncode == 0
-                else "FAIL"
-            ),
-            (
-                pytest.stdout
-                + "\n"
-                + pytest.stderr
-            )[-1500:],
+            "PASS" if pytest.returncode == 0 else "FAIL",
+            (pytest.stdout + "\n" + pytest.stderr)[-2000:],
         )
     )
 
     return checks
 
 
-def write_report(
-    checks: list[Check],
-) -> None:
+def write_report(checks: list[Check]) -> None:
+    """Write validation results without multiline f-string hazards."""
     timestamp = (
-        dt.datetime.now(dt.timezone.utc)
+        dt.datetime.now(dt.UTC)
         .isoformat(timespec="seconds")
     )
 
@@ -649,15 +595,9 @@ def write_report(
     ]
 
     for item in checks:
-        detail = item.detail.replace(
-            "|",
-            "\\|",
-        )
-
+        detail = item.detail.replace("|", "\\|")
         rows.append(
-            f"| {item.name} | "
-            f"**{item.status}** | "
-            f"{detail} |"
+            f"| {item.name} | **{item.status}** | {detail} |"
         )
 
     summary = {
@@ -679,14 +619,13 @@ def write_report(
         "",
         (
             "This report distinguishes executed checks from checks skipped "
-            "because the build sandbox lacks runtime dependencies. "
+            "because the build environment lacks runtime dependencies. "
             "A skip is not represented as a pass."
         ),
         "",
     ]
 
     report_lines.extend(rows)
-
     report_lines.extend(
         [
             "",
@@ -706,7 +645,41 @@ def write_report(
         ]
     )
 
+    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(
         "\n".join(report_lines),
         encoding="utf-8",
     )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--require-runtime",
+        action="store_true",
+        help="Fail if runtime dependencies are unavailable.",
+    )
+    args = parser.parse_args()
+
+    checks = (
+        static_checks()
+        + workbook_checks()
+        + runtime_checks(args.require_runtime)
+    )
+
+    write_report(checks)
+
+    for item in checks:
+        suffix = f" - {item.detail}" if item.detail else ""
+        print(f"{item.status:4} {item.name}{suffix}")
+
+    failures = [
+        item
+        for item in checks
+        if item.status == "FAIL"
+    ]
+    return 1 if failures else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

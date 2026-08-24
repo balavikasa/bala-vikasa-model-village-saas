@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import json
 import secrets
+from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from flask import current_app
 from openpyxl import Workbook, load_workbook
@@ -17,19 +18,17 @@ from sqlalchemy.orm import selectinload
 
 from ..extensions import db
 from ..models import (
+    DA,
     ActionPlan,
     ActionPlanType,
     AuditAction,
     Committee,
-    DA,
-    Role,
     User,
     Village,
 )
 from ..scoping import can_manage_action_plan, require_scoped, scoped_select
 from ..timeutils import current_month, local_today
 from .audit import model_snapshot, record_audit
-
 
 TEMPLATE_VERSION = "2.0"
 STAGE_TTL_MINUTES = 30
@@ -383,7 +382,7 @@ def build_export_workbook(user: User, month: date) -> Workbook:
         ("month", month_key(month)),
         ("exported_for_user_id", user.id),
         ("exported_for_role", user.role.value),
-        ("exported_at_utc", datetime.now(timezone.utc).isoformat()),
+        ("exported_at_utc", datetime.now(UTC).isoformat()),
     ):
         meta.append([key, value])
     return wb
@@ -565,7 +564,7 @@ def stage_import(source_path: Path, user: User, selected_month: date) -> tuple[s
             {
                 "user_id": user.id,
                 "month": month_key(selected_month),
-                "created_at": datetime.now(timezone.utc).isoformat(),
+                "created_at": datetime.now(UTC).isoformat(),
             }
         ),
         encoding="utf-8",
@@ -590,10 +589,10 @@ def _staged_file(token: str, user: User, selected_month: date) -> Path:
     try:
         created = datetime.fromisoformat(meta["created_at"])
         if created.tzinfo is None:
-            created = created.replace(tzinfo=timezone.utc)
+            created = created.replace(tzinfo=UTC)
     except Exception as exc:
         raise PlanningError("Import preview metadata is invalid.") from exc
-    if datetime.now(timezone.utc) - created > timedelta(minutes=STAGE_TTL_MINUTES):
+    if datetime.now(UTC) - created > timedelta(minutes=STAGE_TTL_MINUTES):
         meta_path.unlink(missing_ok=True)
         xlsx_path.unlink(missing_ok=True)
         raise PlanningError("Import preview expired. Validate the workbook again.")

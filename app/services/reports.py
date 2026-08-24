@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import date
-from io import BytesIO
 from typing import Any
 
 from openpyxl import Workbook
@@ -13,12 +12,12 @@ from sqlalchemy.orm import selectinload
 
 from ..extensions import db
 from ..models import (
+    DA,
     ActionPlan,
     ActionPlanType,
     AttendanceEntry,
     Committee,
     CommitteeMember,
-    DA,
     SpecialsEntry,
     User,
     Village,

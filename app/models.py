@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import enum
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from typing import Any
 
 from flask_login import UserMixin
@@ -18,9 +18,9 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
-    text,
     UniqueConstraint,
     event,
+    text,
 )
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -30,7 +30,7 @@ from .extensions import db
 
 
 def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class Role(str, enum.Enum):
@@ -99,7 +99,7 @@ class PM(LifecycleMixin, db.Model):
     mobile: Mapped[str | None] = mapped_column(String(24), unique=True)
     notes: Mapped[str | None] = mapped_column(Text)
 
-    users: Mapped[list["User"]] = relationship(back_populates="pm")
+    users: Mapped[list[User]] = relationship(back_populates="pm")
 
     def __repr__(self) -> str:
         return f"<PM {self.full_name!r}>"
@@ -114,8 +114,8 @@ class PC(LifecycleMixin, db.Model):
     mobile: Mapped[str | None] = mapped_column(String(24), unique=True)
     notes: Mapped[str | None] = mapped_column(Text)
 
-    das: Mapped[list["DA"]] = relationship(back_populates="pc")
-    users: Mapped[list["User"]] = relationship(back_populates="pc")
+    das: Mapped[list[DA]] = relationship(back_populates="pc")
+    users: Mapped[list[User]] = relationship(back_populates="pc")
 
     def __repr__(self) -> str:
         return f"<PC {self.full_name!r} {self.cluster.value}>"
@@ -131,8 +131,8 @@ class DA(LifecycleMixin, db.Model):
     notes: Mapped[str | None] = mapped_column(Text)
 
     pc: Mapped[PC] = relationship(back_populates="das")
-    villages: Mapped[list["Village"]] = relationship(back_populates="da")
-    users: Mapped[list["User"]] = relationship(back_populates="da")
+    villages: Mapped[list[Village]] = relationship(back_populates="da")
+    users: Mapped[list[User]] = relationship(back_populates="da")
 
     @property
     def cluster(self) -> Cluster:
@@ -160,9 +160,9 @@ class Village(LifecycleMixin, db.Model):
     notes: Mapped[str | None] = mapped_column(Text)
 
     da: Mapped[DA] = relationship(back_populates="villages")
-    committees: Mapped[list["Committee"]] = relationship(back_populates="village")
-    attendance_entries: Mapped[list["AttendanceEntry"]] = relationship(back_populates="village")
-    specials_entries: Mapped[list["SpecialsEntry"]] = relationship(back_populates="village")
+    committees: Mapped[list[Committee]] = relationship(back_populates="village")
+    attendance_entries: Mapped[list[AttendanceEntry]] = relationship(back_populates="village")
+    specials_entries: Mapped[list[SpecialsEntry]] = relationship(back_populates="village")
 
     @property
     def cluster(self) -> Cluster:
@@ -182,10 +182,10 @@ class Committee(LifecycleMixin, db.Model):
     notes: Mapped[str | None] = mapped_column(Text)
 
     village: Mapped[Village] = relationship(back_populates="committees")
-    members: Mapped[list["CommitteeMember"]] = relationship(back_populates="committee")
-    action_plans: Mapped[list["ActionPlan"]] = relationship(back_populates="committee")
-    attendance_entries: Mapped[list["AttendanceEntry"]] = relationship(back_populates="committee")
-    specials_entries: Mapped[list["SpecialsEntry"]] = relationship(back_populates="committee")
+    members: Mapped[list[CommitteeMember]] = relationship(back_populates="committee")
+    action_plans: Mapped[list[ActionPlan]] = relationship(back_populates="committee")
+    attendance_entries: Mapped[list[AttendanceEntry]] = relationship(back_populates="committee")
+    specials_entries: Mapped[list[SpecialsEntry]] = relationship(back_populates="committee")
 
     @property
     def active_member_count(self) -> int:
@@ -209,7 +209,7 @@ class CommitteeMember(LifecycleMixin, db.Model):
     notes: Mapped[str | None] = mapped_column(Text)
 
     committee: Mapped[Committee] = relationship(back_populates="members")
-    visit_links: Mapped[list["AttendanceVisitMember"]] = relationship(back_populates="committee_member")
+    visit_links: Mapped[list[AttendanceVisitMember]] = relationship(back_populates="committee_member")
 
     def __repr__(self) -> str:
         return f"<CommitteeMember {self.full_name!r}>"
@@ -256,14 +256,14 @@ class ActionPlan(LifecycleMixin, db.Model):
     notes: Mapped[str | None] = mapped_column(Text)
 
     committee: Mapped[Committee] = relationship(back_populates="action_plans")
-    assigned_by: Mapped["User | None"] = relationship(foreign_keys=[assigned_by_user_id])
-    prepared_from: Mapped["ActionPlan | None"] = relationship(
+    assigned_by: Mapped[User | None] = relationship(foreign_keys=[assigned_by_user_id])
+    prepared_from: Mapped[ActionPlan | None] = relationship(
         remote_side="ActionPlan.id", foreign_keys=[prepared_from_id]
     )
-    attendance_entry: Mapped["AttendanceEntry | None"] = relationship(
+    attendance_entry: Mapped[AttendanceEntry | None] = relationship(
         back_populates="action_plan", uselist=False
     )
-    specials_entry: Mapped["SpecialsEntry | None"] = relationship(
+    specials_entry: Mapped[SpecialsEntry | None] = relationship(
         back_populates="action_plan", uselist=False
     )
 
@@ -358,7 +358,7 @@ class AttendanceEntry(LifecycleMixin, db.Model):
     committee: Mapped[Committee] = relationship(back_populates="attendance_entries")
     action_plan: Mapped[ActionPlan] = relationship(back_populates="attendance_entry")
     submitted_by: Mapped[User] = relationship(foreign_keys=[submitted_by_user_id])
-    visited_members: Mapped[list["AttendanceVisitMember"]] = relationship(
+    visited_members: Mapped[list[AttendanceVisitMember]] = relationship(
         back_populates="attendance_entry",
         cascade="all, delete-orphan",
         order_by="AttendanceVisitMember.designation_snapshot, AttendanceVisitMember.member_name_snapshot",

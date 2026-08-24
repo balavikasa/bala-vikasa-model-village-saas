@@ -18,7 +18,6 @@ from .services.master_transfer import (
     stage_import,
 )
 
-
 bp = Blueprint("admin_transfer", __name__)
 
 

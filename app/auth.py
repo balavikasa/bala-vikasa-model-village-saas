@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from urllib.parse import urlsplit
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy import func, or_
-from urllib.parse import urlsplit
 
 from .extensions import db
 from .models import AuditAction, User, utcnow
 from .services.audit import record_audit
-
 
 bp = Blueprint("auth", __name__)
 

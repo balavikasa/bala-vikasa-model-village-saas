@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from flask import abort, current_app, request
+from flask import abort, request
 from flask_login import current_user
 
 from .models import Role
 from .services.monitoring import dashboard_series
-
 
 PALETTE = {
     "navy": "#1F4E5F",
@@ -25,8 +24,8 @@ def init_dash(app):
     """
 
     try:
-        from dash import Dash, Input, Output, dcc, html
         import plotly.graph_objects as go
+        from dash import Dash, Input, Output, dcc, html
     except ImportError:
         @app.get("/dash/")
         def dash_missing():
@@ -53,7 +52,7 @@ def init_dash(app):
         __name__,
         server=app,
         url_base_pathname=app.config.get("DASH_URL_BASE_PATHNAME", "/dash/"),
-        assets_folder=str((__import__("pathlib").Path(__file__).parent / "dash_assets")),
+        assets_folder=str(__import__("pathlib").Path(__file__).parent / "dash_assets"),
         title="Model Village Analytics",
         update_title="Updating…",
         suppress_callback_exceptions=True,

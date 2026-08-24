@@ -1,18 +1,20 @@
 from __future__ import annotations
 
-import enum
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any
 
 from flask import Blueprint, current_app, jsonify, request
 from flask_login import current_user
-from sqlalchemy import Date, DateTime, Enum as SAEnum, Float, Integer, String, Text, func, inspect, or_
+from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
 from .extensions import db
 from .models import (
+    DA,
+    PC,
+    PM,
     ActionPlan,
     ActionPlanType,
     AttendanceEntry,
@@ -22,9 +24,6 @@ from .models import (
     Cluster,
     Committee,
     CommitteeMember,
-    DA,
-    PC,
-    PM,
     RecycleBin,
     Role,
     SpecialScope,
@@ -36,11 +35,17 @@ from .services.audit import (
     display_name,
     model_snapshot,
     record_audit,
-    restore as restore_record,
     soft_delete,
 )
-from .services.entries import EntryValidationError, attendance_status, create_attendance, create_specials
-
+from .services.audit import (
+    restore as restore_record,
+)
+from .services.entries import (
+    EntryValidationError,
+    attendance_status,
+    create_attendance,
+    create_specials,
+)
 
 bp = Blueprint("admin_api", __name__, url_prefix="/api/v1/admin")
 
@@ -699,12 +704,6 @@ def _apply(record: Any, spec: ResourceSpec, data: dict[str, Any], *, is_create: 
 
 def _validate_record(record: Any) -> None:
     if isinstance(record, User):
-        expected = {
-            Role.ADMIN: (None, None, None),
-            Role.PM: ("pm", record.pm_id, None),
-            Role.PC: ("pc", record.pc_id, None),
-            Role.DA: ("da", record.da_id, None),
-        }
         if record.role == Role.ADMIN:
             if any((record.pm_id, record.pc_id, record.da_id)):
                 raise EntryValidationError("Admin users cannot be attached to PM, PC or DA profiles.")

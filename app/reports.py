@@ -2,13 +2,11 @@ from __future__ import annotations
 
 from io import BytesIO
 
-from flask import current_app, Blueprint, jsonify, render_template, request, send_file
+from flask import Blueprint, current_app, jsonify, render_template, request, send_file
 from flask_login import current_user, login_required
-from sqlalchemy.orm import selectinload
 
 from .extensions import db
-from .models import ActionPlan, Committee, DA, Village
-from .models import Role
+from .models import ActionPlan, Role
 from .scoping import ScopeError, require_scoped
 from .services.audit import soft_delete
 from .services.monthly_plans import PlanningError, month_key, month_label, month_start
@@ -18,7 +16,6 @@ from .services.reports import (
     report_rows,
     report_summary,
 )
-
 
 bp = Blueprint("reports", __name__)
 

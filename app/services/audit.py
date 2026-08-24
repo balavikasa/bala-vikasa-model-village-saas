@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import enum
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -11,7 +11,6 @@ from sqlalchemy import inspect
 
 from ..extensions import db
 from ..models import AuditAction, AuditLog, RecycleBin, User, utcnow
-
 
 SENSITIVE_FIELDS = {"password_hash"}
 

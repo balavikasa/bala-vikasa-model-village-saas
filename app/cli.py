@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import json
-import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import click
@@ -12,15 +11,15 @@ from sqlalchemy.exc import IntegrityError
 
 from .extensions import db
 from .models import (
+    DA,
+    PC,
+    PM,
     ActionPlan,
     AttendanceEntry,
     AuditAction,
     AuditLog,
     Committee,
     CommitteeMember,
-    DA,
-    PC,
-    PM,
     RecycleBin,
     Role,
     SpecialsEntry,
@@ -29,7 +28,6 @@ from .models import (
 )
 from .services.files import delete_photo
 from .services.workbook import WorkbookImportError, database_counts, import_workbook
-
 
 PURGE_MODELS = {
     model.__name__: model
@@ -198,7 +196,7 @@ def backfill_village_coordinates(source: Path | None, force: bool) -> None:
 def purge_recycle_bin(dry_run: bool) -> None:
     """Permanently purge soft-deleted records after the retention period."""
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     rows = db.session.scalars(
         db.select(RecycleBin)
         .where(

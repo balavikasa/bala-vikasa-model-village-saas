@@ -1,9 +1,8 @@
 # Validation report
 
-Generated: `2026-08-22T05:28:51+00:00`
+Generated: `2026-08-24T12:56:22+00:00`
 
-This report distinguishes executed checks from checks skipped because the build sandbox lacks
-runtime dependencies. A skip is not represented as a pass.
+This report distinguishes executed checks from checks skipped because the build environment lacks runtime dependencies. A skip is not represented as a pass.
 
 | Check | Result | Detail |
 |---|---:|---|
@@ -26,18 +25,19 @@ runtime dependencies. A skip is not represented as a pass.
 | Three.js overview | **PASS** |  |
 | Plotly Dash mount | **PASS** |  |
 | Server attendance status values | **PASS** |  |
-| PC-only persisted cluster source | **PASS** |  |
+| PC persisted cluster source | **PASS** |  |
 | Thirteen-table Alembic migration | **PASS** |  |
 | 44px touch targets and adaptive breakpoints | **PASS** |  |
 | Workbook opens and profiles | **PASS** | 13 sheets |
-| Expected master-data row counts visible | **PASS** | README=35, DAs=9, Villages=42, Committees=351, Committee_Members=2433, Action_Plans=352, Attendance_Entries=2, Specials_Entries=2, PMs=3, PCs=3, PC_DA_Map=10, RBAC_Permissions=6, Recycle_Bin=2 |
-| Framework runtime and pytest suite | **SKIP** | missing environment dependencies: flask, flask_sqlalchemy, flask_migrate, flask_login, flask_wtf |
+| Exact production master-data row counts | **PASS** | PMs=2, PCs=2, DAs=9, Villages=42, Committees=351, Committee_Members=2433, Action_Plans=351, Attendance_Entries=0, Specials_Entries=0, PC_DA_Map=9, Recycle_Bin=0 |
+| Flask application factory and in-memory schema | **PASS** |  |
+| Pytest suite | **PASS** | ..............................................                           [100%] 46 passed in 2.93s |
 
 ## Summary
 
-- PASS: 24
+- PASS: 26
 - FAIL: 0
-- SKIP: 1
+- SKIP: 0
 
 ## Reproduce the full runtime gate
 

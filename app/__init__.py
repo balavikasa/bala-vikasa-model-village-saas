@@ -61,13 +61,13 @@ def create_app(config: str | dict | None = None) -> Flask:
         now = local_now()
         return {"now_hour": now.hour, "local_now": now}
 
+    from .admin_api import bp as admin_api_bp
+    from .admin_transfer import bp as admin_transfer_bp
+    from .api import bp as api_bp
     from .auth import bp as auth_bp
     from .pages import bp as pages_bp
-    from .api import bp as api_bp
-    from .admin_api import bp as admin_api_bp
     from .planning import bp as planning_bp
     from .reports import bp as reports_bp
-    from .admin_transfer import bp as admin_transfer_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(pages_bp)

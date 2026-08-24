@@ -5,7 +5,6 @@ import uuid
 from datetime import date
 from typing import Any
 
-from flask_login import current_user
 from sqlalchemy.exc import IntegrityError
 from werkzeug.datastructures import FileStorage
 
