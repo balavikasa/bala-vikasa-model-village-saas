@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Report · {{ detail.village }} · Model Village{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3yn5w/8pSAwiTt68XWwD9ZSpdKknw=" crossorigin="">
+{% endblock %}
+{% block content %}
+<section class="page-shell report-detail-page" data-month="{{ detail.month or '' }}" data-lat="{{ detail.latitude if detail.latitude is not none else '' }}" data-lng="{{ detail.longitude if detail.longitude is not none else '' }}">
+  <header class="page-heading split-heading">
+    <div>
+      <p class="eyebrow">{{ detail.type }} report &middot; {{ detail.month_label or 'Unscheduled' }}</p>
+      <h1>{{ detail.village }} &middot; {{ detail.committee }}</h1>
+      <div class="detail-meta">
+        <span class="badge" data-status="{{ detail.status }}">{{ detail.status }}</span>
+        <span>{{ detail.da }}</span><span>{{ detail.cluster }}</span>
+      </div>
+    </div>
+    <div class="command-actions report-detail-actions">
+      <a class="button ghost" href="{{ url_for('reports.reports_page', month=detail.month) }}">&larr; Reports</a>
+      {% if current_user.role.value == 'admin' %}
+      <a class="button ghost" href="{{ url_for('pages.admin', resource='action-plans', edit=detail.plan_id) }}">Edit plan</a>
+      {% if detail.entry %}
+      <a class="button ghost" href="{{ url_for('pages.admin', resource=('attendance-entries' if detail.type == 'Attendance' else 'specials-entries'), edit=detail.entry.id) }}">Edit submission</a>
+      {% endif %}
+      <a class="button ghost" href="{{ url_for('pages.admin', tab='recycle') }}">Recycle Bin</a>
+      <button class="button danger" type="button" data-report-delete-plan="{{ detail.plan_id }}">Delete report</button>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="report-bento">
+    <article class="panel-card detail-overview">
+      <p class="eyebrow">Assignment</p>
+      <h2>Action plan</h2>
+      <dl class="detail-list">
+        <div><dt>PC</dt><dd>{{ detail.pc }}</dd></div>
+        <div><dt>Cluster</dt><dd>{{ detail.cluster }}</dd></div>
+        <div><dt>DA</dt><dd>{{ detail.da }}</dd></div>
+        <div><dt>Village</dt><dd>{{ detail.village }}</dd></div>
+        <div><dt>Committee</dt><dd>{{ detail.committee }}</dd></div>
+        <div><dt>Assigned date</dt><dd>{{ detail.assigned_date or 'Not assigned' }}</dd></div>
+        <div><dt>Status</dt><dd>{{ detail.status }}</dd></div>
+      </dl>
+    </article>
+
+    {% if detail.entry %}
+    {% if detail.type == 'Attendance' %}
+    <article class="panel-card attendance-card">
+      <p class="eyebrow">Attendance</p>
+      <h2>{{ detail.entry.date }}</h2>
+      <div class="count-triad">
+        <span><strong>{{ detail.entry.male }}</strong><small>Male / {{ detail.master.male }} master</small></span>
+        <span><strong>{{ detail.entry.female }}</strong><small>Female / {{ detail.master.female }} master</small></span>
+        <span><strong>{{ detail.entry.total }}</strong><small>Total / {{ detail.master.total }} master</small></span>
+      </div>
+      <p class="muted">New members: <strong>{{ detail.entry.new_members }}</strong></p>
+    </article>
+
+    <article class="panel-card member-report-card">
+      <p class="eyebrow">Visit designations</p>
+      <h2>Committee Member Name</h2>
+      {% if detail.entry.visit_members %}
+        <div class="member-report-groups">
+        {% for designation, names in detail.entry.visit_members.items() %}
+          <section><strong>{{ designation }}</strong><div>{% for name in names %}<span class="member-pill">{{ name }}</span>{% endfor %}</div></section>
+        {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">No committee-member names were recorded for this visit.</p>
+      {% endif %}
+    </article>
+    {% else %}
+    <article class="panel-card attendance-card">
+      <p class="eyebrow">Specials</p>
+      <h2>{{ detail.entry.title }}</h2>
+      <div class="count-triad two">
+        <span><strong>{{ detail.entry.participants }}</strong><small>Participants</small></span>
+        <span><strong>{{ detail.entry.scope }}</strong><small>Scope</small></span>
+      </div>
+    </article>
+    {% endif %}
+
+    <article class="panel-card report-notes-card">
+      <p class="eyebrow">Field context</p><h2>Reason & notes</h2>
+      <dl class="detail-list">
+        <div><dt>Reason</dt><dd>{{ detail.entry.reason or '—' }}</dd></div>
+        <div><dt>Notes</dt><dd>{{ detail.entry.remarks or detail.entry.notes or detail.notes or '—' }}</dd></div>
+        <div><dt>Submitted by</dt><dd>{{ detail.entry.submitted_by }}</dd></div>
+      </dl>
+    </article>
+
+    <article class="panel-card evidence-card">
+      <p class="eyebrow">Field evidence</p><h2>Photo</h2>
+      {% if detail.entry.photo_url %}
+        <a href="{{ detail.entry.photo_url }}" target="_blank" rel="noopener"><img class="report-photo" src="{{ detail.entry.photo_url }}" alt="Field evidence for {{ detail.village }} {{ detail.committee }}"></a>
+      {% else %}<div class="empty-evidence">No photo attached</div>{% endif %}
+    </article>
+    {% else %}
+    <article class="panel-card span-two">
+      <p class="eyebrow">No submission</p>
+      <h2>{{ 'Action required' if detail.status == 'Failure' else 'Awaiting field activity' }}</h2>
+      <p class="muted">This plan has no submitted field entry yet.</p>
+    </article>
+    {% endif %}
+
+    <article class="panel-card map-detail-card">
+      <div class="panel-heading"><div><p class="eyebrow">GPS</p><h2>Location</h2></div>
+        {% if detail.latitude is not none and detail.longitude is not none %}
+        <a class="button ghost" target="_blank" rel="noopener" href="https://www.google.com/maps?q={{ detail.latitude }},{{ detail.longitude }}">Open map</a>
+        {% endif %}
+      </div>
+      {% if detail.latitude is not none and detail.longitude is not none %}
+      <div id="report-map" class="report-map" aria-label="Submission location map"></div>
+      <p class="mono muted">{{ '%.5f'|format(detail.latitude) }}, {{ '%.5f'|format(detail.longitude) }}</p>
+      {% else %}<div class="empty-evidence">Location unavailable</div>{% endif %}
+    </article>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+{% if detail.latitude is not none and detail.longitude is not none %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
+{% endif %}
+<script src="{{ url_for('static', filename='js/report-detail.js') }}" defer></script>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Action Plan Transfer · Model Village{% endblock %}
+{% block content %}
+<section class="page-shell transfer-page" data-selected-month="{{ selected_month }}" data-can-import="{{ '1' if can_import else '0' }}">
+  <header class="page-heading split-heading">
+    <div>
+      <p class="eyebrow">Bulk monthly planning</p>
+      <h1>Export / Import</h1>
+      <p class="lede">Export the month, edit the yellow cells in Excel, then validate and preview every change before anything is saved.</p>
+    </div>
+    <a class="button ghost" href="{{ url_for('planning.action_plans_page', month=selected_month) }}">← Action Plans</a>
+  </header>
+
+  <div class="transfer-bento">
+    <article class="panel-card transfer-card">
+      <span class="step-orb">1</span>
+      <p class="eyebrow">Export</p>
+      <h2>Download planning sheet</h2>
+      <p class="muted">The workbook is scoped to your access. Grey columns are system-controlled; yellow cells are the fields to complete.</p>
+      <label class="field"><span>Month</span><input type="month" id="transfer-month" value="{{ selected_month }}"></label>
+      <a class="button primary wide" id="export-workbook" href="{{ url_for('planning.export_month', month=selected_month) }}">Export Excel</a>
+    </article>
+
+    {% if can_import %}
+    <article class="panel-card transfer-card">
+      <span class="step-orb">2</span>
+      <p class="eyebrow">Import</p>
+      <h2>Validate changed sheet</h2>
+      <p class="muted">Nothing is written during validation. You will see New, Changed, Unchanged and Error counts first.</p>
+      <label class="file-drop" for="import-file">
+        <input id="import-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+        <span>Choose edited .xlsx file</span>
+        <small id="import-file-name">No file selected</small>
+      </label>
+      <button class="button primary wide" type="button" id="validate-import">Validate & preview</button>
+    </article>
+    {% endif %}
+
+    <article class="panel-card transfer-card transfer-help">
+      <span class="step-orb">✓</span>
+      <p class="eyebrow">Rules</p>
+      <h2>Safe monthly history</h2>
+      <ul class="clean-list">
+        <li>Type and Assigned Date are entered together.</li>
+        <li>Assigned Date must stay inside the selected month.</li>
+        <li>Completed and past-month plans cannot be overwritten.</li>
+        <li>Import confirmation is atomic: errors mean no partial save.</li>
+      </ul>
+    </article>
+  </div>
+
+  {% if can_import %}
+  <section id="import-preview" class="panel-card import-preview hidden" aria-live="polite">
+    <div class="panel-heading">
+      <div><p class="eyebrow">Preview before import</p><h2 id="preview-title">Changes</h2></div>
+      <button type="button" class="button ghost" id="clear-preview">Clear</button>
+    </div>
+    <div class="metric-bento compact" id="preview-counts">
+      <article class="metric-card"><small>New</small><strong data-preview="New">0</strong></article>
+      <article class="metric-card"><small>Changed</small><strong data-preview="Changed">0</strong></article>
+      <article class="metric-card"><small>Unchanged</small><strong data-preview="Unchanged">0</strong></article>
+      <article class="metric-card"><small>Errors</small><strong data-preview="Error">0</strong></article>
+    </div>
+    <div id="preview-rows" class="responsive-ledger"></div>
+    <div class="form-alert hidden" id="import-error"></div>
+    <footer class="sticky-form-actions transfer-confirm">
+      <span id="preview-note">Review the preview before confirming.</span>
+      <button class="button primary" type="button" id="confirm-import">Confirm Import</button>
+    </footer>
+  </section>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/action-plan-transfer.js') }}" defer></script>
+{% endblock %}

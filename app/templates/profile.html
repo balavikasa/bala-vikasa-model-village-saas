@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}{{ profile.name }} · Model Village{% endblock %}
+{% block head %}
+{% if profile.kind in ['DA', 'Village'] and (profile.latitude|default(None) or profile.villages|default([])) %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endif %}
+{% endblock %}
+{% block content %}
+<section class="page-shell profile-page" data-profile-kind="{{ profile.kind }}">
+  <a class="profile-back" href="{{ url_for('pages.directory') }}">← Back to Directory</a>
+
+  <header class="profile-hero bento-panel">
+    <div class="profile-avatar">{{ profile.kind }}</div>
+    <div class="profile-title">
+      <p class="eyebrow">{{ profile.kind }} profile</p>
+      <h1>{{ profile.name }}</h1>
+      <div class="profile-meta">
+        {% if profile.cluster %}<span class="badge">{{ profile.cluster }}</span>{% endif %}
+        {% if profile.pc %}<span>PC · {{ profile.pc.name }}</span>{% endif %}
+        {% if profile.da %}<span>DA · {{ profile.da.name }}</span>{% endif %}
+        {% if profile.mandal %}<span>{{ profile.mandal }}</span>{% endif %}
+        {% if profile.district %}<span>{{ profile.district }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="profile-contact">
+      {% if profile.email %}<a href="mailto:{{ profile.email }}">{{ profile.email }}</a>{% endif %}
+      {% if profile.mobile %}<a href="tel:{{ profile.mobile }}">{{ profile.mobile }}</a>{% endif %}
+    </div>
+  </header>
+
+  <section class="metric-bento profile-metrics">
+    {% for key, value in profile.counts.items() %}
+    <article class="metric-card"><small>{{ key|replace('_',' ')|title }}</small><strong>{{ value }}</strong></article>
+    {% endfor %}
+  </section>
+
+  <section class="profile-grid">
+    <article class="panel-card">
+      <div class="panel-heading"><div><p class="eyebrow">Current month</p><h2>Action-plan pulse</h2></div></div>
+      <div class="status-breakdown">
+        {% for status, count in profile.status.items() %}
+        <div class="status-row">
+          <label>{{ status }}</label>
+          <div class="status-track"><span class="status-fill" data-status="{{ status }}" style="width: {{ ([count * 12, 100]|min) }}%"></span></div>
+          <strong>{{ count }}</strong>
+        </div>
+        {% endfor %}
+      </div>
+    </article>
+
+    {% if profile.kind == 'Village' and profile.latitude and profile.longitude %}
+    <article class="panel-card profile-map-panel">
+      <div class="panel-heading"><div><p class="eyebrow">Location</p><h2>{{ profile.name }}</h2></div></div>
+      <div id="profile-map" class="profile-map" data-lat="{{ profile.latitude }}" data-lng="{{ profile.longitude }}" data-label="{{ profile.name }}"></div>
+    </article>
+    {% elif profile.kind == 'DA' and profile.villages %}
+    <article class="panel-card profile-map-panel">
+      <div class="panel-heading"><div><p class="eyebrow">Field geography</p><h2>Assigned villages</h2></div></div>
+      <div id="profile-map" class="profile-map" data-villages='{{ profile.villages|tojson }}'></div>
+    </article>
+    {% endif %}
+  </section>
+
+  {% if profile.kind == 'DA' %}
+  <section class="panel-card profile-section">
+    <div class="panel-heading"><div><p class="eyebrow">Assignments</p><h2>Villages</h2></div></div>
+    <div class="profile-card-grid">
+      {% for item in profile.villages %}
+      <a class="profile-link-card" href="{{ item.url }}">
+        <div><strong>{{ item.name }}</strong><small>{{ item.mandal or 'Mandal not recorded' }} · {{ item.district or 'District not recorded' }}</small></div>
+        <div class="profile-card-stats"><span>{{ item.committee_count }}<small>Committees</small></span><span>{{ item.member_count }}<small>Members</small></span></div>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% elif profile.kind == 'Village' %}
+  <section class="panel-card profile-section">
+    <div class="panel-heading"><div><p class="eyebrow">Master data</p><h2>Committees</h2></div></div>
+    <div class="responsive-ledger">
+      <div class="desktop-ledger ledger-table-wrap">
+        <table class="ledger modern-ledger">
+          <thead><tr><th>Committee</th><th>Members</th><th>Type</th><th>Assigned</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {% for item in profile.committees %}
+            <tr><td>{{ item.name }}</td><td>{{ item.members }}</td><td>{{ item.plan_type }}</td><td>{{ item.assigned_date or '—' }}</td><td><span class="badge" data-status="{{ item.status }}">{{ item.status }}</span></td><td>{% if item.report_url %}<a class="text-button" href="{{ item.report_url }}">View</a>{% endif %}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="mobile-ledger">
+        {% for item in profile.committees %}
+        <article class="ledger-card">
+          <div class="ledger-card-top"><div><strong>{{ item.name }}</strong><small>{{ item.members }} members · {{ item.plan_type }}</small></div><span class="badge" data-status="{{ item.status }}">{{ item.status }}</span></div>
+          <div class="ledger-card-meta"><span>{{ item.assigned_date or 'Not assigned' }}</span></div>
+          {% if item.report_url %}<a class="button ghost wide" href="{{ item.report_url }}">View</a>{% endif %}
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% elif profile.kind == 'PC' %}
+  <section class="panel-card profile-section">
+    <div class="panel-heading"><div><p class="eyebrow">Team</p><h2>Development Agents</h2></div></div>
+    <div class="profile-card-grid">
+      {% for item in profile.das %}
+      <a class="profile-link-card" href="{{ item.url }}">
+        <div><strong>{{ item.name }}</strong><small>{{ item.villages }} villages · {{ item.plans }} current plans</small></div>
+        <span class="badge {% if item.failure %}danger{% endif %}">{{ item.failure }} failures</span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% elif profile.kind == 'PM' %}
+  <section class="panel-card profile-section">
+    <div class="panel-heading"><div><p class="eyebrow">Program</p><h2>Project Coordinators</h2></div></div>
+    <div class="profile-card-grid">
+      {% for item in profile.pcs %}
+      <a class="profile-link-card" href="{{ item.url }}">
+        <div><strong>{{ item.name }}</strong><small>{{ item.cluster }} · {{ item.das }} DAs · {{ item.villages }} villages</small></div><b>›</b>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if profile.plans %}
+  <section class="panel-card profile-section">
+    <div class="panel-heading"><div><p class="eyebrow">Current month</p><h2>Action plans</h2></div><a class="text-button" href="{{ url_for('reports.reports_page') }}">All reports</a></div>
+    <div class="mobile-ledger profile-plan-list">
+      {% for plan in profile.plans %}
+      <article class="ledger-card">
+        <div class="ledger-card-top"><div><strong>{{ plan.committee }}</strong><small>{{ plan.village }} · {{ plan.type }}</small></div><span class="badge" data-status="{{ plan.status }}">{{ plan.status }}</span></div>
+        <div class="ledger-card-meta"><span>{{ plan.assigned_date or 'Not assigned' }}</span></div>
+        <a class="button ghost wide" href="{{ plan.report_url }}">View</a>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+{% if profile.kind in ['DA', 'Village'] %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+<script src="{{ url_for('static', filename='js/profile.js') }}" defer></script>
+{% endif %}
+{% endblock %}

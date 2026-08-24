@@ -1,0 +1,218 @@
+{
+  "README": {
+    "header_row": 1,
+    "headers": [],
+    "records": 35,
+    "max_row": 43,
+    "max_column": 1
+  },
+  "DAs": {
+    "header_row": 1,
+    "headers": [
+      "da_id",
+      "da_name",
+      "cluster",
+      "email",
+      "mobile",
+      "villages_assigned",
+      "total_committee_members",
+      "pc_id"
+    ],
+    "records": 9,
+    "max_row": 10,
+    "max_column": 8
+  },
+  "Villages": {
+    "header_row": 1,
+    "headers": [
+      "village_id",
+      "village",
+      "mandal",
+      "district",
+      "cluster",
+      "da_id",
+      "da_name",
+      "committee_count",
+      "total_male",
+      "total_female",
+      "total_members"
+    ],
+    "records": 42,
+    "max_row": 43,
+    "max_column": 11
+  },
+  "Committees": {
+    "header_row": 1,
+    "headers": [
+      "committee_id",
+      "village_id",
+      "village",
+      "committee_name",
+      "total_male",
+      "total_female",
+      "total_members"
+    ],
+    "records": 351,
+    "max_row": 352,
+    "max_column": 7
+  },
+  "Committee_Members": {
+    "header_row": 1,
+    "headers": [
+      "member_id",
+      "committee_id",
+      "village_id",
+      "village",
+      "committee_name",
+      "name",
+      "gender",
+      "designation",
+      "designation_raw",
+      "mobile",
+      "mobile_valid"
+    ],
+    "records": 2433,
+    "max_row": 2434,
+    "max_column": 11
+  },
+  "Action_Plans": {
+    "header_row": 1,
+    "headers": [
+      "plan_id",
+      "village_id",
+      "village",
+      "committee_id",
+      "committee_name",
+      "da_id",
+      "type",
+      "frequency",
+      "assigned_date",
+      "notes"
+    ],
+    "records": 352,
+    "max_row": 354,
+    "max_column": 10
+  },
+  "Attendance_Entries": {
+    "header_row": 1,
+    "headers": [
+      "entry_id",
+      "plan_id",
+      "da_id",
+      "da_name",
+      "village",
+      "committee_name",
+      "entry_date",
+      "status",
+      "reason",
+      "image_url",
+      "male_count_live",
+      "female_count_live",
+      "total_count_live",
+      "male_total_master",
+      "female_total_master",
+      "new_members_count",
+      "visit_designations",
+      "gps_lat",
+      "gps_long"
+    ],
+    "records": 2,
+    "max_row": 4,
+    "max_column": 19
+  },
+  "Specials_Entries": {
+    "header_row": 1,
+    "headers": [
+      "entry_id",
+      "plan_id",
+      "da_id",
+      "da_name",
+      "village",
+      "committee_name",
+      "special",
+      "entry_date",
+      "status",
+      "reason",
+      "image_url",
+      "participants_count",
+      "scope",
+      "gps_lat",
+      "gps_long"
+    ],
+    "records": 2,
+    "max_row": 4,
+    "max_column": 15
+  },
+  "PMs": {
+    "header_row": 1,
+    "headers": [
+      "pm_id",
+      "pm_name",
+      "access_scope",
+      "email",
+      "mobile"
+    ],
+    "records": 3,
+    "max_row": 5,
+    "max_column": 5
+  },
+  "PCs": {
+    "header_row": 1,
+    "headers": [
+      "pc_id",
+      "pc_name",
+      "cluster",
+      "email",
+      "mobile"
+    ],
+    "records": 3,
+    "max_row": 5,
+    "max_column": 5
+  },
+  "PC_DA_Map": {
+    "header_row": 1,
+    "headers": [
+      "map_id",
+      "pc_id",
+      "da_id",
+      "da_name",
+      "cluster"
+    ],
+    "records": 10,
+    "max_row": 12,
+    "max_column": 5
+  },
+  "RBAC_Permissions": {
+    "header_row": 1,
+    "headers": [
+      "role",
+      "data_scope",
+      "view",
+      "add",
+      "edit",
+      "move",
+      "enable_disable",
+      "delete",
+      "restore_bin"
+    ],
+    "records": 6,
+    "max_row": 8,
+    "max_column": 9
+  },
+  "Recycle_Bin": {
+    "header_row": 1,
+    "headers": [
+      "bin_id",
+      "source_sheet",
+      "record_id",
+      "record_summary",
+      "deleted_by",
+      "deleted_at",
+      "auto_purge_date",
+      "status"
+    ],
+    "records": 2,
+    "max_row": 4,
+    "max_column": 8
+  }
+}

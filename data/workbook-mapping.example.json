@@ -1,0 +1,60 @@
+{
+  "pms": {
+    "sheet": "PMs",
+    "header_row": 1,
+    "columns": {
+      "PM Name": "full_name"
+    }
+  },
+  "pcs": {
+    "sheet": "PCs",
+    "header_row": 1,
+    "columns": {
+      "PC Name": "full_name",
+      "Cluster": "cluster"
+    }
+  },
+  "das": {
+    "sheet": "DAs",
+    "header_row": 1,
+    "columns": {
+      "DA Name": "full_name",
+      "PC Name": "pc_name"
+    }
+  },
+  "villages": {
+    "sheet": "Villages",
+    "header_row": 1,
+    "columns": {
+      "Village Name": "name",
+      "DA Name": "da_name"
+    }
+  },
+  "committees": {
+    "sheet": "Committees",
+    "header_row": 1,
+    "columns": {
+      "Committee Name": "name",
+      "Village Name": "village_name"
+    }
+  },
+  "members": {
+    "sheet": "Committee Members",
+    "header_row": 1,
+    "columns": {
+      "Member Name": "full_name",
+      "Committee Name": "committee_name",
+      "Village Name": "village_name"
+    }
+  },
+  "plans": {
+    "sheet": "Action Plans",
+    "header_row": 1,
+    "columns": {
+      "Action Plan": "title",
+      "Committee Name": "committee_name",
+      "Village Name": "village_name",
+      "Assigned Date": "assigned_date"
+    }
+  }
+}

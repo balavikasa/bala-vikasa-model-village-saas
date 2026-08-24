@@ -1,0 +1,148 @@
+bala_vikasa_model_village_2026_27/
+└── .dockerignore
+└── .env.example
+└── .github/
+  └── workflows/
+    └── ci.yml
+└── .gitignore
+└── Dockerfile
+└── Makefile
+└── README.md
+└── alembic.ini
+└── app/
+  └── __init__.py
+  └── admin_api.py
+  └── api.py
+  └── auth.py
+  └── cli.py
+  └── config.py
+  └── dash_assets/
+    └── dash.css
+  └── dashboards.py
+  └── extensions.py
+  └── models.py
+  └── pages.py
+  └── scoping.py
+  └── services/
+    └── __init__.py
+    └── audit.py
+    └── entries.py
+    └── files.py
+    └── monitoring.py
+    └── workbook.py
+  └── static/
+    └── css/
+      └── app.css
+    └── icons/
+      └── apple-touch-icon.png
+      └── favicon-32.png
+      └── favicon-64.png
+      └── icon-192.png
+      └── icon-512.png
+      └── icon-maskable-192.png
+      └── icon-maskable-512.png
+    └── js/
+      └── admin.js
+      └── app.js
+      └── directory.js
+      └── field.js
+      └── idb-queue.js
+      └── monitoring.js
+      └── overview.js
+      └── pwa.js
+      └── three-overview.js
+    └── manifest.json
+    └── sw.js
+  └── templates/
+    └── admin.html
+    └── base.html
+    └── directory.html
+    └── field.html
+    └── login.html
+    └── monitoring.html
+    └── offline.html
+    └── overview.html
+└── data/
+  └── MV-Master-Data-26-27.xlsx
+  └── workbook-mapping.example.json
+└── docker/
+  └── entrypoint.sh
+└── docker-compose.yml
+└── docs/
+  └── ACCEPTANCE_CRITERIA.md
+  └── API.md
+  └── ARCHITECTURE.md
+  └── DATA_MODEL.md
+  └── IMPLEMENTATION_NOTES.md
+  └── OPERATIONS.md
+  └── RBAC.md
+  └── ROUTE_INVENTORY.md
+  └── SECURITY.md
+  └── VALIDATION_REPORT.md
+  └── WORKBOOK_PROFILE.md
+  └── apt-install.log
+  └── apt-update.log
+  └── cli-commands.json
+  └── dependency-install.log
+  └── early-syntax-check.json
+  └── failed-static-checks.json
+  └── flask-direct-install.log
+  └── flask-package-hits.json
+  └── local-package-versions.json
+  └── missing-dist.txt
+  └── missing-dist2.txt
+  └── missing-dist3.txt
+  └── missing-dist4.txt
+  └── missing-imports.json
+  └── missing-module.txt
+  └── model-schema.json
+  └── python-runtime-availability.json
+  └── reference/
+    └── 01_ENGINEERING_STANDARDS.md
+    └── 02_ARCHITECTURE_SYSTEM_DESIGN.md
+    └── 03_SECURITY_PRIVACY.md
+    └── 04_TESTING_DEBUGGING_CODE_REVIEW.md
+    └── 05_DEVOPS_SRE_CLOUD.md
+    └── 06_API_DATABASE_DATA.md
+    └── 07_AI_ML_GUIDELINES.md
+    └── 08_PROJECT_CONTEXT_TEMPLATE.md
+    └── Model-Village-Project-Documentation.md
+    └── model-village-dashboard-prototype.html
+  └── routes-static.json
+  └── runtime-import-check.json
+  └── runtime-pass.txt
+  └── syntax-check.json
+  └── third-party-imports.json
+  └── uv-install.log
+  └── uv-path.txt
+  └── validate-release.log
+  └── workbook-profile-run.log
+  └── workbook-profile.json
+└── gunicorn.conf.py
+└── instance/
+  └── .gitkeep
+└── migrations/
+  └── env.py
+  └── script.py.mako
+  └── versions/
+    └── 20260821_0001_initial_schema.py
+└── pyproject.toml
+└── requirements-dev.txt
+└── requirements.txt
+└── run.py
+└── scripts/
+  └── bootstrap_admin.py
+  └── inspect_workbook.py
+  └── package_release.py
+  └── validate_release.py
+└── tests/
+  └── conftest.py
+  └── test_migration_contract.py
+  └── test_pwa_contract.py
+  └── test_routes_and_headers.py
+  └── test_schema_contract.py
+  └── test_source_contracts.py
+  └── test_workbook_integration.py
+└── uploads/
+  └── .gitkeep
+└── wsgi.py

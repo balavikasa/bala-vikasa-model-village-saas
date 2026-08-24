@@ -1,0 +1,14 @@
+{
+  "Flask": null,
+  "Flask-SQLAlchemy": null,
+  "Flask-Login": null,
+  "Flask-WTF": null,
+  "alembic": "1.18.4",
+  "dash": null,
+  "plotly": "6.5.2",
+  "openpyxl": "3.1.5",
+  "Pillow": "12.3.0",
+  "PyMySQL": null,
+  "pytest": "9.0.2",
+  "gunicorn": null
+}

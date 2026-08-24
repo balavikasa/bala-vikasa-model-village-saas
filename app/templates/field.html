@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Attendance' if entry_type == 'attendance' else 'Specials' }} · Model Village{% endblock %}
+{% block content %}
+<section class="page-shell field-page" data-entry-type="{{ entry_type }}" data-current-month="{{ local_now.strftime('%Y-%m') }}" data-today="{{ local_now.strftime('%Y-%m-%d') }}">
+  <header class="page-heading split-heading">
+    <div>
+      <p class="eyebrow">DA field mode</p>
+      <h1>{{ 'Attendance' if entry_type == 'attendance' else 'Specials' }}</h1>
+      <p class="lede">Choose your village and committee. Only assigned monthly plans that are ready for field execution are shown.</p>
+      <nav class="segmented-control field-type-switch" aria-label="Field entry type">
+        <a href="{{ url_for('pages.attendance') }}" class="{% if entry_type == 'attendance' %}is-active{% endif %}">Attendance</a>
+        <a href="{{ url_for('pages.specials') }}" class="{% if entry_type == 'specials' %}is-active{% endif %}">Specials</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="field-layout">
+    <form id="entry-form" class="entry-form panel-card" enctype="multipart/form-data" novalidate>
+      <input type="hidden" name="client_submission_id" id="client-submission-id">
+      <input type="hidden" name="latitude" id="latitude">
+      <input type="hidden" name="longitude" id="longitude">
+      {% if entry_type == 'attendance' %}
+      <input type="hidden" name="visit_member_ids" id="visit-member-ids" value="[]">
+      {% endif %}
+
+      <section class="form-section">
+        <div class="form-section-heading"><span>1</span><div><h2>Plan</h2><p>Your assigned villages only.</p></div></div>
+        <div class="form-grid">
+          <label class="field">
+            <span>Village <b>*</b></span>
+            <select name="village_id" id="village-select" required><option value="">Select village</option></select>
+          </label>
+          <label class="field">
+            <span>Committee <b>*</b></span>
+            <select name="committee_id" id="committee-select" required disabled><option value="">Select committee</option></select>
+          </label>
+          <label class="field span-two">
+            <span>{{ 'Attendance' if entry_type == 'attendance' else 'Specials' }} action plan <b>*</b></span>
+            <select name="action_plan_id" id="action-plan-select" required disabled><option value="">Select assigned plan</option></select>
+            <small class="field-help" id="plan-help">Your PC's current monthly assignments appear here.</small>
+          </label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-heading"><span>2</span><div><h2>{{ 'Visit details' if entry_type == 'attendance' else 'Special details' }}</h2><p>Status is calculated from assigned date vs entry date.</p></div></div>
+        <div class="form-grid">
+          <label class="field">
+            <span>{{ 'Visit date' if entry_type == 'attendance' else 'Event date' }} <b>*</b></span>
+            <input type="date" name="{{ 'visit_date' if entry_type == 'attendance' else 'event_date' }}" id="entry-date" required>
+          </label>
+          <div class="field status-field">
+            <span>Calculated status</span>
+            <output id="status-preview" class="badge neutral">Choose plan and date</output>
+          </div>
+
+          {% if entry_type == 'attendance' %}
+          <div class="attendance-count-grid span-two">
+            <label class="attendance-count-card">
+              <span>Male</span>
+              <div><input type="number" name="male_count" id="male-count" min="0" inputmode="numeric" value="0" required><strong>/ <span id="male-master">—</span></strong></div>
+              <small>Live / master</small>
+            </label>
+            <label class="attendance-count-card">
+              <span>Female</span>
+              <div><input type="number" name="female_count" id="female-count" min="0" inputmode="numeric" value="0" required><strong>/ <span id="female-master">—</span></strong></div>
+              <small>Live / master</small>
+            </label>
+            <div class="attendance-count-card total">
+              <span>Total</span>
+              <div><output id="attendance-total">0</output><strong>/ <span id="member-master-total">—</span></strong></div>
+              <small>Live / master</small>
+            </div>
+          </div>
+
+          <label class="field span-two">
+            <span>New Members Count</span>
+            <input type="number" name="new_members_count" id="new-members-count" min="0" inputmode="numeric" value="0">
+          </label>
+
+          <fieldset class="field span-two designation-field">
+            <legend>Visit designations</legend>
+            <p class="field-help">Tap a designation. One matching master-data name is selected directly; multiple names open a picker.</p>
+            <div class="designation-grid" id="designation-grid">
+              {% for designation in ['President', 'Vice President', 'Secretary', 'Member'] %}
+              <button type="button" class="designation-button" data-designation="{{ designation }}" disabled>
+                <span>{{ designation }}</span><small data-designation-count>Choose committee</small>
+              </button>
+              {% endfor %}
+            </div>
+            <div id="selected-visit-members" class="selected-members"></div>
+          </fieldset>
+          {% else %}
+          <label class="field">
+            <span>Participants <b>*</b></span>
+            <input type="number" name="participant_count" min="0" inputmode="numeric" required>
+          </label>
+          <label class="field">
+            <span>Special</span>
+            <input name="title" id="special-title" maxlength="220" readonly>
+            <small class="field-help">Currently follows the selected Committee name.</small>
+          </label>
+          <fieldset class="field span-two">
+            <legend>Scope <b>*</b></legend>
+            <div class="radio-cards">
+              <label><input type="radio" name="scope" value="Under GP" required><span><strong>Under GP</strong><small>Gram Panchayat</small></span></label>
+              <label><input type="radio" name="scope" value="Under VDC" required><span><strong>Under VDC</strong><small>Village Development Committee</small></span></label>
+            </div>
+          </fieldset>
+          {% endif %}
+
+          <label class="field span-two hidden" id="reason-field">
+            <span>Reason <b>*</b></span>
+            <textarea name="reason" id="reason" rows="3" placeholder="Required for Early or Postponed"></textarea>
+          </label>
+
+          <label class="field span-two">
+            <span>{{ 'Remarks' if entry_type == 'attendance' else 'Notes' }}</span>
+            <textarea name="{{ 'remarks' if entry_type == 'attendance' else 'notes' }}" rows="3" placeholder="Optional field notes"></textarea>
+          </label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-heading"><span>3</span><div><h2>Evidence & location</h2><p>Photo is converted to WebP before submission.</p></div></div>
+        <div class="evidence-grid">
+          <label class="camera-card" for="photo-input">
+            <input id="photo-input" name="photo" type="file" accept="image/*" capture="environment">
+            <span class="camera-icon" aria-hidden="true">◎</span>
+            <span><strong>Capture photo</strong><small>Camera or gallery · max 12 MB before compression</small></span>
+          </label>
+          <figure class="photo-preview hidden" id="photo-preview">
+            <img alt="Selected field evidence preview">
+            <button type="button" class="text-button" id="remove-photo">Remove</button>
+          </figure>
+          <div class="location-card">
+            <span class="location-icon" aria-hidden="true">⌖</span>
+            <span><strong id="location-label">Finding location…</strong><small id="location-detail">Village coordinates are fallback.</small></span>
+            <button type="button" class="text-button" id="retry-location">Retry</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="entry-error" class="form-alert hidden" role="alert"></div>
+      <footer class="sticky-form-actions">
+        <span class="draft-state" id="draft-state">Ready</span>
+        <button class="button primary" id="submit-entry" type="submit">{{ 'Submit attendance' if entry_type == 'attendance' else 'Submit special' }} <span aria-hidden="true">→</span></button>
+      </footer>
+    </form>
+
+    <aside class="field-aside">
+      <article class="panel-card field-tip"><p class="eyebrow">Offline ready</p><h2>No signal? Keep working.</h2><p>Entries are queued per signed-in profile and synchronized with a stable submission ID.</p><button class="button ghost wide" type="button" data-sync-trigger>Open sync queue</button></article>
+      <article class="panel-card field-checklist"><h2>Before submitting</h2><ul><li>Village, committee and monthly plan are correct</li><li>Attendance counts are live counts</li><li>Visit designations show the correct master-data names</li><li>Reason appears only for Early/Postponed</li><li>Evidence and location are appropriate</li></ul></article>
+    </aside>
+  </div>
+
+  {% if entry_type == 'attendance' %}
+  <dialog id="member-picker-dialog" class="sheet-dialog member-picker-dialog">
+    <div class="dialog-shell">
+      <header class="dialog-heading"><div><p class="eyebrow">Committee Member Name</p><h2 id="member-picker-title">Members</h2></div><button class="icon-button" type="button" data-close-member-picker aria-label="Close">×</button></header>
+      <label class="field"><span class="sr-only">Search member names</span><input id="member-search" type="search" placeholder="Search names"></label>
+      <div id="member-picker-list" class="member-picker-list"></div>
+      <footer class="dialog-actions"><button class="button ghost" type="button" data-close-member-picker>Cancel</button><button class="button primary" type="button" id="member-picker-done">Done</button></footer>
+    </div>
+  </dialog>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/field.js') }}" defer></script>
+{% endblock %}

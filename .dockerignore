@@ -1,0 +1,32 @@
+# Secrets / local state
+.env
+.env.*
+!.env.example
+instance/
+uploads/
+*.db
+*.sqlite
+*.sqlite3
+
+# Python / tooling
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# VCS / IDE
+.git/
+.github/
+.vscode/
+.idea/
+
+# UAT / local backups / generated artifacts
+uat_evidence/
+_backup*/
+backup*/
+*.log
+*.zip

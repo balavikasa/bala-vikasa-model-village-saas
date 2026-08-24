@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Master Data Transfer · Model Village{% endblock %}
+{% block content %}
+<section class="page-shell master-transfer-page" data-master-transfer>
+  <header class="page-heading split-heading">
+    <div>
+      <p class="eyebrow">Admin · safe bulk maintenance</p>
+      <h1>Master Data Transfer</h1>
+      <p class="lede">Export the current database shape, edit only the unlocked Excel cells, validate changes, preview every add/update/move, then confirm atomically.</p>
+    </div>
+    <a class="button ghost" href="{{ url_for('pages.admin') }}">Back to Admin</a>
+  </header>
+
+  <section class="transfer-grid">
+    <article class="panel-card transfer-card">
+      <div class="panel-heading"><div><p class="eyebrow">Step 1</p><h2>Export</h2></div></div>
+      <label class="field">
+        <span>Master data</span>
+        <select id="master-export-resource">
+          {% for resource in resources %}<option value="{{ resource.key }}">{{ resource.label }}</option>{% endfor %}
+        </select>
+      </label>
+      <p class="muted">System/context columns are grey and locked. Editable cells are white. Missing rows never mean “delete”.</p>
+      <a class="button primary wide" id="master-export-link" href="#">Export Excel</a>
+    </article>
+
+    <article class="panel-card transfer-card">
+      <div class="panel-heading"><div><p class="eyebrow">Step 2</p><h2>Import & validate</h2></div></div>
+      <label class="field">
+        <span>Master data</span>
+        <select id="master-import-resource">
+          {% for resource in resources %}<option value="{{ resource.key }}">{{ resource.label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="file-drop" id="master-file-drop">
+        <input type="file" id="master-import-file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+        <span class="file-drop-icon">⇧</span>
+        <span><strong>Select exported workbook</strong><small id="master-file-label">.xlsx only · preview before save</small></span>
+      </label>
+      <button class="button primary wide" id="master-preview" type="button">Validate file</button>
+      <div class="form-alert hidden" id="master-transfer-error" role="alert"></div>
+    </article>
+  </section>
+
+  <section class="panel-card import-preview hidden" id="master-preview-panel">
+    <div class="panel-heading split-heading">
+      <div><p class="eyebrow">Preview</p><h2 id="master-preview-title">Changes</h2></div>
+      <button class="button primary" type="button" id="master-confirm" disabled>Confirm import</button>
+    </div>
+    <div class="import-summary">
+      <span><strong data-master-count="New">0</strong><small>New</small></span>
+      <span><strong data-master-count="Changed">0</strong><small>Changed</small></span>
+      <span><strong data-master-count="Moved">0</strong><small>Moved</small></span>
+      <span><strong data-master-count="Unchanged">0</strong><small>Unchanged</small></span>
+      <span><strong data-master-count="Error">0</strong><small>Errors</small></span>
+    </div>
+    <div class="responsive-ledger" id="master-preview-list"></div>
+  </section>
+
+  <section class="panel-card transfer-safety">
+    <div><p class="eyebrow">Safety model</p><h2>No silent destructive imports</h2></div>
+    <ul>
+      <li>Imports only add or update rows; omission never deletes data.</li>
+      <li>Assignment changes are previewed as <strong>Moved</strong> and audit-logged as moves.</li>
+      <li>Rows in the Recycle Bin cannot be recreated with the same stable identity.</li>
+      <li>User/password administration stays in the Admin UI, not in bulk spreadsheets.</li>
+      <li>Action Plans use their dedicated monthly Export → Preview → Confirm workflow.</li>
+    </ul>
+  </section>
+</section>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin-transfer.js') }}" defer></script>
+{% endblock %}

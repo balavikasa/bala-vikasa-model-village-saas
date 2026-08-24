@@ -1,0 +1,380 @@
+[
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V01",
+    "name": "Thigul narsapur",
+    "mandal": "Jagdevpur",
+    "district": "Siddipet",
+    "latitude": 17.775894,
+    "longitude": 78.815918
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V02",
+    "name": "B.G.Venkatapur",
+    "mandal": "Jagdevpur",
+    "district": "Siddipet",
+    "latitude": 17.757805,
+    "longitude": 78.802373
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V03",
+    "name": "Thimmapur",
+    "mandal": "Jagdevpur",
+    "district": "Siddipet",
+    "latitude": 17.753601,
+    "longitude": 78.794816
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V04",
+    "name": "Palugugadda",
+    "mandal": "Jagdevpur",
+    "district": "Siddipet",
+    "latitude": 17.754581,
+    "longitude": 78.809032
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V05",
+    "name": "Wattipally",
+    "mandal": "Jagdevpur",
+    "district": "Siddipet",
+    "latitude": 17.767522,
+    "longitude": 78.811651
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V06",
+    "name": "Angadikistapur",
+    "mandal": "Markook",
+    "district": "Siddipet",
+    "latitude": 17.765657,
+    "longitude": 78.715409
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V07",
+    "name": "Ganeshpalli",
+    "mandal": "Markook",
+    "district": "Siddipet",
+    "latitude": 17.759648,
+    "longitude": 78.713933
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V08",
+    "name": "Kondapur",
+    "mandal": "Jagdevpur",
+    "district": "Siddipet",
+    "latitude": 17.780298,
+    "longitude": 78.816616
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V09",
+    "name": "Chebarthy",
+    "mandal": "Markook",
+    "district": "Siddipet",
+    "latitude": 17.747971,
+    "longitude": 78.709126
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V10",
+    "name": "Kothapet",
+    "mandal": "Jagdevpur",
+    "district": "Siddipet",
+    "latitude": 17.759806,
+    "longitude": 78.796014
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V11",
+    "name": "PT Venkatapur",
+    "mandal": "Kukunoorpalli",
+    "district": "Siddipet",
+    "latitude": 17.902751,
+    "longitude": 78.789445
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V12",
+    "name": "Rayavaram",
+    "mandal": "Kukunoorpalli",
+    "district": "Siddipet",
+    "latitude": 17.904885,
+    "longitude": 78.793431
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V13",
+    "name": "Jangamreddypalli",
+    "mandal": "Jagdevpur",
+    "district": "Siddipet",
+    "latitude": 17.768321,
+    "longitude": 78.818837
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V14",
+    "name": "Yellaiguda",
+    "mandal": "Kukunoorpalli",
+    "district": "Siddipet",
+    "latitude": 17.896873,
+    "longitude": 78.779439
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V15",
+    "name": "Itikyala",
+    "mandal": "Jagdevpur",
+    "district": "Siddipet",
+    "latitude": 17.759874,
+    "longitude": 78.808859
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V16",
+    "name": "Gopalpur",
+    "mandal": "Thurkapalli",
+    "district": "Yadadri Bhongir",
+    "latitude": 17.645842,
+    "longitude": 78.822287
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V17",
+    "name": "Thirmalapur",
+    "mandal": "Thurkapalli",
+    "district": "Yadadri Bhongir",
+    "latitude": 17.64546,
+    "longitude": 78.827234
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V18",
+    "name": "Indiranagar",
+    "mandal": "Thurkapalli",
+    "district": "Yadadri Bhongir",
+    "latitude": 17.660672,
+    "longitude": 78.827446
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V19",
+    "name": "Konapur",
+    "mandal": "Thurkapalli",
+    "district": "Yadadri Bhongir",
+    "latitude": 17.647334,
+    "longitude": 78.821654
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V20",
+    "name": "Thumukunta",
+    "mandal": "Bommala Ramaram",
+    "district": "Yadadri Bhongir",
+    "latitude": 17.570294,
+    "longitude": 78.745273
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V21",
+    "name": "Muneerabad",
+    "mandal": "Bommala Ramaram",
+    "district": "Yadadri Bhongir",
+    "latitude": 17.568749,
+    "longitude": 78.7519
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V22",
+    "name": "Solipeta",
+    "mandal": "Bommala Ramaram",
+    "district": "Yadadri Bhongir",
+    "latitude": 17.55843,
+    "longitude": 78.735755
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V23",
+    "name": "Pedda Parvathapuram",
+    "mandal": "Bommala Ramaram",
+    "district": "Yadadri Bhongir",
+    "latitude": 17.554746,
+    "longitude": 78.745836
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V24",
+    "name": "Ghandhinagar",
+    "mandal": "Govindaraopet",
+    "district": "Mulugu",
+    "latitude": 18.184269,
+    "longitude": 80.131662
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V25",
+    "name": "Balajinagar",
+    "mandal": "Govindaraopet",
+    "district": "Mulugu",
+    "latitude": 18.208898,
+    "longitude": 80.123295
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V26",
+    "name": "Somalagadda",
+    "mandal": "Govindaraopet",
+    "district": "Mulugu",
+    "latitude": 18.186782,
+    "longitude": 80.136748
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V27",
+    "name": "Jawaharnagar",
+    "mandal": "Venkatapur",
+    "district": "Mulugu",
+    "latitude": 18.316876,
+    "longitude": 80.542848
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V28",
+    "name": "Bussapur",
+    "mandal": "Govindaraopet",
+    "district": "Mulugu",
+    "latitude": 18.184507,
+    "longitude": 80.136718
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V29",
+    "name": "Muthapur",
+    "mandal": "Govindaraopet",
+    "district": "Mulugu",
+    "latitude": 18.191916,
+    "longitude": 80.123174
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V30",
+    "name": "Laxmipur",
+    "mandal": "Govindaraopet",
+    "district": "Mulugu",
+    "latitude": 18.18997,
+    "longitude": 80.124379
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V31",
+    "name": "Machapur",
+    "mandal": "Govindaraopet",
+    "district": "Mulugu",
+    "latitude": 18.209868,
+    "longitude": 80.142433
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V32",
+    "name": "Lingapur",
+    "mandal": "Venkatapur",
+    "district": "Mulugu",
+    "latitude": 18.301687,
+    "longitude": 80.546909
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V33",
+    "name": "Rangapur",
+    "mandal": "Govindaraopet",
+    "district": "Mulugu",
+    "latitude": 18.199746,
+    "longitude": 80.124842
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V34",
+    "name": "Thirmalagiri",
+    "mandal": "Palakurthi",
+    "district": "Jangaon",
+    "latitude": 17.65598,
+    "longitude": 79.444257
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V35",
+    "name": "Theegaram",
+    "mandal": "Palakurthi",
+    "district": "Jangaon",
+    "latitude": 17.653734,
+    "longitude": 79.424593
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V36",
+    "name": "Kothulabad",
+    "mandal": "Palakurthi",
+    "district": "Jangaon",
+    "latitude": 17.647283,
+    "longitude": 79.443913
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V37",
+    "name": "Ayyangaripalli",
+    "mandal": "Palakurthi",
+    "district": "Jangaon",
+    "latitude": 17.648908,
+    "longitude": 79.434696
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V38",
+    "name": "Raghavapur",
+    "mandal": "Palakurthi",
+    "district": "Jangaon",
+    "latitude": 17.651267,
+    "longitude": 79.440297
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V39",
+    "name": "Mulkalagudem",
+    "mandal": "Inavolu",
+    "district": "Hanmakonda",
+    "latitude": 17.864079,
+    "longitude": 79.560834
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V40",
+    "name": "Sagaram",
+    "mandal": "Zaffarghad",
+    "district": "Jangaon",
+    "latitude": 17.759081,
+    "longitude": 79.498377
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V41",
+    "name": "Ramoji Kummarigudem",
+    "mandal": "Wardhannapet",
+    "district": "Warangal",
+    "latitude": 17.786067,
+    "longitude": 79.597469
+  },
+  {
+    "source": "approved dashboard prototype",
+    "prototype_id": "V42",
+    "name": "Ontimamidipalli",
+    "mandal": "Inavolu",
+    "district": "Hanmakonda",
+    "latitude": 17.878468,
+    "longitude": 79.563648
+  }
+]

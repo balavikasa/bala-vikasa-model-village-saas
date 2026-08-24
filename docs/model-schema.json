@@ -1,0 +1,927 @@
+{
+  "pms": {
+    "columns": [
+      {
+        "name": "full_name",
+        "type": "String(160)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "email",
+        "type": "String(254)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "True",
+        "fk": ""
+      },
+      {
+        "name": "mobile",
+        "type": "String(24)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "True",
+        "fk": ""
+      },
+      {
+        "name": "notes",
+        "type": "Text()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      }
+    ],
+    "constraints": [],
+    "migration": "20260821_0001_initial_schema.py"
+  },
+  "pcs": {
+    "columns": [
+      {
+        "name": "full_name",
+        "type": "String(160)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "cluster",
+        "type": "String(4)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "email",
+        "type": "String(254)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "True",
+        "fk": ""
+      },
+      {
+        "name": "mobile",
+        "type": "String(24)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "True",
+        "fk": ""
+      },
+      {
+        "name": "notes",
+        "type": "Text()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      }
+    ],
+    "constraints": [
+      "CheckConstraint(\"cluster IN ('CSRB','PDTC')\", name='ck_pcs_cluster')"
+    ],
+    "migration": "20260821_0001_initial_schema.py"
+  },
+  "das": {
+    "columns": [
+      {
+        "name": "full_name",
+        "type": "String(160)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "pc_id",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": "pcs.id"
+      },
+      {
+        "name": "email",
+        "type": "String(254)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "True",
+        "fk": ""
+      },
+      {
+        "name": "mobile",
+        "type": "String(24)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "True",
+        "fk": ""
+      },
+      {
+        "name": "notes",
+        "type": "Text()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      }
+    ],
+    "constraints": [],
+    "migration": "20260821_0001_initial_schema.py"
+  },
+  "villages": {
+    "columns": [
+      {
+        "name": "name",
+        "type": "String(160)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "code",
+        "type": "String(40)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "True",
+        "fk": ""
+      },
+      {
+        "name": "gp_name",
+        "type": "String(160)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "district",
+        "type": "String(120)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "mandal",
+        "type": "String(120)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "latitude",
+        "type": "Float()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "longitude",
+        "type": "Float()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "da_id",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": "das.id"
+      },
+      {
+        "name": "notes",
+        "type": "Text()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      }
+    ],
+    "constraints": [
+      "UniqueConstraint('da_id', 'name', name='uq_villages_da_name')"
+    ],
+    "migration": "20260821_0001_initial_schema.py"
+  },
+  "committees": {
+    "columns": [
+      {
+        "name": "name",
+        "type": "String(180)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "committee_type",
+        "type": "String(100)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "village_id",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": "villages.id"
+      },
+      {
+        "name": "notes",
+        "type": "Text()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      }
+    ],
+    "constraints": [
+      "UniqueConstraint('village_id', 'name', name='uq_committees_village_name')"
+    ],
+    "migration": "20260821_0001_initial_schema.py"
+  },
+  "committee_members": {
+    "columns": [
+      {
+        "name": "committee_id",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": "committees.id"
+      },
+      {
+        "name": "full_name",
+        "type": "String(160)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "gender",
+        "type": "String(32)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "designation",
+        "type": "String(80)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "mobile",
+        "type": "String(24)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "notes",
+        "type": "Text()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      }
+    ],
+    "constraints": [],
+    "migration": "20260821_0001_initial_schema.py"
+  },
+  "users": {
+    "columns": [
+      {
+        "name": "email",
+        "type": "String(254)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "True",
+        "fk": ""
+      },
+      {
+        "name": "mobile",
+        "type": "String(24)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "True",
+        "fk": ""
+      },
+      {
+        "name": "password_hash",
+        "type": "String(255)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "role",
+        "type": "String(8)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "display_name",
+        "type": "String(160)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "pm_id",
+        "type": "Integer()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "True",
+        "fk": "pms.id"
+      },
+      {
+        "name": "pc_id",
+        "type": "Integer()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "True",
+        "fk": "pcs.id"
+      },
+      {
+        "name": "da_id",
+        "type": "Integer()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "True",
+        "fk": "das.id"
+      },
+      {
+        "name": "last_login_at",
+        "type": "DateTime(timezone=True)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "password_changed_at",
+        "type": "DateTime(timezone=True)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "failed_login_count",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "locked_until",
+        "type": "DateTime(timezone=True)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      }
+    ],
+    "constraints": [
+      "CheckConstraint(\"(role = 'admin' AND pm_id IS NULL AND pc_id IS NULL AND da_id IS NULL) OR (role = 'pm' AND pm_id IS NOT NULL AND pc_id IS NULL AND da_id IS NULL) OR (role = 'pc' AND pm_id IS NULL AND pc_id IS NOT NULL AND da_id IS NULL) OR (role = 'da' AND pm_id IS NULL AND pc_id IS NULL AND da_id IS NOT NULL)\", name='ck_users_role_profile')",
+      "CheckConstraint(\"role IN ('admin','pm','pc','da')\", name='ck_users_role')"
+    ],
+    "migration": "20260821_0001_initial_schema.py"
+  },
+  "action_plans": {
+    "columns": [
+      {
+        "name": "committee_id",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": "committees.id"
+      },
+      {
+        "name": "title",
+        "type": "String(220)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "description",
+        "type": "Text()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "assigned_date",
+        "type": "Date()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "assigned_by_user_id",
+        "type": "Integer()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": "users.id"
+      },
+      {
+        "name": "notes",
+        "type": "Text()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      }
+    ],
+    "constraints": [],
+    "migration": "20260821_0001_initial_schema.py"
+  },
+  "attendance_entries": {
+    "columns": [
+      {
+        "name": "village_id",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": "villages.id"
+      },
+      {
+        "name": "committee_id",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": "committees.id"
+      },
+      {
+        "name": "action_plan_id",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": "action_plans.id"
+      },
+      {
+        "name": "visit_date",
+        "type": "Date()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "male_count",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "female_count",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "total_count",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "visit_designations",
+        "type": "JSON()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "status",
+        "type": "String(16)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "reason",
+        "type": "Text()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "remarks",
+        "type": "Text()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "photo_path",
+        "type": "String(500)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "latitude",
+        "type": "Float()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "longitude",
+        "type": "Float()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "geolocation_source",
+        "type": "String(32)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "submitted_by_user_id",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": "users.id"
+      },
+      {
+        "name": "client_submission_id",
+        "type": "String(80)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "submitted_at",
+        "type": "DateTime(timezone=True)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      }
+    ],
+    "constraints": [
+      "UniqueConstraint('action_plan_id', name='uq_attendance_action_plan')",
+      "UniqueConstraint('client_submission_id', name='uq_attendance_client_submission')",
+      "CheckConstraint('male_count >= 0 AND female_count >= 0', name='ck_attendance_nonnegative')",
+      "CheckConstraint('total_count = male_count + female_count', name='ck_attendance_total')",
+      "CheckConstraint(\"status IN ('Early','On-time','Postponed')\", name='ck_attendance_status')"
+    ],
+    "migration": "20260821_0001_initial_schema.py"
+  },
+  "specials_entries": {
+    "columns": [
+      {
+        "name": "village_id",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": "villages.id"
+      },
+      {
+        "name": "committee_id",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": "committees.id"
+      },
+      {
+        "name": "event_date",
+        "type": "Date()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "title",
+        "type": "String(220)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "participant_count",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "scope",
+        "type": "String(16)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "notes",
+        "type": "Text()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "photo_path",
+        "type": "String(500)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "latitude",
+        "type": "Float()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "longitude",
+        "type": "Float()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "geolocation_source",
+        "type": "String(32)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "submitted_by_user_id",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": "users.id"
+      },
+      {
+        "name": "client_submission_id",
+        "type": "String(80)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "submitted_at",
+        "type": "DateTime(timezone=True)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      }
+    ],
+    "constraints": [
+      "UniqueConstraint('client_submission_id', name='uq_specials_client_submission')",
+      "CheckConstraint('participant_count >= 0', name='ck_specials_nonnegative')",
+      "CheckConstraint(\"scope IN ('Under GP','Under VDC')\", name='ck_specials_scope')"
+    ],
+    "migration": "20260821_0001_initial_schema.py"
+  },
+  "audit_logs": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "Integer()",
+        "nullable": "True",
+        "pk": "True",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "actor_user_id",
+        "type": "Integer()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": "users.id"
+      },
+      {
+        "name": "action",
+        "type": "String(16)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "entity_type",
+        "type": "String(80)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "entity_id",
+        "type": "Integer()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "before_json",
+        "type": "JSON()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "after_json",
+        "type": "JSON()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "request_id",
+        "type": "String(80)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "ip_address",
+        "type": "String(64)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "user_agent",
+        "type": "String(300)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DateTime(timezone=True)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      }
+    ],
+    "constraints": [],
+    "migration": "20260821_0001_initial_schema.py"
+  },
+  "recycle_bin": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "Integer()",
+        "nullable": "True",
+        "pk": "True",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "entity_type",
+        "type": "String(80)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "entity_id",
+        "type": "Integer()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "display_name",
+        "type": "String(240)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "snapshot_json",
+        "type": "JSON()",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "deleted_by_user_id",
+        "type": "Integer()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": "users.id"
+      },
+      {
+        "name": "deleted_at",
+        "type": "DateTime(timezone=True)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "purge_after",
+        "type": "DateTime(timezone=True)",
+        "nullable": "False",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      },
+      {
+        "name": "restored_by_user_id",
+        "type": "Integer()",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": "users.id"
+      },
+      {
+        "name": "restored_at",
+        "type": "DateTime(timezone=True)",
+        "nullable": "True",
+        "pk": "False",
+        "unique": "False",
+        "fk": ""
+      }
+    ],
+    "constraints": [
+      "UniqueConstraint('entity_type', 'entity_id', 'restored_at', name='uq_recycle_entity_open')"
+    ],
+    "migration": "20260821_0001_initial_schema.py"
+  }
+}

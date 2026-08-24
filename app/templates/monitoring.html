@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Monitoring · Model Village{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+{% block content %}
+<section class="page-shell monitoring-page">
+  <header class="page-heading split-heading">
+    <div><p class="eyebrow">Program monitoring</p><h1>Cluster delivery pulse</h1><p class="lede">Role-scoped field evidence, deadlines and committee participation.</p></div>
+    <div class="monitor-actions">
+      <span class="status-chip" id="monitor-updated">Loading…</span>
+      <a class="button primary" href="/dash/" target="_blank" rel="noopener">Open full analytics</a>
+    </div>
+  </header>
+
+  <section class="kpi-grid compact-kpis" id="monitor-kpis">
+    <article class="metric-card"><span>Villages</span><strong data-monitor-kpi="villages">—</strong></article>
+    <article class="metric-card"><span>Action plans</span><strong data-monitor-kpi="action_plans">—</strong></article>
+    <article class="metric-card"><span>Failures</span><strong data-monitor-status="Failure">—</strong></article>
+    <article class="metric-card"><span>On-time</span><strong data-monitor-status="On-time">—</strong></article>
+  </section>
+
+  <section class="monitor-grid">
+    <article class="panel-card map-panel">
+      <div class="panel-heading">
+        <div><p class="eyebrow">Village evidence map</p><h2>Last visit & current risk</h2></div>
+        <div class="map-legend"><span><i class="legend-dot success"></i>On track</span><span><i class="legend-dot warning"></i>Attention</span><span><i class="legend-dot danger"></i>Failure</span></div>
+      </div>
+      <div id="village-map" class="village-map" aria-label="Map of visible villages"></div>
+      <div class="map-no-coordinates hidden" id="map-no-coordinates">No village coordinates are available in this scope.</div>
+    </article>
+
+    <article class="panel-card status-summary-panel">
+      <div class="panel-heading"><div><p class="eyebrow">Deadline status</p><h2>Action-plan breakdown</h2></div></div>
+      <div id="monitor-status-list" class="status-breakdown"></div>
+    </article>
+  </section>
+
+  <article class="panel-card dash-embed-card">
+    <div class="panel-heading">
+      <div><p class="eyebrow">Plotly Dash</p><h2>Interactive analytics</h2></div>
+      <span class="muted">Refreshes every minute</span>
+    </div>
+    <iframe title="Role-scoped Plotly analytics" src="/dash/" loading="lazy"></iframe>
+  </article>
+</section>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+<script src="{{ url_for('static', filename='js/monitoring.js') }}" defer></script>
+{% endblock %}

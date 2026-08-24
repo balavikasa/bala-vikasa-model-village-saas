@@ -1,0 +1,18 @@
+[
+  {
+    "function": "seed_admin",
+    "command": "seed-admin"
+  },
+  {
+    "function": "import_master_data",
+    "command": "import-master-data"
+  },
+  {
+    "function": "master_data_counts",
+    "command": "master-data-counts"
+  },
+  {
+    "function": "purge_recycle_bin",
+    "command": "purge-recycle-bin"
+  }
+]

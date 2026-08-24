@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Village Map · Model Village{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+{% block content %}
+<section class="page-shell map-page">
+  <header class="page-heading split-heading">
+    <div>
+      <p class="eyebrow">Role-scoped geography</p>
+      <h1>Village Map</h1>
+      <p class="lede">Only villages inside your access scope are shown. Switch to List on small screens when that is easier in the field.</p>
+    </div>
+    <div class="segmented-control map-mode" role="group" aria-label="Map display">
+      <button class="is-active" type="button" data-map-mode="map">Map</button>
+      <button type="button" data-map-mode="list">List</button>
+    </div>
+  </header>
+
+  <section class="panel-card map-workspace" data-map-panel>
+    <div class="panel-heading map-toolbar">
+      <div>
+        <p class="eyebrow">Current month</p>
+        <h2>Visit risk & latest evidence</h2>
+      </div>
+      <div class="map-legend">
+        <span><i class="legend-dot success"></i>On track</span>
+        <span><i class="legend-dot warning"></i>Attention</span>
+        <span><i class="legend-dot danger"></i>Failure</span>
+      </div>
+    </div>
+    <div id="role-village-map" class="village-map large-map" aria-label="Map of visible villages"></div>
+    <div id="role-map-empty" class="empty-state hidden"><h2>No mapped villages</h2><p>No coordinates are available in your current scope.</p></div>
+  </section>
+
+  <section class="map-list hidden" data-list-panel aria-live="polite">
+    <label class="search-field"><span aria-hidden="true">⌕</span><input id="map-search" type="search" placeholder="Search village, DA or cluster"></label>
+    <div id="map-list-items" class="mobile-ledger"></div>
+  </section>
+</section>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+<script src="{{ url_for('static', filename='js/map.js') }}" defer></script>
+{% endblock %}

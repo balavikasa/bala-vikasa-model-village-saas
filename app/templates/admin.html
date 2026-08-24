@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Administration · Model Village{% endblock %}
+{% block content %}
+<section class="page-shell admin-page" data-admin-root>
+  <header class="page-heading split-heading">
+    <div>
+      <p class="eyebrow">System administration</p>
+      <h1>Master Data & Administration</h1>
+      <p class="lede">Manage master data, assignments, access, the recycle bin and the immutable audit trail.</p>
+    </div>
+    <div class="admin-heading-actions">
+      <a class="button ghost" href="{{ url_for('admin_transfer.page') }}">Export / Import Master Data</a>
+      <div class="status-chip" id="admin-status" role="status" aria-live="polite">Ready</div>
+    </div>
+  </header>
+
+  <nav class="segmented-control admin-tabs" aria-label="Administration sections">
+    <button type="button" class="is-active" data-admin-tab="records" aria-pressed="true">Master Data</button>
+    <button type="button" data-admin-tab="recycle" aria-pressed="false">Recycle bin</button>
+    <button type="button" data-admin-tab="audit" aria-pressed="false">Audit log</button>
+  </nav>
+
+  <section class="admin-panel" id="master-data" data-admin-panel="records">
+    <div class="toolbar admin-toolbar">
+      <label class="field compact-field">
+        <span>Master data type</span>
+        <select id="admin-resource" aria-label="Resource"></select>
+      </label>
+      <label class="field compact-field grow">
+        <span>Search</span>
+        <input id="admin-search" type="search" autocomplete="off" placeholder="Search visible records">
+      </label>
+      <button id="admin-refresh" class="button ghost" type="button">Refresh</button>
+      <button id="admin-add" class="button primary" type="button">Add record</button>
+    </div>
+
+    <div class="table-shell" tabindex="0" aria-label="Administrative records">
+      <table class="data-table" id="admin-table">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="empty-state hidden" id="admin-empty">
+      <h2>No matching records</h2>
+      <p>Change the search or add a new record.</p>
+    </div>
+    <footer class="pagination">
+      <button class="button ghost" id="admin-prev" type="button">Previous</button>
+      <span id="admin-page-label">Page 1</span>
+      <button class="button ghost" id="admin-next" type="button">Next</button>
+    </footer>
+  </section>
+
+  <section class="admin-panel hidden" id="recycle-bin" data-admin-panel="recycle">
+    <div class="toolbar">
+      <div>
+        <h2>Recycle bin</h2>
+        <p>Soft-deleted records are retained for ten days before scheduled purge.</p>
+      </div>
+      <button id="recycle-refresh" class="button ghost" type="button">Refresh</button>
+    </div>
+    <div class="card-grid" id="recycle-list"></div>
+    <div class="empty-state hidden" id="recycle-empty">
+      <h2>The bin is empty</h2>
+      <p>No records are awaiting restore or purge.</p>
+    </div>
+  </section>
+
+  <section class="admin-panel hidden" id="audit-log" data-admin-panel="audit">
+    <div class="toolbar admin-toolbar">
+      <label class="field compact-field grow">
+        <span>Filter</span>
+        <input id="audit-search" type="search" autocomplete="off" placeholder="Actor, action, entity or record ID">
+      </label>
+      <button id="audit-refresh" class="button ghost" type="button">Refresh</button>
+    </div>
+    <div class="table-shell" tabindex="0" aria-label="Audit events">
+      <table class="data-table" id="audit-table">
+        <thead>
+          <tr><th>When</th><th>Actor</th><th>Action</th><th>Entity</th><th>Record</th><th>Changes</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="empty-state hidden" id="audit-empty">
+      <h2>No audit events</h2>
+      <p>No events match the current filter.</p>
+    </div>
+  </section>
+</section>
+
+<dialog id="admin-dialog" class="admin-dialog">
+  <form method="dialog" id="admin-form" novalidate>
+    <header class="dialog-heading">
+      <div>
+        <p class="eyebrow" id="admin-dialog-eyebrow">Record</p>
+        <h2 id="admin-dialog-title">Add record</h2>
+      </div>
+      <button class="icon-button" value="cancel" aria-label="Close dialog" type="submit">×</button>
+    </header>
+    <div id="admin-form-error" class="form-alert hidden" role="alert"></div>
+    <div id="admin-fields" class="form-grid"></div>
+    <label class="check-row hidden" id="move-ack-row">
+      <input type="checkbox" id="move-ack">
+      <span>I understand this assignment change can reclassify inherited cluster visibility.</span>
+    </label>
+    <footer class="dialog-actions">
+      <button class="button ghost" value="cancel" type="submit">Cancel</button>
+      <button class="button primary" id="admin-save" value="default" type="submit">Save</button>
+    </footer>
+  </form>
+</dialog>
+
+<dialog id="confirm-dialog" class="confirm-dialog">
+  <form method="dialog">
+    <h2 id="confirm-title">Confirm action</h2>
+    <p id="confirm-message"></p>
+    <footer class="dialog-actions">
+      <button class="button ghost" value="cancel">Cancel</button>
+      <button class="button danger" value="confirm" id="confirm-action">Confirm</button>
+    </footer>
+  </form>
+</dialog>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>
+{% endblock %}

@@ -1,0 +1,292 @@
+[
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/",
+    "function": "home",
+    "file": "app/pages.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/admin",
+    "function": "admin",
+    "file": "app/pages.py"
+  },
+  {
+    "methods": [
+      "POST"
+    ],
+    "route": "/api/v1/action-plans",
+    "function": "create_action_plan_route",
+    "file": "app/api.py"
+  },
+  {
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "route": "/api/v1/admin/<slug>",
+    "function": "collection",
+    "file": "app/admin_api.py"
+  },
+  {
+    "methods": [
+      "DELETE"
+    ],
+    "route": "/api/v1/admin/<slug>/<int:record_id>",
+    "function": "delete",
+    "file": "app/admin_api.py"
+  },
+  {
+    "methods": [
+      "PATCH"
+    ],
+    "route": "/api/v1/admin/<slug>/<int:record_id>",
+    "function": "update",
+    "file": "app/admin_api.py"
+  },
+  {
+    "methods": [
+      "POST"
+    ],
+    "route": "/api/v1/admin/<slug>/<int:record_id>/toggle",
+    "function": "toggle",
+    "file": "app/admin_api.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/api/v1/admin/audit-logs/items",
+    "function": "audit_logs",
+    "file": "app/admin_api.py"
+  },
+  {
+    "methods": [
+      "POST"
+    ],
+    "route": "/api/v1/admin/recycle-bin/<int:item_id>/restore",
+    "function": "restore",
+    "file": "app/admin_api.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/api/v1/admin/recycle-bin/items",
+    "function": "recycle_items",
+    "file": "app/admin_api.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/api/v1/admin/resources",
+    "function": "resources",
+    "file": "app/admin_api.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/api/v1/attendance",
+    "function": "list_attendance",
+    "file": "app/api.py"
+  },
+  {
+    "methods": [
+      "POST"
+    ],
+    "route": "/api/v1/attendance",
+    "function": "submit_attendance",
+    "file": "app/api.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/api/v1/auth/csrf",
+    "function": "csrf_token",
+    "file": "app/api.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/api/v1/committees/<int:committee_id>/action-plans",
+    "function": "committee_action_plans",
+    "file": "app/api.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/api/v1/directory",
+    "function": "directory_data",
+    "file": "app/api.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/api/v1/me",
+    "function": "me",
+    "file": "app/api.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/api/v1/monitoring/map",
+    "function": "monitoring_map",
+    "file": "app/api.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/api/v1/monitoring/series",
+    "function": "monitoring_series_route",
+    "file": "app/api.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/api/v1/monitoring/summary",
+    "function": "monitoring_summary",
+    "file": "app/api.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/api/v1/photos/<entry_type>/<int:entry_id>",
+    "function": "photo",
+    "file": "app/api.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/api/v1/specials",
+    "function": "list_specials",
+    "file": "app/api.py"
+  },
+  {
+    "methods": [
+      "POST"
+    ],
+    "route": "/api/v1/specials",
+    "function": "submit_specials",
+    "file": "app/api.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/api/v1/villages",
+    "function": "villages",
+    "file": "app/api.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/api/v1/villages/<int:village_id>/committees",
+    "function": "village_committees",
+    "file": "app/api.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/dash/",
+    "function": "dash_missing",
+    "file": "app/dashboards.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/directory",
+    "function": "directory",
+    "file": "app/pages.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/field/attendance",
+    "function": "attendance",
+    "file": "app/pages.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/field/specials",
+    "function": "specials",
+    "file": "app/pages.py"
+  },
+  {
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "route": "/login",
+    "function": "login",
+    "file": "app/auth.py"
+  },
+  {
+    "methods": [
+      "POST"
+    ],
+    "route": "/logout",
+    "function": "logout",
+    "file": "app/auth.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/manifest.json",
+    "function": "manifest",
+    "file": "app/pages.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/monitoring",
+    "function": "monitoring",
+    "file": "app/pages.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/offline",
+    "function": "offline",
+    "file": "app/pages.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/overview",
+    "function": "overview",
+    "file": "app/pages.py"
+  },
+  {
+    "methods": [
+      "GET"
+    ],
+    "route": "/sw.js",
+    "function": "service_worker",
+    "file": "app/pages.py"
+  }
+]

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Sign in · Model Village{% endblock %}
+{% block content %}
+<section class="login-shell">
+  <article class="login-story" aria-label="Program introduction">
+    <div class="login-story-content">
+      <span class="program-chip">Sopar-funded · 2026–27</span>
+      <h1>Field intelligence for stronger model villages.</h1>
+      <p>One secure, offline-ready workspace for 42 villages across CSRB and PDTC.</p>
+      <div class="story-stats">
+        <span><strong>42</strong> villages</span>
+        <span><strong>2</strong> clusters</span>
+        <span><strong>Offline</strong> field mode</span>
+      </div>
+    </div>
+    <div class="village-illustration" aria-hidden="true">
+      <span class="sun"></span><span class="hill hill-one"></span><span class="hill hill-two"></span>
+      <span class="home home-one"></span><span class="home home-two"></span><span class="tree"></span>
+    </div>
+  </article>
+  <article class="login-card">
+    <a class="brand-lockup login-brand" href="{{ url_for('auth.login') }}">
+      <span class="brand-mark" aria-hidden="true">BV</span>
+      <span><strong>Bala Vikasa</strong><small>Model Village Program</small></span>
+    </a>
+    <p class="eyebrow">Secure program access</p>
+    <h2>Welcome back</h2>
+    <p class="muted">Use your registered email address or mobile number.</p>
+    <form method="post" class="stack-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="next" value="{{ next_url }}">
+      <label class="field">
+        <span>Email or mobile</span>
+        <input name="identifier" autocomplete="username" inputmode="email" required autofocus>
+      </label>
+      <label class="field">
+        <span>Password</span>
+        <span class="password-field">
+          <input name="password" type="password" autocomplete="current-password" minlength="8" required>
+          <button type="button" class="text-button" data-toggle-password>Show</button>
+        </span>
+      </label>
+      <label class="check-row">
+        <input type="checkbox" name="remember">
+        <span>Keep me signed in on this device</span>
+      </label>
+      <button class="button primary wide" type="submit">Sign in</button>
+    </form>
+    <p class="login-help">Lost access? Contact the program administrator. Never share field credentials.</p>
+  </article>
+</section>
+{% endblock %}

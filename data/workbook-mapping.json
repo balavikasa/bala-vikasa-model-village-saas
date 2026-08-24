@@ -1,0 +1,80 @@
+{
+  "pms": {
+    "sheet": "PMs",
+    "header_row": 1,
+    "columns": {
+      "PM_ID": "pm_code",
+      "PM_Name": "full_name",
+      "Email": "email",
+      "Mobile": "mobile"
+    }
+  },
+  "pcs": {
+    "sheet": "PCs",
+    "header_row": 1,
+    "columns": {
+      "PC_ID": "pc_code",
+      "PC_Name": "full_name",
+      "Cluster": "cluster",
+      "Email": "email",
+      "Mobile": "mobile"
+    }
+  },
+  "das": {
+    "sheet": "DAs",
+    "header_row": 1,
+    "columns": {
+      "DA_ID": "da_code",
+      "DA_Name": "full_name",
+      "PC_ID": "pc_code",
+      "Cluster": "cluster",
+      "Email": "email",
+      "Mobile": "mobile"
+    }
+  },
+  "villages": {
+    "sheet": "Villages",
+    "header_row": 1,
+    "columns": {
+      "Village_ID": "code",
+      "Village": "name",
+      "Mandal": "mandal",
+      "District": "district",
+      "Cluster": "cluster",
+      "DA_ID": "da_code",
+      "DA_Name": "da_name"
+    }
+  },
+  "committees": {
+    "sheet": "Committees",
+    "header_row": 1,
+    "columns": {
+      "Committee_Name": "name",
+      "Village": "village_name"
+    }
+  },
+  "members": {
+    "sheet": "Committee_Members",
+    "header_row": 1,
+    "columns": {
+      "Name": "full_name",
+      "Committee_Name": "committee_name",
+      "Village": "village_name",
+      "Gender": "gender",
+      "Designation": "designation",
+      "Designation_Raw": "designation_raw",
+      "Mobile": "mobile",
+      "Mobile_Valid": "mobile_valid"
+    }
+  },
+  "plans": {
+    "sheet": "Action_Plans",
+    "header_row": 1,
+    "columns": {
+      "Plan_ID": "plan_code",
+      "Committee_Name": "committee_name",
+      "Village": "village_name",
+      "Notes": "notes"
+    }
+  }
+}

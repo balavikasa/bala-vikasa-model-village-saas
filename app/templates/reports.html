@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Reports · Model Village{% endblock %}
+{% block content %}
+<section class="page-shell reports-page" data-selected-month="{{ selected_month }}" data-current-month="{{ local_now.strftime('%Y-%m') }}">
+  <header class="page-heading split-heading">
+    <div>
+      <p class="eyebrow">Field reports</p>
+      <h1>Reports</h1>
+      <p class="lede">A clean operational list. Open <strong>View</strong> for the complete report, evidence photo, map, GPS and committee-member detail.</p>
+    </div>
+    <div class="command-actions report-heading-actions">
+      <a id="report-export" class="button ghost" href="{{ url_for('reports.export_reports', month=selected_month) }}">Export Excel</a>
+      {% if current_user.role.value == 'admin' %}
+      <a id="report-admin-recycle" class="button ghost" href="{{ url_for('pages.admin', tab='recycle') }}">Recycle Bin</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <section class="month-command bento-panel">
+    <div class="month-switcher">
+      <button class="icon-button month-step" type="button" data-month-step="-1" aria-label="Previous month">←</button>
+      <label class="month-picker"><span>Report month</span><input id="report-month" type="month" value="{{ selected_month }}"></label>
+      <button class="icon-button month-step" type="button" data-month-step="1" aria-label="Next month">→</button>
+      <button class="button ghost" type="button" data-current-month>This month</button>
+    </div>
+  </section>
+
+  <div class="metric-bento reports-metrics">
+    <article class="metric-card"><small>Total</small><strong data-report-metric="total">—</strong></article>
+    <article class="metric-card"><small>Early</small><strong data-report-metric="Early">—</strong></article>
+    <article class="metric-card"><small>On-time</small><strong data-report-metric="On-time">—</strong></article>
+    <article class="metric-card"><small>Postponed</small><strong data-report-metric="Postponed">—</strong></article>
+    <article class="metric-card"><small>Failure</small><strong data-report-metric="Failure">—</strong></article>
+    <article class="metric-card"><small>Scheduled</small><strong data-report-metric="Scheduled">—</strong></article>
+  </div>
+
+  <section class="panel-card">
+    <div class="panel-heading filter-heading">
+      <div><p class="eyebrow">Monthly ledger</p><h2 id="report-month-label">{{ selected_month_label }}</h2></div>
+      <div class="compact-filters">
+        <select id="report-type"><option value="">Attendance + Specials</option><option>Attendance</option><option>Specials</option></select>
+        <select id="report-status"><option value="">All statuses</option><option>Early</option><option>On-time</option><option>Postponed</option><option>Failure</option><option>Scheduled</option><option>Due today</option></select>
+        <input id="report-search" type="search" placeholder="Search reports">
+      </div>
+    </div>
+    <div id="report-list" class="responsive-ledger"></div>
+  </section>
+</section>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/reports.js') }}" defer></script>
+{% endblock %}

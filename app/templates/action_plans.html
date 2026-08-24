@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Action Plans · Model Village{% endblock %}
+{% block content %}
+<section class="page-shell planning-page" data-selected-month="{{ selected_month }}" data-current-month="{{ local_now.strftime('%Y-%m') }}" data-server-now="{{ local_now.isoformat() }}" data-app-timezone="{{ config['APP_TIMEZONE'] }}" data-can-manage="{{ '1' if can_manage else '0' }}">
+  <header class="page-heading split-heading">
+    <div>
+      <p class="eyebrow">Monthly field planning</p>
+      <h1>Action Plans</h1>
+      <p class="lede">Plan, monitor and preserve each month independently. The current month opens automatically.</p>
+    </div>
+    <div class="today-stamp" data-today-stamp aria-live="polite"></div>
+  </header>
+
+  <section class="month-command bento-panel" aria-label="Month controls">
+    <div class="month-switcher">
+      <button class="icon-button month-step" type="button" data-month-step="-1" aria-label="Previous month">←</button>
+      <label class="month-picker">
+        <span>Planning month</span>
+        <input type="month" id="planning-month" value="{{ selected_month }}">
+      </label>
+      <button class="icon-button month-step" type="button" data-month-step="1" aria-label="Next month">→</button>
+      <button class="button ghost" type="button" data-current-month>This month</button>
+    </div>
+    <div class="command-actions">
+      {% if can_transfer %}
+      <a class="button ghost" data-transfer-link href="{{ url_for('planning.action_plan_transfer_page', month=selected_month) }}">Export / Import</a>
+      {% endif %}
+      {% if can_manage %}
+      <button class="button primary" type="button" id="prepare-next-month">Prepare next month</button>
+      {% endif %}
+    </div>
+  </section>
+
+  <div class="metric-bento planning-metrics" id="planning-metrics" aria-live="polite">
+    <article class="metric-card"><small>Total</small><strong data-metric="total">—</strong></article>
+    <article class="metric-card"><small>Draft</small><strong data-metric="draft">—</strong></article>
+    <article class="metric-card"><small>Scheduled</small><strong data-metric="scheduled">—</strong></article>
+    <article class="metric-card"><small>Due today</small><strong data-metric="due_today">—</strong></article>
+    <article class="metric-card"><small>Early</small><strong data-metric="early">—</strong></article>
+    <article class="metric-card"><small>On-time</small><strong data-metric="on_time">—</strong></article>
+    <article class="metric-card"><small>Postponed</small><strong data-metric="postponed">—</strong></article>
+    <article class="metric-card"><small>Failure</small><strong data-metric="failure">—</strong></article>
+  </div>
+
+  <section class="panel-card plan-workspace">
+    <div class="panel-heading filter-heading">
+      <div>
+        <p class="eyebrow">Monthly ledger</p>
+        <h2 id="month-label">{{ selected_month_label }}</h2>
+      </div>
+      <div class="compact-filters">
+        <label class="compact-field"><span class="sr-only">Search</span><input id="plan-search" type="search" placeholder="Search DA, village, committee"></label>
+        <label class="compact-field"><span class="sr-only">Status</span>
+          <select id="plan-status-filter">
+            <option value="">All statuses</option>
+            <option>Draft</option><option>Scheduled</option><option>Due today</option>
+            <option>Early</option><option>On-time</option><option>Postponed</option><option>Failure</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    <div id="plan-list" class="responsive-ledger" aria-live="polite">
+      <div class="skeleton-card">Loading action plans…</div>
+    </div>
+  </section>
+
+  {% if can_manage %}
+  <dialog id="plan-edit-dialog" class="sheet-dialog">
+    <form method="dialog" class="dialog-shell" id="plan-edit-form">
+      <header class="dialog-heading">
+        <div><p class="eyebrow">Single plan edit</p><h2 id="plan-edit-title">Action plan</h2></div>
+        <button type="button" class="icon-button" data-close-plan aria-label="Close">×</button>
+      </header>
+      <input type="hidden" id="plan-edit-id">
+      <label class="field"><span>Type</span>
+        <select id="plan-edit-type">
+          <option value="">Draft / not assigned</option>
+          <option value="Attendance">Attendance</option>
+          <option value="Specials">Specials</option>
+        </select>
+      </label>
+      <label class="field"><span>Assigned date</span><input id="plan-edit-date" type="date"></label>
+      <label class="field"><span>Notes</span><textarea id="plan-edit-notes" rows="3"></textarea></label>
+      <div class="form-alert hidden" id="plan-edit-error" role="alert"></div>
+      <footer class="dialog-actions">
+        <button type="button" class="button ghost" data-close-plan>Cancel</button>
+        <button type="submit" class="button primary">Save plan</button>
+      </footer>
+    </form>
+  </dialog>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/action-plans.js') }}" defer></script>
+{% endblock %}
