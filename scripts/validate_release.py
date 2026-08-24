@@ -710,4 +710,3 @@ def write_report(
         "\n".join(report_lines),
         encoding="utf-8",
     )
-
