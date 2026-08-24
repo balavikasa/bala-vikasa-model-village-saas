@@ -672,23 +672,42 @@ def write_report(
         )
     }
 
-    report = f"""# Validation report
+    report_lines = [
+        "# Validation report",
+        "",
+        f"Generated: `{timestamp}`",
+        "",
+        (
+            "This report distinguishes executed checks from checks skipped "
+            "because the build sandbox lacks runtime dependencies. "
+            "A skip is not represented as a pass."
+        ),
+        "",
+    ]
 
-Generated: `{timestamp}`
+    report_lines.extend(rows)
 
-This report distinguishes executed checks from checks skipped because the build sandbox lacks
-runtime dependencies. A skip is not represented as a pass.
+    report_lines.extend(
+        [
+            "",
+            "## Summary",
+            "",
+            f"- PASS: {summary['PASS']}",
+            f"- FAIL: {summary['FAIL']}",
+            f"- SKIP: {summary['SKIP']}",
+            "",
+            "## Reproduce the full runtime gate",
+            "",
+            "```bash",
+            "python -m pip install -r requirements-dev.txt",
+            "python scripts/validate_release.py --require-runtime",
+            "```",
+            "",
+        ]
+    )
 
-{os.linesep.join(rows)}
+    REPORT_PATH.write_text(
+        "\n".join(report_lines),
+        encoding="utf-8",
+    )
 
-## Summary
-
-- PASS: {summary['PASS']}
-- FAIL: {summary['FAIL']}
-- SKIP: {summary['SKIP']}
-
-## Reproduce the full runtime gate
-
-```bash
-python -m pip install -r requirements-dev.txt
-python scripts/validate_release.py --require-runtime
