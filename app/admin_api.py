@@ -627,8 +627,8 @@ def _create(spec: ResourceSpec, data: dict[str, Any]):
     _apply(record, spec, data, is_create=True)
     if isinstance(record, User):
         password = str(data.get("password") or "")
-        if len(password) < 10:
-            raise EntryValidationError("New user passwords must contain at least 10 characters.")
+        if len(password) < 6:
+            raise EntryValidationError("New user passwords must contain at least 6 characters.")
         record.set_password(password)
     if isinstance(record, ActionPlan):
         record.assigned_by_user_id = current_user.id
@@ -696,8 +696,8 @@ def _apply(record: Any, spec: ResourceSpec, data: dict[str, Any], *, is_create: 
         record.mobile = "".join(ch for ch in record.mobile if ch.isdigit() or ch == "+") if record.mobile else None
         password = data.get("password")
         if password:
-            if len(str(password)) < 10:
-                raise EntryValidationError("Passwords must contain at least 10 characters.")
+            if len(str(password)) < 6:
+                raise EntryValidationError("Passwords must contain at least 6 characters.")
             record.set_password(str(password))
     return changed_parent
 

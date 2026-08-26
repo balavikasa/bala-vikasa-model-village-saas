@@ -46,8 +46,8 @@ def main() -> int:
         email = (os.getenv("BOOTSTRAP_ADMIN_EMAIL") or input("Admin email: ")).strip().lower()
         mobile = (os.getenv("BOOTSTRAP_ADMIN_MOBILE") or "").strip() or None
         password = os.getenv("BOOTSTRAP_ADMIN_PASSWORD") or getpass.getpass("Admin password: ")
-        if len(password) < 12:
-            print("Password must contain at least 12 characters.", file=sys.stderr)
+        if len(password) < 6:
+            print("Password must contain at least 6 characters.", file=sys.stderr)
             return 2
 
         user = User.query.filter_by(email=email).one_or_none()
