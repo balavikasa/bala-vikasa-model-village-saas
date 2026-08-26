@@ -1,6 +1,6 @@
 # Validation report
 
-Generated: `2026-08-24T12:56:22+00:00`
+Generated: `2026-08-26T04:16:28+00:00`
 
 This report distinguishes executed checks from checks skipped because the build environment lacks runtime dependencies. A skip is not represented as a pass.
 
@@ -31,7 +31,7 @@ This report distinguishes executed checks from checks skipped because the build 
 | Workbook opens and profiles | **PASS** | 13 sheets |
 | Exact production master-data row counts | **PASS** | PMs=2, PCs=2, DAs=9, Villages=42, Committees=351, Committee_Members=2433, Action_Plans=351, Attendance_Entries=0, Specials_Entries=0, PC_DA_Map=9, Recycle_Bin=0 |
 | Flask application factory and in-memory schema | **PASS** |  |
-| Pytest suite | **PASS** | ..............................................                           [100%] 46 passed in 2.93s |
+| Pytest suite | **PASS** | ..............................................                           [100%] 46 passed in 3.03s |
 
 ## Summary
 
