@@ -44,3 +44,18 @@ def test_touch_target_and_adaptive_breakpoints_exist():
     assert "44px" in compact
     assert "@media" in css
     assert "min-width" in css or "max-width" in css
+def test_generated_pwa_icon_set_dimensions():
+    from PIL import Image
+
+    expected = {
+        "icon-192.png": (192, 192),
+        "icon-512.png": (512, 512),
+        "icon-maskable-192.png": (192, 192),
+        "icon-maskable-512.png": (512, 512),
+        "apple-touch-icon.png": (180, 180),
+        "favicon-32.png": (32, 32),
+    }
+
+    for name, size in expected.items():
+        with Image.open(STATIC / "icons" / name) as image:
+            assert image.size == size

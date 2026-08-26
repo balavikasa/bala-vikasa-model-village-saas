@@ -2,7 +2,8 @@
 "use strict";
 importScripts("/static/js/idb-queue.js");
 
-const VERSION = "2026.27.11";
+const VERSION = "2026.27.12";
+// UI polish: refreshed sidebar, typography and PWA icon
 const STATIC_CACHE = `mv-static-${VERSION}`;
 const DATA_PREFIX = "mv-data-";
 let activeUser = null;
