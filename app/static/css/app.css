@@ -2429,3 +2429,132 @@ details pre{max-width:400px;max-height:220px;overflow:auto;padding:10px;border-r
     color: #FFFFFF;
   }
 }
+/* --------------------------------------------------------------------------
+   Monitoring / Analytics navigation split v2026.27.12
+
+   Desktop primary navigation is deliberately sized for every role:
+   DA    = 6 links
+   PM    = 7 links
+   PC    = 7 links
+   Admin = 8 links
+
+   Recycle Bin remains available from Master Data and the mobile all-nav menu,
+   but does not consume a permanent desktop rail slot.
+   -------------------------------------------------------------------------- */
+@media (min-width: 760px) {
+  .side-rail {
+    overflow: hidden;
+  }
+
+  .rail-nav {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-auto-rows: 44px;
+    align-content: start;
+    gap: 2px;
+    margin-top: 12px;
+    overflow: visible;
+    overscroll-behavior: auto;
+    scrollbar-width: none;
+    padding-right: 0;
+  }
+
+  .rail-nav::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  .rail-nav a {
+    min-height: 44px;
+    height: 44px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+}
+
+@media (min-width: 1080px) {
+  .rail-nav a {
+    padding-left: 13px;
+    padding-right: 13px;
+  }
+}
+
+/* Keep all role navs visible even on shorter laptop screens without adding
+   a scrollbar or reducing the 44px interaction target. */
+@media (min-width: 760px) and (max-height: 620px) {
+  .side-rail {
+    padding-top: 9px;
+    padding-bottom: 8px;
+  }
+
+  .side-rail .brand-lockup {
+    min-height: 44px;
+  }
+
+  .side-rail .brand-mark {
+    width: 42px;
+    height: 42px;
+  }
+
+  .rail-nav {
+    margin-top: 6px;
+    gap: 1px;
+  }
+
+  .rail-footer {
+    margin-top: 5px;
+  }
+
+  .rail-account-strip {
+    min-height: 50px;
+    padding-top: 7px;
+    padding-bottom: 5px;
+  }
+}
+
+/* Monitoring now answers "what needs attention now?" only. */
+.monitoring-page .monitor-grid {
+  margin-bottom: 0;
+}
+
+/* Analytics owns the Plotly Dash surface. /dash/ remains the protected
+   internal analytics engine for Admin, PM and PC. */
+.analytics-heading {
+  align-items: end;
+}
+
+.analytics-heading-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.analytics-frame-card {
+  padding: 0;
+  overflow: hidden;
+  background: var(--paper);
+}
+
+.analytics-frame {
+  display: block;
+  width: 100%;
+  min-height: 1120px;
+  border: 0;
+  background: var(--paper);
+}
+
+@media (max-width: 759px) {
+  .analytics-heading-actions {
+    justify-content: stretch;
+  }
+
+  .analytics-heading-actions .button {
+    width: 100%;
+  }
+
+  .analytics-frame {
+    min-height: 1780px;
+  }
+}

@@ -93,13 +93,13 @@
       <a href="{{ url_for('pages.monitoring') }}" class="{% if request.endpoint == 'pages.monitoring' %}is-active{% endif %}">
         <span class="nav-glyph" aria-hidden="true">&#9673;</span><span class="nav-label">Monitoring</span>
       </a>
+      <a href="{{ url_for('pages.analytics') }}" class="{% if request.endpoint == 'pages.analytics' %}is-active{% endif %}">
+        <span class="nav-glyph" aria-hidden="true">&#9636;</span><span class="nav-label">Analytics</span>
+      </a>
       {% endif %}
       {% if current_user.role.value == 'admin' %}
       <a href="{{ url_for('pages.admin') }}" class="{% if request.endpoint == 'pages.admin' or (request.endpoint and request.endpoint.startswith('admin_transfer.')) %}is-active{% endif %}">
         <span class="nav-glyph" aria-hidden="true">&#9881;</span><span class="nav-label">Master Data</span>
-      </a>
-      <a href="{{ url_for('pages.admin', tab='recycle') }}" class="{% if request.endpoint == 'pages.admin' and request.args.get('tab') == 'recycle' %}is-active{% endif %}">
-        <span class="nav-glyph" aria-hidden="true">&#9851;</span><span class="nav-label">Recycle Bin</span>
       </a>
       {% endif %}
       {% endif %}
@@ -210,7 +210,8 @@
         <a href="{{ url_for('pages.directory') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#8962;</span><strong>{{ 'Team' if current_user.role.value == 'pc' else 'People' if current_user.role.value == 'pm' else 'Directory' }}</strong><small>Profiles and scope</small></a>
         <a href="{{ url_for('pages.map_page') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#8982;</span><strong>Map</strong><small>Village operations</small></a>
         {% if current_user.role.value in ['admin', 'pm', 'pc'] %}
-        <a href="{{ url_for('pages.monitoring') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#9673;</span><strong>Monitoring</strong><small>Operational analytics</small></a>
+        <a href="{{ url_for('pages.monitoring') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#9673;</span><strong>Monitoring</strong><small>Current delivery health</small></a>
+        <a href="{{ url_for('pages.analytics') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#9636;</span><strong>Analytics</strong><small>Trends and program analysis</small></a>
         {% endif %}
         {% if current_user.role.value == 'admin' %}
         <a href="{{ url_for('pages.admin') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#9881;</span><strong>Master Data</strong><small>People, villages, committees</small></a>

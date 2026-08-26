@@ -105,6 +105,14 @@ def monitoring():
     return render_template("monitoring.html")
 
 
+
+@bp.get("/analytics")
+@login_required
+@role_required(Role.ADMIN, Role.PM, Role.PC)
+def analytics():
+    return render_template("analytics.html")
+
+
 @bp.get("/admin")
 @login_required
 @role_required(Role.ADMIN)

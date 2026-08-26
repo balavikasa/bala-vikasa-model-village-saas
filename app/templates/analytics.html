@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Analytics · Model Village{% endblock %}
+{% block content %}
+<section class="page-shell analytics-page">
+  <header class="page-heading split-heading analytics-heading">
+    <div>
+      <p class="eyebrow">Program analytics</p>
+      <h1>Model village analytics</h1>
+      <p class="lede">
+        Role-scoped trends, participation, action-plan status and program distributions.
+      </p>
+    </div>
+    <div class="analytics-heading-actions">
+      <a class="button ghost" href="{{ url_for('pages.monitoring') }}">Back to monitoring</a>
+    </div>
+  </header>
+
+  <article class="panel-card analytics-frame-card">
+    <iframe
+      class="analytics-frame"
+      title="Role-scoped Model Village analytics"
+      src="/dash/"
+      loading="eager"
+    ></iframe>
+  </article>
+</section>
+{% endblock %}
