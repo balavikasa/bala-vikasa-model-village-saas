@@ -2010,3 +2010,174 @@ details pre{max-width:400px;max-height:220px;overflow:auto;padding:10px;border-r
     grid-template-columns: minmax(0, 1fr);
   }
 }
+/* --------------------------------------------------------------------------
+   BMW M-inspired desktop sidebar footer
+   Reference colors sampled from the supplied BMW M image:
+   light blue #0066B1, dark blue #003C78, red #E22718.
+   -------------------------------------------------------------------------- */
+:root {
+  --bmw-m-light-blue: #0066B1;
+  --bmw-m-dark-blue: #003C78;
+  --bmw-m-red: #E22718;
+}
+
+@media (min-width: 760px) {
+  /* Keep wheel/touch/keyboard scrolling, but remove the visual scrollbar. */
+  .rail-nav {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-right: 0;
+  }
+
+  .rail-nav::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+
+  /* Collapse control has been removed from the template. This is defensive. */
+  .rail-toggle {
+    display: none !important;
+  }
+
+  .rail-footer {
+    display: block;
+    flex: 0 0 auto;
+    margin-top: auto;
+  }
+
+  .rail-account-strip {
+    position: relative;
+    width: 100%;
+    min-height: 58px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 10px 5px 7px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 60, 120, .16);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 8px 24px rgba(0, 60, 120, .08);
+  }
+
+  .rail-account-strip::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background:
+      linear-gradient(
+        90deg,
+        var(--bmw-m-light-blue) 0 33.333%,
+        var(--bmw-m-dark-blue) 33.333% 66.666%,
+        var(--bmw-m-red) 66.666% 100%
+      );
+  }
+
+  .rail-account-name {
+    display: none;
+    min-width: 0;
+    color: var(--bmw-m-dark-blue);
+    font-size: .79rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .rail-status-button,
+  .rail-account-logout-button {
+    position: relative;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    display: inline-grid;
+    place-items: center;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+    transition:
+      background .15s ease,
+      transform .15s ease,
+      box-shadow .15s ease;
+  }
+
+  .rail-status-button {
+    color: var(--bmw-m-dark-blue);
+  }
+
+  .rail-status-button:hover {
+    background: rgba(0, 102, 177, .09);
+  }
+
+  .rail-account-logout {
+    margin: 0;
+  }
+
+  .rail-account-logout-button {
+    color: var(--bmw-m-red);
+    font-size: 1.08rem;
+  }
+
+  .rail-account-logout-button:hover {
+    background: rgba(226, 39, 24, .09);
+  }
+
+  .rail-status-button:focus-visible,
+  .rail-account-logout-button:focus-visible {
+    outline: 3px solid rgba(0, 102, 177, .28);
+    outline-offset: 2px;
+  }
+
+  .rail-status-button:active,
+  .rail-account-logout-button:active {
+    transform: translateY(1px);
+  }
+
+  .rail-status-button .network-dot {
+    width: 11px;
+    height: 11px;
+    box-shadow: 0 0 0 4px rgba(91, 140, 94, .12);
+  }
+
+  .rail-queue-count {
+    position: absolute;
+    top: 4px;
+    right: 3px;
+    min-width: 18px;
+    height: 18px;
+    display: grid;
+    place-items: center;
+    padding: 0 4px;
+    border: 2px solid #FFFFFF;
+    border-radius: 999px;
+    background: var(--bmw-m-light-blue);
+    color: #FFFFFF;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .58rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+}
+
+@media (min-width: 1080px) {
+  .rail-account-strip {
+    min-height: 62px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px 44px;
+    align-items: center;
+    gap: 3px;
+    padding: 12px 7px 7px 12px;
+  }
+
+  .rail-account-name {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

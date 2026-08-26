@@ -83,12 +83,10 @@
   window.addEventListener("offline", setNetworkState);
   setNetworkState();
 
-  const railKey = "mv-rail-collapsed";
-  if (localStorage.getItem(railKey) === "1") document.body.classList.add("rail-collapsed");
-  document.querySelector("[data-rail-toggle]")?.addEventListener("click", () => {
-    document.body.classList.toggle("rail-collapsed");
-    localStorage.setItem(railKey, document.body.classList.contains("rail-collapsed") ? "1" : "0");
-  });
+  // Desktop sidebar is intentionally fixed-width now. Remove the old
+  // persisted collapse state so users are never left in the legacy mode.
+  localStorage.removeItem("mv-rail-collapsed");
+  document.body.classList.remove("rail-collapsed");
 
   document.querySelectorAll("[data-toggle-password]").forEach((button) => {
     button.addEventListener("click", () => {

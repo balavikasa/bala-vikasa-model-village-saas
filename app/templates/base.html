@@ -106,21 +106,39 @@
     </nav>
 
     <div class="rail-footer">
-      <button class="sync-card" type="button" data-sync-trigger>
-        <span class="network-dot" aria-hidden="true"></span>
-        <span><strong data-network-label>Online</strong><small><span data-queue-count>0</span> queued</small></span>
-      </button>
-      <div class="user-card">
-        <span class="avatar" aria-hidden="true">{{ current_user.display_name[:1]|upper }}</span>
-        <span class="user-copy"><strong>{{ current_user.display_name }}</strong><small>{{ current_user.role.value|upper }}</small></span>
-      </div>
-      <form class="rail-signout" action="{{ url_for('auth.logout') }}" method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button class="rail-signout-button" type="submit" aria-label="Sign out">
-          <span class="nav-glyph" aria-hidden="true">&#8617;</span><span class="rail-signout-label">Sign out</span>
+      <div class="rail-account-strip" aria-label="Signed-in account">
+        <strong class="rail-account-name" title="{{ current_user.display_name }}">
+          {{ current_user.display_name }}
+        </strong>
+
+        <button
+          class="rail-status-button"
+          type="button"
+          data-sync-trigger
+          aria-label="Open sync queue"
+          title="Sync status and offline queue"
+        >
+          <span class="network-dot" aria-hidden="true"></span>
+          <span class="rail-queue-count" data-queue-count>0</span>
+          <span class="sr-only" data-network-label>Online</span>
         </button>
-      </form>
-      <button class="rail-toggle" type="button" data-rail-toggle aria-label="Collapse navigation">‹</button>
+
+        <form
+          class="rail-account-logout"
+          action="{{ url_for('auth.logout') }}"
+          method="post"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button
+            class="rail-account-logout-button"
+            type="submit"
+            aria-label="Sign out"
+            title="Sign out"
+          >
+            <span class="nav-glyph" aria-hidden="true">&#8617;</span>
+          </button>
+        </form>
+      </div>
     </div>
   </aside>
   {% endif %}
