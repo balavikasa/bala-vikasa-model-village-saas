@@ -148,7 +148,6 @@ def visible_committees(user: User) -> list[Committee]:
 
 
 def monthly_plans(user: User, month: date) -> dict[int, ActionPlan]:
-    """Return active monthly plans visible to the user, keyed by committee."""
     stmt = (
         scoped_select(ActionPlan, user)
         .where(ActionPlan.plan_month == month)
@@ -165,13 +164,11 @@ def monthly_plans(user: User, month: date) -> dict[int, ActionPlan]:
 
 
 def _monthly_plan_slots(user: User, month: date) -> dict[int, ActionPlan]:
-    """Return every database slot for a committee/month, including soft-deleted rows.
+    """Return every scoped committee/month row, including archived lifecycle rows.
 
-    ``action_plans`` has a database uniqueness constraint on
-    ``(committee_id, plan_month)``. A soft-deleted row still occupies that unique
-    slot, so imports must reuse/restore it instead of attempting a duplicate INSERT.
-    Authorization is still enforced by ``scoped_select``; only lifecycle filters are
-    relaxed here.
+    The database uniqueness constraint covers soft-deleted ActionPlan rows too.
+    Import and month preparation therefore need a lifecycle-inclusive lookup so
+    they never attempt a second physical row for the same committee/month.
     """
     stmt = (
         scoped_select(
@@ -191,6 +188,11 @@ def _monthly_plan_slots(user: User, month: date) -> dict[int, ActionPlan]:
         )
     )
     return {plan.committee_id: plan for plan in db.session.scalars(stmt).unique()}
+
+
+def _plan_has_any_field_history(plan: ActionPlan) -> bool:
+    """Return True even when a linked field row is itself soft-deleted."""
+    return plan.attendance_entry is not None or plan.specials_entry is not None
 
 
 def planning_rows(user: User, month: date) -> list[dict[str, Any]]:
@@ -442,12 +444,10 @@ def _validate_meta(wb, user: User, selected_month: date) -> None:
 def preview_import(path: Path, user: User, selected_month: date) -> dict[str, Any]:
     if selected_month < current_month():
         raise PlanningError("Past monthly history is immutable and cannot be imported.")
-
     try:
         wb = load_workbook(path, data_only=False)
     except Exception as exc:
         raise PlanningError("The uploaded file is not a readable .xlsx workbook.") from exc
-
     _validate_meta(wb, user, selected_month)
     if EXPORT_SHEET not in wb.sheetnames:
         raise PlanningError(f"Workbook must contain a '{EXPORT_SHEET}' sheet.")
@@ -455,12 +455,8 @@ def preview_import(path: Path, user: User, selected_month: date) -> dict[str, An
     ws = wb[EXPORT_SHEET]
     headers = _headers(ws)
     visible = {committee.id: committee for committee in visible_committees(user)}
-
-    # Important: include soft-deleted rows here. PostgreSQL's unique constraint on
-    # (committee_id, plan_month) still applies to them, so treating a deleted row as
-    # absent would make Confirm Import attempt a duplicate INSERT.
+    existing = monthly_plans(user, selected_month)
     slots = _monthly_plan_slots(user, selected_month)
-
     seen: set[int] = set()
     parsed: list[ImportRow] = []
 
@@ -473,7 +469,6 @@ def preview_import(path: Path, user: User, selected_month: date) -> dict[str, An
                 for name in EDITABLE_HEADERS
             ):
                 continue
-
         errors: list[str] = []
         committee_id = None
         try:
@@ -498,74 +493,62 @@ def preview_import(path: Path, user: User, selected_month: date) -> dict[str, An
         except PlanningError as exc:
             plan_type = None
             errors.append(str(exc))
-
         try:
-            assigned = _parse_excel_date(
-                ws.cell(excel_row, headers["Assigned Date"]).value
-            )
+            assigned = _parse_excel_date(ws.cell(excel_row, headers["Assigned Date"]).value)
         except PlanningError as exc:
             assigned = None
             errors.append(str(exc))
 
         if assigned is not None and plan_type is None:
             errors.append("Choose Attendance or Specials before assigning a date.")
-        if assigned and (
-            assigned.year != selected_month.year
-            or assigned.month != selected_month.month
-        ):
+        if assigned and (assigned.year != selected_month.year or assigned.month != selected_month.month):
             errors.append(f"Assigned Date must be inside {month_label(selected_month)}.")
 
         notes = _cell_text(ws.cell(excel_row, headers["Notes"]).value)
-        slot = slots.get(committee_id) if committee_id else None
-        active_plan = slot if slot is not None and not slot.is_deleted else None
+        plan = existing.get(committee_id) if committee_id else None
+        archived_slot = slots.get(committee_id) if committee_id and plan is None else None
+
+        if archived_slot is not None:
+            if _plan_has_any_field_history(archived_slot):
+                errors.append(
+                    "An archived monthly plan with field history already exists. "
+                    "Restore it from Recycle Bin instead of importing a replacement."
+                )
+            elif plan_locked(archived_slot):
+                errors.append(
+                    "An archived monthly plan occupies this committee/month and is locked. "
+                    "Restore or resolve it before importing."
+                )
 
         plan_id_raw = ws.cell(excel_row, headers["Plan ID"]).value
         try:
-            workbook_plan_id = (
-                int(plan_id_raw) if plan_id_raw not in (None, "") else None
-            )
+            workbook_plan_id = int(plan_id_raw) if plan_id_raw not in (None, "") else None
         except (TypeError, ValueError):
             workbook_plan_id = None
             errors.append("Plan ID was modified and is invalid.")
 
-        if active_plan and workbook_plan_id not in (None, active_plan.id):
+        if plan and workbook_plan_id not in (None, plan.id):
             errors.append("Plan ID does not match the database record.")
-        elif slot is None and workbook_plan_id is not None:
+        if not plan and workbook_plan_id is not None:
             errors.append("Plan ID refers to a plan that does not exist for this month.")
-        elif (
-            slot is not None
-            and slot.is_deleted
-            and workbook_plan_id not in (None, slot.id)
-        ):
-            errors.append("Plan ID does not match the archived database record.")
-
-        has_content = bool(plan_type or assigned or notes)
-
-        if slot is not None and plan_locked(slot):
+        if plan and plan_locked(plan):
             changed = (
-                slot.plan_type != plan_type
-                or slot.assigned_date != assigned
-                or (slot.notes or None) != notes
-                or slot.is_deleted
+                plan.plan_type != plan_type
+                or plan.assigned_date != assigned
+                or (plan.notes or None) != notes
             )
             if changed:
-                errors.append(
-                    "This monthly plan is locked by immutable history and cannot be changed."
-                )
+                errors.append("This monthly plan is locked by immutable history and cannot be changed.")
 
         if errors:
             action = "Error"
-        elif slot is None:
-            action = "New" if has_content else "Unchanged"
-        elif slot.is_deleted:
-            # From the user's active-data perspective this is a new plan. Confirm
-            # Import will safely restore/reuse the archived row instead of INSERTing.
-            action = "New" if has_content else "Unchanged"
+        elif plan is None:
+            action = "New" if (plan_type or assigned or notes) else "Unchanged"
         else:
             changed = (
-                slot.plan_type != plan_type
-                or slot.assigned_date != assigned
-                or (slot.notes or None) != notes
+                plan.plan_type != plan_type
+                or plan.assigned_date != assigned
+                or (plan.notes or None) != notes
             )
             action = "Changed" if changed else "Unchanged"
 
@@ -573,7 +556,7 @@ def preview_import(path: Path, user: User, selected_month: date) -> dict[str, An
             ImportRow(
                 excel_row=excel_row,
                 committee_id=committee_id,
-                plan_id=slot.id if slot else None,
+                plan_id=plan.id if plan else None,
                 plan_type=plan_type,
                 assigned_date=assigned,
                 notes=notes,
@@ -588,7 +571,6 @@ def preview_import(path: Path, user: User, selected_month: date) -> dict[str, An
     counts = {key: 0 for key in ("New", "Changed", "Unchanged", "Error")}
     for row in parsed:
         counts[row.action] += 1
-
     return {
         "month": month_key(selected_month),
         "month_label": month_label(selected_month),
@@ -603,9 +585,7 @@ def preview_import(path: Path, user: User, selected_month: date) -> dict[str, An
                 "village_name": row.village_name,
                 "committee_name": row.committee_name,
                 "plan_type": row.plan_type.value if row.plan_type else None,
-                "assigned_date": (
-                    row.assigned_date.isoformat() if row.assigned_date else None
-                ),
+                "assigned_date": row.assigned_date.isoformat() if row.assigned_date else None,
                 "notes": row.notes,
                 "action": row.action,
                 "errors": row.errors,
@@ -667,49 +647,31 @@ def _staged_file(token: str, user: User, selected_month: date) -> Path:
     return xlsx_path
 
 
-def _delete_staged_import(token: str) -> None:
-    root = _stage_root()
-    for suffix in (".xlsx", ".json"):
-        (root / f"{token}{suffix}").unlink(missing_ok=True)
-
-
 def confirm_import(token: str, user: User, selected_month: date) -> dict[str, Any]:
     path = _staged_file(token, user, selected_month)
-
-    # Re-run preview against current database state at confirmation time. This keeps
-    # Confirm Import safe if another request changed plans after the first preview.
     preview = preview_import(path, user, selected_month)
     if preview["has_errors"]:
         raise PlanningError("Import still contains validation errors; nothing was saved.")
 
-    slots = _monthly_plan_slots(user, selected_month)
-    created = 0
-    updated = 0
+    # Include archived rows because the database uniqueness constraint applies to
+    # them as well. A safe archived slot is restored in place so its ActionPlan ID
+    # remains stable.
+    existing = _monthly_plan_slots(user, selected_month)
+    created = updated = 0
+    committed = False
 
     try:
         for row in preview["rows"]:
             if row["action"] not in {"New", "Changed"}:
                 continue
 
-            committee = require_scoped(
-                Committee,
-                int(row["committee_id"]),
-                user,
-            )
+            committee = require_scoped(Committee, int(row["committee_id"]), user)
             if not can_manage_action_plan(user, committee):
-                raise PlanningError(
-                    "A row moved outside your action-plan management scope."
-                )
+                raise PlanningError("A row moved outside your action-plan management scope.")
 
-            plan = slots.get(committee.id)
-            plan_type = (
-                ActionPlanType(row["plan_type"]) if row["plan_type"] else None
-            )
-            assigned = (
-                date.fromisoformat(row["assigned_date"])
-                if row["assigned_date"]
-                else None
-            )
+            plan = existing.get(committee.id)
+            plan_type = ActionPlanType(row["plan_type"]) if row["plan_type"] else None
+            assigned = date.fromisoformat(row["assigned_date"]) if row["assigned_date"] else None
 
             if plan is None:
                 plan = ActionPlan(
@@ -723,35 +685,52 @@ def confirm_import(token: str, user: User, selected_month: date) -> dict[str, An
                     notes=row["notes"],
                 )
                 db.session.add(plan)
-                db.session.flush()
+                try:
+                    db.session.flush()
+                except IntegrityError as exc:
+                    raise PlanningError(
+                        "Another action plan already occupies this committee/month. "
+                        "Validate the workbook again before confirming."
+                    ) from exc
+
                 record_audit(
                     AuditAction.IMPORT,
                     plan,
                     after=model_snapshot(plan),
                     actor=user,
                 )
-                slots[committee.id] = plan
+                existing[committee.id] = plan
                 created += 1
                 continue
 
-            if plan_locked(plan):
+            was_archived = bool(plan.is_deleted or not plan.is_enabled)
+            if was_archived:
+                # Never revive a plan that has any field-entry history, even if the
+                # field row is also in Recycle Bin. Doing so would make Reports say
+                # "no active entry" while the DB unique key still blocks a new DA
+                # submission.
+                if _plan_has_any_field_history(plan):
+                    raise PlanningError(
+                        "An archived action plan with field history cannot be reused by import. "
+                        "Restore it from Recycle Bin instead."
+                    )
+                if plan_locked(plan):
+                    raise PlanningError(
+                        "An archived action plan for this committee/month is locked and cannot be reused."
+                    )
+            elif plan_locked(plan):
                 raise PlanningError(
                     "A monthly plan became locked before import confirmation."
                 )
 
             before = model_snapshot(plan)
-            was_deleted = plan.is_deleted
 
-            # A soft-deleted action plan still occupies the database unique key
-            # (committee_id, plan_month). Restore that row rather than INSERTing a
-            # duplicate. This is the production failure fixed by this path.
-            if was_deleted:
+            if was_archived:
                 plan.is_deleted = False
                 plan.deleted_at = None
                 plan.is_enabled = True
 
             plan.title = committee.name
-            plan.plan_month = selected_month
             plan.plan_type = plan_type
             plan.assigned_date = assigned
             plan.assigned_by_user_id = user.id
@@ -765,26 +744,24 @@ def confirm_import(token: str, user: User, selected_month: date) -> dict[str, An
                 actor=user,
             )
 
-            if was_deleted:
+            if was_archived:
                 created += 1
             else:
                 updated += 1
 
         db.session.commit()
-
-    except IntegrityError as exc:
-        db.session.rollback()
-        raise PlanningError(
-            "Action plans changed after validation and now conflict with an "
-            "existing committee/month record. Validate the workbook again."
-        ) from exc
+        committed = True
     except Exception:
         db.session.rollback()
         raise
-
-    # Consume the token only after a successful transaction. On a recoverable
-    # failure the user can retry or revalidate until the normal TTL expires.
-    _delete_staged_import(token)
+    finally:
+        # A DB failure should not consume the preview token. Consume only after a
+        # successful commit so the operator can correct the cause and retry.
+        if committed:
+            root = _stage_root()
+            for suffix in (".xlsx", ".json"):
+                candidate = root / f"{token}{suffix}"
+                candidate.unlink(missing_ok=True)
 
     return {
         "created": created,
@@ -799,7 +776,7 @@ def prepare_next_month(user: User, source_month: date) -> dict[str, int | str]:
         raise PlanningError("Cannot prepare a month that is already in immutable history.")
 
     source = monthly_plans(user, source_month)
-    target = monthly_plans(user, target_month)
+    target = _monthly_plan_slots(user, target_month)
     created = skipped = 0
     for committee in visible_committees(user):
         if not can_manage_action_plan(user, committee):

@@ -265,10 +265,18 @@ def create_attendance(
         )
         if duplicate:
             return duplicate, False
-        if db.session.scalar(
+        existing_for_plan = db.session.scalar(
             db.select(AttendanceEntry).where(AttendanceEntry.action_plan_id == action_plan.id)
-        ):
-            raise EntryValidationError("Attendance has already been submitted for this action plan.") from exc
+        )
+        if existing_for_plan:
+            if existing_for_plan.is_deleted:
+                raise EntryValidationError(
+                    "A previous Attendance submission for this action plan is in Recycle Bin. "
+                    "Ask an administrator to restore it before submitting again."
+                ) from exc
+            raise EntryValidationError(
+                "Attendance has already been submitted for this action plan."
+            ) from exc
         raise
 
     record_audit(AuditAction.CREATE, entry, after=model_snapshot(entry), actor=user)
@@ -337,10 +345,18 @@ def create_specials(
         )
         if duplicate:
             return duplicate, False
-        if db.session.scalar(
+        existing_for_plan = db.session.scalar(
             db.select(SpecialsEntry).where(SpecialsEntry.action_plan_id == action_plan.id)
-        ):
-            raise EntryValidationError("A Specials entry has already been submitted for this action plan.") from exc
+        )
+        if existing_for_plan:
+            if existing_for_plan.is_deleted:
+                raise EntryValidationError(
+                    "A previous Specials submission for this action plan is in Recycle Bin. "
+                    "Ask an administrator to restore it before submitting again."
+                ) from exc
+            raise EntryValidationError(
+                "A Specials entry has already been submitted for this action plan."
+            ) from exc
         raise
 
     record_audit(AuditAction.CREATE, entry, after=model_snapshot(entry), actor=user)
