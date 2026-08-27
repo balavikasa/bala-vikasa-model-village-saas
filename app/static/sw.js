@@ -2,8 +2,8 @@
 "use strict";
 importScripts("/static/js/idb-queue.js");
 
-const VERSION = "2026.27.12";
-// UI polish: refreshed sidebar, typography and PWA icon
+const VERSION = "2026.27.13";
+// Required field evidence + reliable evidence-map coordinates
 const STATIC_CACHE = `mv-static-${VERSION}`;
 const DATA_PREFIX = "mv-data-";
 let activeUser = null;

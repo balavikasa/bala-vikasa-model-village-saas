@@ -115,13 +115,20 @@ def _resolve_chain(payload: dict[str, Any], user: User) -> tuple[Village, Commit
     return village, committee
 
 
-def _coordinates(payload: dict[str, Any], village: Village) -> tuple[float | None, float | None, str]:
+def _coordinates(
+    payload: dict[str, Any],
+    _village: Village,
+) -> tuple[float, float, str]:
     latitude = _float_or_none(payload.get("latitude"))
     longitude = _float_or_none(payload.get("longitude"))
     if latitude is None or longitude is None:
-        return village.latitude, village.longitude, "village-fallback"
+        raise EntryValidationError("Current device location is required.")
     if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
-        raise EntryValidationError("Coordinates are outside valid latitude/longitude ranges.")
+        raise EntryValidationError(
+            "Coordinates are outside valid latitude/longitude ranges."
+        )
+    if abs(latitude) < 0.000001 and abs(longitude) < 0.000001:
+        raise EntryValidationError("Current device location is invalid. Capture GPS again.")
     return latitude, longitude, "device"
 
 
@@ -172,6 +179,19 @@ def _selected_members(committee: Committee, raw_ids: Any) -> list[CommitteeMembe
     return rows
 
 
+def _required_photo(
+    photo: FileStorage | None,
+    namespace: str,
+    submission_id: str,
+) -> str:
+    if photo is None or not photo.filename:
+        raise EntryValidationError("A field evidence photo is required.")
+    photo_path = save_photo(photo, namespace, submission_id)
+    if not photo_path:
+        raise EntryValidationError("A field evidence photo is required.")
+    return photo_path
+
+
 def create_attendance(
     payload: dict[str, Any],
     photo: FileStorage | None,
@@ -202,7 +222,7 @@ def create_attendance(
     designations = list(dict.fromkeys(member.designation for member in selected_members if member.designation))
     latitude, longitude, geolocation_source = _coordinates(payload, village)
 
-    photo_path = save_photo(photo, "attendance", client_id)
+    photo_path = _required_photo(photo, "attendance", client_id)
     entry = AttendanceEntry(
         village_id=village.id,
         committee_id=committee.id,
@@ -286,7 +306,7 @@ def create_specials(
 
     participant_count = _integer(payload.get("participant_count"), "participant_count")
     latitude, longitude, geolocation_source = _coordinates(payload, village)
-    photo_path = save_photo(photo, "specials", client_id)
+    photo_path = _required_photo(photo, "specials", client_id)
 
     entry = SpecialsEntry(
         village_id=village.id,

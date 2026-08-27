@@ -284,31 +284,71 @@
   male?.addEventListener("input", updateCounts);
   female?.addEventListener("input", updateCounts);
 
+  const hasDeviceLocation = () => {
+    if (!latitude.value || !longitude.value) return false;
+    const lat = Number(latitude.value);
+    const lon = Number(longitude.value);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return false;
+    if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return false;
+    return !(Math.abs(lat) < 0.000001 && Math.abs(lon) < 0.000001);
+  };
+
   const captureLocation = () => {
     const label = document.getElementById("location-label");
     const detail = document.getElementById("location-detail");
+    latitude.value = "";
+    longitude.value = "";
+
     if (!navigator.geolocation) {
-      label.textContent = "GPS unavailable";
-      detail.textContent = "Village master coordinates will be used.";
+      label.textContent = "Location unavailable";
+      detail.textContent = "This device/browser cannot provide GPS location. Location is required.";
       return;
     }
-    label.textContent = "Finding location…";
+
+    label.textContent = "Finding current location…";
+    detail.textContent = "Keep location permission enabled while GPS is captured.";
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        latitude.value = pos.coords.latitude.toFixed(6);
-        longitude.value = pos.coords.longitude.toFixed(6);
+        const lat = Number(pos.coords.latitude);
+        const lon = Number(pos.coords.longitude);
+        if (
+          !Number.isFinite(lat)
+          || !Number.isFinite(lon)
+          || lat < -90
+          || lat > 90
+          || lon < -180
+          || lon > 180
+          || (Math.abs(lat) < 0.000001 && Math.abs(lon) < 0.000001)
+        ) {
+          latitude.value = "";
+          longitude.value = "";
+          label.textContent = "Location required";
+          detail.textContent = "The device returned an invalid location. Tap Retry.";
+          return;
+        }
+
+        latitude.value = lat.toFixed(6);
+        longitude.value = lon.toFixed(6);
         label.textContent = "Current location captured";
         detail.textContent = `${latitude.value}, ${longitude.value} · ±${Math.round(pos.coords.accuracy)} m`;
       },
-      () => {
+      (error) => {
         latitude.value = "";
         longitude.value = "";
-        label.textContent = "Using village location fallback";
-        detail.textContent = "GPS permission unavailable; master location will be used.";
+        label.textContent = "Location required";
+        if (error?.code === 1) {
+          detail.textContent = "Location permission is blocked. Allow precise location, then tap Retry.";
+        } else if (error?.code === 3) {
+          detail.textContent = "GPS timed out. Move to an open area and tap Retry.";
+        } else {
+          detail.textContent = "Current GPS location could not be captured. Tap Retry.";
+        }
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   };
+
   document.getElementById("retry-location")?.addEventListener("click", captureLocation);
   captureLocation();
 
@@ -417,15 +457,33 @@
     event.preventDefault();
     clearError();
     updateStatus();
+
     if (!form.reportValidity()) return;
-    if (!planSelect.value) return showError("Choose an assigned monthly action plan.");
+    if (!planSelect.value) {
+      return showError("Choose an assigned monthly action plan.");
+    }
+    if (!compressedPhoto) {
+      photoInput.focus();
+      return showError("A field evidence photo is required before submitting.");
+    }
+    if (!hasDeviceLocation()) {
+      captureLocation();
+      document.getElementById("retry-location")?.focus();
+      return showError(
+        "Current GPS location is required. Allow precise location, wait for capture, then submit again."
+      );
+    }
     if (entryType === "attendance" && !selectedMembers.size) {
       return showError("Select at least one Visit designation / Committee Member Name.");
     }
 
     const data = formData();
     if (!navigator.onLine) {
-      try { await queue(data); } catch (error) { showError(error.message); }
+      try {
+        await queue(data);
+      } catch (error) {
+        showError(error.message);
+      }
       return;
     }
 
@@ -435,13 +493,24 @@
       const endpoint = entryType === "attendance" ? "/api/v1/attendance" : "/api/v1/specials";
       const response = await window.MV.api(endpoint, { method: "POST", body: data });
       let payload = {};
-      try { payload = await response.json(); } catch (_) { /* noop */ }
+      try {
+        payload = await response.json();
+      } catch (_) {
+        /* noop */
+      }
       if (!response.ok) throw new Error(payload.error || "Submission was rejected.");
-      window.MV.toast(payload.idempotent ? "Already submitted" : "Field entry submitted", "success");
+      window.MV.toast(
+        payload.idempotent ? "Already submitted" : "Field entry submitted",
+        "success"
+      );
       resetAfterSubmit();
     } catch (error) {
       if (!navigator.onLine || error instanceof TypeError) {
-        try { await queue(data); } catch (queueError) { showError(queueError.message); }
+        try {
+          await queue(data);
+        } catch (queueError) {
+          showError(queueError.message);
+        }
       } else {
         showError(error.message);
         draftState.textContent = "Fix the highlighted issue";
@@ -450,6 +519,5 @@
       submitButton.disabled = false;
     }
   });
-
   loadVillages();
 })();

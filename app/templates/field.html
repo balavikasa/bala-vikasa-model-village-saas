@@ -122,12 +122,15 @@
       </section>
 
       <section class="form-section">
-        <div class="form-section-heading"><span>3</span><div><h2>Evidence & location</h2><p>Photo is converted to WebP before submission.</p></div></div>
+        <div class="form-section-heading"><span>3</span><div><h2>Evidence & location</h2><p>Photo and current device location are required for every submission.</p></div></div>
         <div class="evidence-grid">
           <label class="camera-card" for="photo-input">
-            <input id="photo-input" name="photo" type="file" accept="image/*" capture="environment">
+            <input id="photo-input" name="photo" type="file" accept="image/*" capture="environment" required>
             <span class="camera-icon" aria-hidden="true">◎</span>
-            <span><strong>Capture photo</strong><small>Camera or gallery · max 12 MB before compression</small></span>
+            <span>
+              <strong>Capture photo <b>*</b></strong>
+              <small>Required · camera or gallery · max 12 MB before compression</small>
+            </span>
           </label>
           <figure class="photo-preview hidden" id="photo-preview">
             <img alt="Selected field evidence preview">
@@ -135,7 +138,10 @@
           </figure>
           <div class="location-card">
             <span class="location-icon" aria-hidden="true">⌖</span>
-            <span><strong id="location-label">Finding location…</strong><small id="location-detail">Village coordinates are fallback.</small></span>
+            <span>
+              <strong><span id="location-label">Finding current location…</span> <b>*</b></strong>
+              <small id="location-detail">Required · allow precise location permission before submitting.</small>
+            </span>
             <button type="button" class="text-button" id="retry-location">Retry</button>
           </div>
         </div>
@@ -150,7 +156,7 @@
 
     <aside class="field-aside">
       <article class="panel-card field-tip"><p class="eyebrow">Offline ready</p><h2>No signal? Keep working.</h2><p>Entries are queued per signed-in profile and synchronized with a stable submission ID.</p><button class="button ghost wide" type="button" data-sync-trigger>Open sync queue</button></article>
-      <article class="panel-card field-checklist"><h2>Before submitting</h2><ul><li>Village, committee and monthly plan are correct</li><li>Attendance counts are live counts</li><li>Visit designations show the correct master-data names</li><li>Reason appears only for Early/Postponed</li><li>Evidence and location are appropriate</li></ul></article>
+      <article class="panel-card field-checklist"><h2>Before submitting</h2><ul><li>Village, committee and monthly plan are correct</li><li>Attendance counts are live counts</li><li>Visit designations show the correct master-data names</li><li>Reason appears only for Early/Postponed</li><li>Required photo and current GPS location are captured</li></ul></article>
     </aside>
   </div>
 

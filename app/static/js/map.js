@@ -1,5 +1,6 @@
 (() => {
   "use strict";
+
   const mapHost = document.getElementById("role-village-map");
   if (!mapHost || !window.MV) return;
 
@@ -19,6 +20,27 @@
     return "neutral";
   };
 
+  const finiteCoordinate = (value) => {
+    if (value === null || value === undefined || value === "") return false;
+    return Number.isFinite(Number(value));
+  };
+
+  const hasCoordinates = (item) => {
+    if (!finiteCoordinate(item.latitude) || !finiteCoordinate(item.longitude)) {
+      return false;
+    }
+    const lat = Number(item.latitude);
+    const lon = Number(item.longitude);
+    if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return false;
+    return !(Math.abs(lat) < 0.000001 && Math.abs(lon) < 0.000001);
+  };
+
+  const locationLabel = (item) => {
+    if (item.location_source === "field-evidence") return "Field GPS";
+    if (item.location_source === "village-master") return "Village master";
+    return "Location unavailable";
+  };
+
   const popup = (item) => `
     <div class="map-popup">
       <strong>${esc(item.name)}</strong>
@@ -26,7 +48,9 @@
       <span class="badge" data-status="${esc(item.status)}">${esc(item.status)}</span>
       <dl>
         <div><dt>Committees</dt><dd>${Number(item.committee_count || 0)}</dd></div>
-        <div><dt>Last visit</dt><dd>${esc(item.last_visit_date || "No visit")}</dd></div>
+        <div><dt>Latest evidence</dt><dd>${esc(item.last_visit_date || "No evidence")}</dd></div>
+        <div><dt>Evidence type</dt><dd>${esc(item.evidence_type || "—")}</dd></div>
+        <div><dt>Location</dt><dd>${esc(locationLabel(item))}</dd></div>
       </dl>
       ${item.photo_url ? `<img src="${esc(item.photo_url)}" alt="Latest field evidence">` : ""}
       <a class="button ghost wide" href="/directory/village/${Number(item.id)}">View village</a>
@@ -34,16 +58,25 @@
 
   const renderMap = () => {
     if (!window.L) return;
-    const located = rows.filter((r) => Number.isFinite(Number(r.latitude)) && Number.isFinite(Number(r.longitude)));
+
+    const located = rows.filter(hasCoordinates);
+
+    if (map) {
+      map.remove();
+      map = null;
+    }
+
     empty.classList.toggle("hidden", located.length > 0);
     mapHost.classList.toggle("hidden", located.length === 0);
+
     if (!located.length) return;
-    map?.remove();
+
     map = window.L.map(mapHost, { zoomControl: true });
     window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors',
+      attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
+
     const bounds = [];
     located.forEach((item) => {
       const position = [Number(item.latitude), Number(item.longitude)];
@@ -51,47 +84,82 @@
       const icon = window.L.divIcon({
         className: "",
         html: `<div class="mv-map-marker ${kind(item.status)}"></div>`,
-        iconSize: [24,24],
-        iconAnchor: [12,12],
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
       });
-      window.L.marker(position, { icon, title: item.name }).addTo(map).bindPopup(popup(item), { maxWidth: 290 });
+      window.L.marker(position, { icon, title: item.name })
+        .addTo(map)
+        .bindPopup(popup(item), { maxWidth: 290 });
     });
-    map.fitBounds(bounds, { padding: [26,26], maxZoom: 12 });
-    setTimeout(() => map.invalidateSize(), 120);
+
+    if (bounds.length === 1) {
+      map.setView(bounds[0], 13);
+    } else {
+      map.fitBounds(bounds, { padding: [26, 26], maxZoom: 13 });
+    }
+
+    requestAnimationFrame(() => map?.invalidateSize());
+    setTimeout(() => map?.invalidateSize(), 160);
   };
 
   const renderList = () => {
     const q = (search?.value || "").trim().toLowerCase();
-    const visible = rows.filter((item) => !q || `${item.name} ${item.da_name} ${item.cluster}`.toLowerCase().includes(q));
-    listHost.innerHTML = visible.length ? visible.map((item) => `
-      <article class="ledger-card">
-        <div class="ledger-card-top"><div><strong>${esc(item.name)}</strong><small>${esc(item.da_name)} · ${esc(item.cluster)}</small></div><span class="badge" data-status="${esc(item.status)}">${esc(item.status)}</span></div>
-        <div class="ledger-card-meta"><span>${Number(item.committee_count || 0)} committees</span><span>${esc(item.last_visit_date || "No visit")}</span></div>
-        <a class="button ghost wide" href="/directory/village/${Number(item.id)}">View</a>
-      </article>`).join("") : `<div class="empty-state"><strong>No matching villages.</strong></div>`;
+    const visible = rows.filter(
+      (item) => !q
+        || `${item.name} ${item.da_name} ${item.cluster}`.toLowerCase().includes(q)
+    );
+
+    listHost.innerHTML = visible.length
+      ? visible.map((item) => `
+        <article class="ledger-card">
+          <div class="ledger-card-top">
+            <div>
+              <strong>${esc(item.name)}</strong>
+              <small>${esc(item.da_name)} · ${esc(item.cluster)}</small>
+            </div>
+            <span class="badge" data-status="${esc(item.status)}">${esc(item.status)}</span>
+          </div>
+          <div class="ledger-card-meta">
+            <span>${Number(item.committee_count || 0)} committees</span>
+            <span>${esc(item.last_visit_date || "No evidence")}</span>
+          </div>
+          <a class="button ghost wide" href="/directory/village/${Number(item.id)}">View</a>
+        </article>`)
+        .join("")
+      : `<div class="empty-state"><strong>No matching villages.</strong></div>`;
   };
 
-  document.querySelectorAll("[data-map-mode]").forEach((button) => button.addEventListener("click", () => {
-    const list = button.dataset.mapMode === "list";
-    document.querySelectorAll("[data-map-mode]").forEach((b) => {
-      b.classList.toggle("is-active", b === button);
-      b.setAttribute("aria-pressed", String(b === button));
+  document.querySelectorAll("[data-map-mode]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const list = button.dataset.mapMode === "list";
+      document.querySelectorAll("[data-map-mode]").forEach((candidate) => {
+        candidate.classList.toggle("is-active", candidate === button);
+        candidate.setAttribute("aria-pressed", String(candidate === button));
+      });
+      mapPanel.classList.toggle("hidden", list);
+      listPanel.classList.toggle("hidden", !list);
+      if (list) {
+        renderList();
+      } else {
+        setTimeout(() => map?.invalidateSize(), 100);
+      }
     });
-    mapPanel.classList.toggle("hidden", list);
-    listPanel.classList.toggle("hidden", !list);
-    if (list) renderList(); else setTimeout(() => map?.invalidateSize(), 100);
-  }));
+  });
+
   search?.addEventListener("input", renderList);
 
   (async () => {
     try {
       const response = await window.MV.api("/api/v1/monitoring/map");
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Could not load the village map.");
+      if (!response.ok) {
+        throw new Error(payload.error || "Could not load the village map.");
+      }
       rows = payload.items || [];
       renderMap();
       renderList();
     } catch (error) {
+      mapHost.classList.remove("hidden");
       mapHost.innerHTML = `<div class="form-alert">${esc(error.message)}</div>`;
     }
   })();

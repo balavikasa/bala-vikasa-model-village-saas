@@ -99,6 +99,30 @@ def dashboard_summary(user: User) -> dict[str, Any]:
 
 
 def map_markers(user: User) -> list[dict[str, Any]]:
+    def valid_coordinates(latitude: Any, longitude: Any) -> bool:
+        if latitude is None or longitude is None:
+            return False
+        try:
+            lat = float(latitude)
+            lon = float(longitude)
+        except (TypeError, ValueError):
+            return False
+        if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+            return False
+        return not (abs(lat) < 0.000001 and abs(lon) < 0.000001)
+
+    def evidence_date(entry: Any) -> date:
+        return entry.visit_date if hasattr(entry, "visit_date") else entry.event_date
+
+    def evidence_type(entry: Any) -> str:
+        return "Attendance" if hasattr(entry, "visit_date") else "Specials"
+
+    def evidence_photo_url(entry: Any) -> str | None:
+        if not entry or not entry.photo_path:
+            return None
+        kind = "attendance" if hasattr(entry, "visit_date") else "specials"
+        return f"/api/v1/photos/{kind}/{entry.id}"
+
     villages = list(
         db.session.scalars(
             scoped_select(Village, user)
@@ -111,39 +135,111 @@ def map_markers(user: User) -> list[dict[str, Any]]:
                 .selectinload(Committee.action_plans)
                 .selectinload(ActionPlan.specials_entry),
                 selectinload(Village.attendance_entries),
+                selectinload(Village.specials_entries),
             )
             .order_by(Village.name)
         ).unique()
     )
+
     markers: list[dict[str, Any]] = []
     today = local_today()
+
     for village in villages:
-        entries = [item for item in village.attendance_entries if item.is_enabled and not item.is_deleted]
-        latest = max(entries, key=lambda item: (item.visit_date, item.id), default=None)
+        attendance = [
+            item
+            for item in village.attendance_entries
+            if item.is_enabled and not item.is_deleted
+        ]
+        specials = [
+            item
+            for item in village.specials_entries
+            if item.is_enabled and not item.is_deleted
+        ]
+        evidence_rows = [*attendance, *specials]
+
+        latest_evidence = max(
+            evidence_rows,
+            key=lambda item: (evidence_date(item), item.id),
+            default=None,
+        )
+        located_evidence = [
+            item
+            for item in evidence_rows
+            if valid_coordinates(item.latitude, item.longitude)
+        ]
+        latest_located = max(
+            located_evidence,
+            key=lambda item: (evidence_date(item), item.id),
+            default=None,
+        )
+
+        if latest_located is not None:
+            latitude = latest_located.latitude
+            longitude = latest_located.longitude
+            location_source = "field-evidence"
+        elif valid_coordinates(village.latitude, village.longitude):
+            latitude = village.latitude
+            longitude = village.longitude
+            location_source = "village-master"
+        else:
+            latitude = None
+            longitude = None
+            location_source = None
+
         plans = [
             plan
             for committee in village.committees
             if committee.is_enabled and not committee.is_deleted
             for plan in committee.action_plans
-            if plan.is_enabled and not plan.is_deleted and plan.plan_month == today.replace(day=1)
+            if (
+                plan.is_enabled
+                and not plan.is_deleted
+                and plan.plan_month == today.replace(day=1)
+            )
         ]
         statuses = [action_plan_status(plan, today) for plan in plans]
-        priority = ["Failure", "Postponed", "Early", "Due today", "Scheduled", "On-time", "Draft"]
+        priority = [
+            "Failure",
+            "Postponed",
+            "Early",
+            "Due today",
+            "Scheduled",
+            "On-time",
+            "Draft",
+        ]
         overall = next((value for value in priority if value in statuses), "No plan")
+
         markers.append(
             {
                 "id": village.id,
                 "name": village.name,
                 "cluster": village.da.pc.cluster.value,
                 "da_name": village.da.full_name,
-                "latitude": village.latitude,
-                "longitude": village.longitude,
-                "last_visit_date": latest.visit_date.isoformat() if latest else None,
+                "latitude": latitude,
+                "longitude": longitude,
+                "location_source": location_source,
+                "last_visit_date": (
+                    evidence_date(latest_evidence).isoformat()
+                    if latest_evidence
+                    else None
+                ),
+                "evidence_type": (
+                    evidence_type(latest_evidence)
+                    if latest_evidence
+                    else None
+                ),
                 "status": overall,
-                "photo_url": f"/api/v1/photos/attendance/{latest.id}" if latest and latest.photo_path else None,
-                "committee_count": len([c for c in village.committees if c.is_enabled and not c.is_deleted]),
+                "photo_url": evidence_photo_url(latest_evidence),
+                "committee_count": len(
+                    [
+                        committee
+                        for committee in village.committees
+                        if committee.is_enabled and not committee.is_deleted
+                    ]
+                ),
             }
         )
+
     return markers
 
 
