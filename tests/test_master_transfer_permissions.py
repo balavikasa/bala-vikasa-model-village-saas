@@ -6,7 +6,6 @@ from types import SimpleNamespace
 from app.models import Role
 from app.services.master_transfer import resource_catalog
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 

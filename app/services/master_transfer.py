@@ -15,7 +15,18 @@ from openpyxl.utils import get_column_letter
 from sqlalchemy.exc import IntegrityError
 
 from ..extensions import db
-from ..models import DA, PC, PM, AuditAction, Cluster, Committee, CommitteeMember, Role, User, Village
+from ..models import (
+    DA,
+    PC,
+    PM,
+    AuditAction,
+    Cluster,
+    Committee,
+    CommitteeMember,
+    Role,
+    User,
+    Village,
+)
 from ..scoping import scoped_get, scoped_select
 from .audit import model_snapshot, record_audit
 

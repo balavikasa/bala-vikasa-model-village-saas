@@ -7,7 +7,6 @@ import pytest
 
 from app.services.entries import EntryValidationError, _coordinates
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
