@@ -37,6 +37,9 @@ jobs:
       - name: Lint
         run: ruff check .
 
+      - name: Prepare CI database
+        run: mkdir -p instance
+
       - name: Migration smoke test
         env:
           SECRET_KEY: ci-only-secret-key-not-for-production
@@ -45,3 +48,9 @@ jobs:
           rm -f instance/ci.db
           flask --app wsgi db upgrade
           flask --app wsgi db current
+
+      - name: Tests
+        env:
+          SECRET_KEY: ci-only-secret-key-not-for-production
+          DATABASE_URL: sqlite:///ci.db
+        run: python -m pytest -q
