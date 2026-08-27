@@ -8,7 +8,11 @@
       <h1>Master Data Transfer</h1>
       <p class="lede">Export the current database shape, edit only the unlocked Excel cells, validate changes, preview every add/update/move, then confirm atomically.</p>
     </div>
+    {% if current_user.role.value == 'admin' %}
     <a class="button ghost" href="{{ url_for('pages.admin') }}">Back to Admin</a>
+    {% else %}
+    <a class="button ghost" href="{{ url_for('pages.home') }}">Back to Home</a>
+    {% endif %}
   </header>
 
   <section class="transfer-grid">

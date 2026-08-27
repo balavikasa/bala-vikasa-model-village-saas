@@ -29,8 +29,6 @@ def login():
     if request.method == "POST":
         identifier = request.form.get("identifier", "").strip()
         password = request.form.get("password", "")
-        remember = request.form.get("remember") == "on"
-
         normalized_email = identifier.casefold()
         normalized_mobile = "".join(ch for ch in identifier if ch.isdigit() or ch == "+")
         user = db.session.scalar(
@@ -50,7 +48,7 @@ def login():
             user.last_login_at = now
             record_audit(AuditAction.LOGIN, user, actor=user)
             db.session.commit()
-            login_user(user, remember=remember, fresh=True)
+            login_user(user, remember=True, fresh=True)
             next_url = request.args.get("next") or request.form.get("next")
             return redirect(next_url if _safe_next(next_url) else url_for("pages.home"))
         else:

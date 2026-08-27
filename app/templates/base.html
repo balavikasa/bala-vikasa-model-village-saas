@@ -97,8 +97,8 @@
         <span class="nav-glyph" aria-hidden="true">&#9636;</span><span class="nav-label">Analytics</span>
       </a>
       {% endif %}
-      {% if current_user.role.value == 'admin' %}
-      <a href="{{ url_for('pages.admin') }}" class="{% if request.endpoint == 'pages.admin' or (request.endpoint and request.endpoint.startswith('admin_transfer.')) %}is-active{% endif %}">
+      {% if current_user.role.value in ['admin', 'pc'] %}
+      <a href="{{ url_for('pages.admin') if current_user.role.value == 'admin' else url_for('admin_transfer.page') }}" class="{% if request.endpoint == 'pages.admin' or (request.endpoint and request.endpoint.startswith('admin_transfer.')) %}is-active{% endif %}">
         <span class="nav-glyph" aria-hidden="true">&#9881;</span><span class="nav-label">Master Data</span>
       </a>
       {% endif %}

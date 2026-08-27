@@ -15,7 +15,8 @@ from openpyxl.utils import get_column_letter
 from sqlalchemy.exc import IntegrityError
 
 from ..extensions import db
-from ..models import DA, PC, PM, AuditAction, Cluster, Committee, CommitteeMember, User, Village
+from ..models import DA, PC, PM, AuditAction, Cluster, Committee, CommitteeMember, Role, User, Village
+from ..scoping import scoped_get, scoped_select
 from .audit import model_snapshot, record_audit
 
 TEMPLATE_VERSION = "1.0"
@@ -136,8 +137,24 @@ RESOURCES: dict[str, ResourceSpec] = {
 }
 
 
-def resource_catalog() -> list[dict[str, str]]:
-    return [{"key": item.key, "label": item.label} for item in RESOURCES.values()]
+PC_RESOURCE_KEYS = {"das", "villages", "committees", "committee-members"}
+
+
+def _allowed_resource_keys(user: User) -> set[str]:
+    if user.role == Role.ADMIN:
+        return set(RESOURCES)
+    if user.role == Role.PC:
+        return set(PC_RESOURCE_KEYS)
+    return set()
+
+
+def resource_catalog(user: User | None = None) -> list[dict[str, str]]:
+    allowed = set(RESOURCES) if user is None else _allowed_resource_keys(user)
+    return [
+        {"key": item.key, "label": item.label}
+        for item in RESOURCES.values()
+        if item.key in allowed
+    ]
 
 
 def _resource(key: str) -> ResourceSpec:
@@ -145,6 +162,13 @@ def _resource(key: str) -> ResourceSpec:
         return RESOURCES[key]
     except KeyError as exc:
         raise MasterTransferError("Unknown master-data resource.") from exc
+
+
+def _resource_for_user(key: str, user: User) -> ResourceSpec:
+    spec = _resource(key)
+    if spec.key not in _allowed_resource_keys(user):
+        raise MasterTransferError("You do not have permission to import or export this master-data resource.")
+    return spec
 
 
 def _display(value: Any) -> Any:
@@ -161,12 +185,12 @@ def _preview_value(value: Any) -> Any:
     return value
 
 
-def _export_rows(spec: ResourceSpec) -> list[Any]:
-    stmt = (
-        db.select(spec.model)
-        .where(spec.model.is_deleted.is_(False))
-        .order_by(spec.model.id)
-    )
+def _export_rows(spec: ResourceSpec, user: User) -> list[Any]:
+    stmt = scoped_select(
+        spec.model,
+        user,
+        include_disabled=True,
+    ).order_by(spec.model.id)
     return list(db.session.scalars(stmt).unique())
 
 
@@ -196,8 +220,8 @@ def _style_export(ws, spec: ResourceSpec, row_count: int) -> None:
 
 
 def build_export_workbook(resource_key: str, user: User) -> Workbook:
-    spec = _resource(resource_key)
-    rows = _export_rows(spec)
+    spec = _resource_for_user(resource_key, user)
+    rows = _export_rows(spec, user)
     wb = Workbook()
     ws = wb.active
     ws.title = spec.sheet
@@ -312,12 +336,21 @@ def _meta(wb, spec: ResourceSpec, user: User) -> None:
         raise MasterTransferError("This workbook was exported for a different login.")
 
 
-def _validate_relationship(col: ColumnSpec, value: Any) -> str | None:
+def _validate_relationship(
+    col: ColumnSpec,
+    value: Any,
+    user: User,
+) -> str | None:
     if value is None or not col.relationship_model:
         return None
-    related = db.session.get(col.relationship_model, value)
-    if related is None or getattr(related, "is_deleted", False):
-        return f"{col.header} does not reference an available record."
+    related = scoped_get(
+        col.relationship_model,
+        int(value),
+        user,
+        include_disabled=True,
+    )
+    if related is None:
+        return f"{col.header} does not reference a record available in your assigned scope."
     return None
 
 
@@ -375,7 +408,7 @@ def _workbook_signatures(spec: ResourceSpec, values: dict[str, Any]) -> list[tup
 
 
 def preview_import(path: Path, resource_key: str, user: User) -> dict[str, Any]:
-    spec = _resource(resource_key)
+    spec = _resource_for_user(resource_key, user)
     try:
         wb = load_workbook(path, data_only=False)
     except Exception as exc:
@@ -406,9 +439,13 @@ def preview_import(path: Path, resource_key: str, user: User) -> dict[str, Any]:
             if record_id:
                 seen_ids.add(record_id)
 
-        record = db.session.get(spec.model, record_id) if record_id else None
-        if record_id and (record is None or getattr(record, "is_deleted", False)):
-            errors.append("ID does not reference an available record.")
+        record = (
+            scoped_get(spec.model, record_id, user, include_disabled=True)
+            if record_id
+            else None
+        )
+        if record_id and record is None:
+            errors.append("ID does not reference a record available in your assigned scope.")
 
         values: dict[str, Any] = {}
         for col in spec.columns:
@@ -421,7 +458,7 @@ def preview_import(path: Path, resource_key: str, user: User) -> dict[str, Any]:
                 errors.append(str(exc))
             if col.required and converted is None:
                 errors.append(f"{col.header} is required.")
-            rel_error = _validate_relationship(col, converted)
+            rel_error = _validate_relationship(col, converted, user)
             if rel_error:
                 errors.append(rel_error)
             values[col.attr] = converted
@@ -552,7 +589,7 @@ def _apply_values(record: Any, values: dict[str, Any], spec: ResourceSpec) -> No
 
 
 def confirm_import(token: str, resource_key: str, user: User) -> dict[str, Any]:
-    spec = _resource(resource_key)
+    spec = _resource_for_user(resource_key, user)
     path = _staged(token, resource_key, user)
     preview = preview_import(path, resource_key, user)
     if preview["has_errors"]:
@@ -564,7 +601,15 @@ def confirm_import(token: str, resource_key: str, user: User) -> dict[str, Any]:
             if row["action"] not in {"New", "Changed", "Moved"}:
                 continue
             values = row["values"]
-            record = db.session.get(spec.model, row["id"]) if row["id"] else None
+            record = (
+                scoped_get(spec.model, row["id"], user, include_disabled=True)
+                if row["id"]
+                else None
+            )
+            if row["id"] and record is None:
+                raise MasterTransferError(
+                    "A previewed record is no longer available in your assigned scope. Validate the workbook again."
+                )
             if record is None:
                 record = spec.model()
                 _apply_values(record, values, spec)
