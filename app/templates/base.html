@@ -6,108 +6,457 @@
   <meta name="theme-color" content="#1F4E5F">
   <meta name="color-scheme" content="light">
   <meta name="csrf-token" content="{{ csrf_token() }}">
+
   {% if current_user.is_authenticated %}
   <meta name="mv-user-id" content="{{ current_user.id }}">
   <meta name="mv-user-role" content="{{ current_user.role.value }}">
   {% endif %}
+
   <title>{% block title %}Model Village{% endblock %}</title>
+
   <link rel="manifest" href="{{ url_for('pages.manifest') }}">
-  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
-  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/favicon-32.png') }}">
+  <link
+    rel="apple-touch-icon"
+    href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}"
+  >
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="32x32"
+    href="{{ url_for('static', filename='icons/favicon-32.png') }}"
+  >
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/app.css') }}"
+  >
+
   {% block head %}{% endblock %}
 </head>
+
 <body
   class="{% if current_user.is_authenticated %}app-authenticated{% else %}app-anonymous{% endif %}"
-  {% if current_user.is_authenticated %}data-user-id="{{ current_user.id }}" data-role="{{ current_user.role.value }}"{% endif %}
+  {% if current_user.is_authenticated %}
+  data-user-id="{{ current_user.id }}"
+  data-role="{{ current_user.role.value }}"
+  {% endif %}
 >
-  <a class="skip-link" href="#main-content">Skip to content</a>
+  <a class="skip-link" href="#main-content">
+    Skip to content
+  </a>
 
   {% if current_user.is_authenticated %}
-  <header class="mobile-appbar">
-    <a class="brand-lockup compact" href="{{ url_for('pages.home') }}" aria-label="Model Village home">
-      <span class="brand-mark" aria-hidden="true">BV</span>
-      <span><strong>Model Village</strong><small>2026–27</small></span>
+
+  {# ======================================================
+     MOBILE APP BAR
+     DA gets the new Field App shell.
+     Admin / PM / PC keep the existing shell.
+     ====================================================== #}
+
+  {% if current_user.role.value == 'da' %}
+
+  <header class="da-field-appbar">
+    <a
+      class="da-field-brand"
+      href="{{ url_for('planning.action_plans_page') }}"
+      aria-label="Model Village action plans"
+    >
+      <span
+        class="brand-mark"
+        aria-hidden="true"
+      >
+        BV
+      </span>
+
+      <span>
+        <strong>Model Village</strong>
+        <small>Field App</small>
+      </span>
     </a>
-    <div class="appbar-actions">
-      <button class="icon-button install-button hidden" type="button" data-install-app aria-label="Install app">＋</button>
-      <button class="icon-button mobile-menu-trigger" type="button" data-mobile-menu-open aria-controls="mobile-menu" aria-label="Open navigation menu">&#9776;</button>
-      <button class="sync-pill" type="button" data-sync-trigger aria-label="View and sync offline entries">
-        <span class="network-dot" aria-hidden="true"></span>
-        <span data-network-label>Online</span>
-        <strong data-queue-count>0</strong>
+
+    <div class="da-field-appbar-actions">
+      <button
+        class="da-sync-button"
+        type="button"
+        data-sync-trigger
+        aria-label="Open sync queue"
+      >
+        <span
+          class="network-dot"
+          aria-hidden="true"
+        ></span>
+
+        <span data-network-label>
+          Online
+        </span>
+
+        <strong data-queue-count>
+          0
+        </strong>
       </button>
-      <form class="mobile-quick-logout" action="{{ url_for('auth.logout') }}" method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button class="icon-button" type="submit" aria-label="Sign out" title="Sign out"><span aria-hidden="true">&#8617;</span></button>
+
+      <button
+        class="da-field-menu-button"
+        type="button"
+        data-mobile-menu-open
+        aria-controls="mobile-menu"
+        aria-label="Open more navigation"
+      >
+        <span aria-hidden="true">
+          &#9776;
+        </span>
+      </button>
+    </div>
+  </header>
+
+  {% else %}
+
+  <header class="mobile-appbar">
+    <a
+      class="brand-lockup compact"
+      href="{{ url_for('pages.home') }}"
+      aria-label="Model Village home"
+    >
+      <span
+        class="brand-mark"
+        aria-hidden="true"
+      >
+        BV
+      </span>
+
+      <span>
+        <strong>Model Village</strong>
+        <small>2026–27</small>
+      </span>
+    </a>
+
+    <div class="appbar-actions">
+      <button
+        class="icon-button install-button hidden"
+        type="button"
+        data-install-app
+        aria-label="Install app"
+      >
+        ＋
+      </button>
+
+      <button
+        class="icon-button mobile-menu-trigger"
+        type="button"
+        data-mobile-menu-open
+        aria-controls="mobile-menu"
+        aria-label="Open navigation menu"
+      >
+        &#9776;
+      </button>
+
+      <button
+        class="sync-pill"
+        type="button"
+        data-sync-trigger
+        aria-label="View and sync offline entries"
+      >
+        <span
+          class="network-dot"
+          aria-hidden="true"
+        ></span>
+
+        <span data-network-label>
+          Online
+        </span>
+
+        <strong data-queue-count>
+          0
+        </strong>
+      </button>
+
+      <form
+        class="mobile-quick-logout"
+        action="{{ url_for('auth.logout') }}"
+        method="post"
+      >
+        <input
+          type="hidden"
+          name="csrf_token"
+          value="{{ csrf_token() }}"
+        >
+
+        <button
+          class="icon-button"
+          type="submit"
+          aria-label="Sign out"
+          title="Sign out"
+        >
+          <span aria-hidden="true">
+            &#8617;
+          </span>
+        </button>
       </form>
     </div>
   </header>
 
-  <aside class="side-rail" aria-label="Primary navigation">
-    <a class="brand-lockup" href="{{ url_for('pages.home') }}">
-      <span class="brand-mark" aria-hidden="true">BV</span>
-      <span class="brand-copy"><strong>Bala Vikasa</strong><small>Model Village · 2026–27</small></span>
+  {% endif %}
+
+
+  {# ======================================================
+     DESKTOP SIDE RAIL
+     Kept intact for this phase.
+     ====================================================== #}
+
+  <aside
+    class="side-rail"
+    aria-label="Primary navigation"
+  >
+    <a
+      class="brand-lockup"
+      href="{{ url_for('pages.home') }}"
+    >
+      <span
+        class="brand-mark"
+        aria-hidden="true"
+      >
+        BV
+      </span>
+
+      <span class="brand-copy">
+        <strong>Bala Vikasa</strong>
+        <small>
+          Model Village · 2026–27
+        </small>
+      </span>
     </a>
 
     <nav class="rail-nav">
+
       {% if current_user.role.value == 'da' %}
-      <a href="{{ url_for('pages.attendance') }}" class="{% if request.endpoint == 'pages.attendance' %}is-active{% endif %}">
-        <span class="nav-glyph" aria-hidden="true">&#10003;</span><span class="nav-label">Attendance</span>
+
+      <a
+        href="{{ url_for('pages.attendance') }}"
+        class="{% if request.endpoint == 'pages.attendance' %}is-active{% endif %}"
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#10003;
+        </span>
+
+        <span class="nav-label">Attendance</span>
       </a>
-      <a href="{{ url_for('pages.specials') }}" class="{% if request.endpoint == 'pages.specials' %}is-active{% endif %}">
-        <span class="nav-glyph" aria-hidden="true">&#10022;</span><span class="nav-label">Specials</span>
+
+      <a
+        href="{{ url_for('pages.specials') }}"
+        class="{% if request.endpoint == 'pages.specials' %}is-active{% endif %}"
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#10022;
+        </span>
+
+        <span class="nav-label">Specials</span>
       </a>
-      <a href="{{ url_for('planning.action_plans_page') }}" class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}">
-        <span class="nav-glyph" aria-hidden="true">&#9638;</span><span class="nav-label">Action Plans</span>
+
+      <a
+        href="{{ url_for('planning.action_plans_page') }}"
+        class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}"
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#9638;
+        </span>
+
+        <span class="nav-label">Action Plans</span>
       </a>
-      <a href="{{ url_for('reports.reports_page') }}" class="{% if request.endpoint and request.endpoint.startswith('reports.') %}is-active{% endif %}">
-        <span class="nav-glyph" aria-hidden="true">&#9636;</span><span class="nav-label">Reports</span>
+
+      <a
+        href="{{ url_for('reports.reports_page') }}"
+        class="{% if request.endpoint and request.endpoint.startswith('reports.') %}is-active{% endif %}"
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#9636;
+        </span>
+
+        <span class="nav-label">Reports</span>
       </a>
-      <a href="{{ url_for('pages.directory') }}" class="{% if request.endpoint == 'pages.directory' or (request.endpoint and 'profile_page' in request.endpoint) %}is-active{% endif %}">
-        <span class="nav-glyph" aria-hidden="true">&#8962;</span><span class="nav-label">My Villages</span>
+
+      <a
+        href="{{ url_for('pages.directory') }}"
+        class="{% if request.endpoint == 'pages.directory' or (request.endpoint and 'profile_page' in request.endpoint) %}is-active{% endif %}"
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#8962;
+        </span>
+
+        <span class="nav-label">My Villages</span>
       </a>
-      <a href="{{ url_for('pages.map_page') }}" class="{% if request.endpoint == 'pages.map_page' %}is-active{% endif %}">
-        <span class="nav-glyph" aria-hidden="true">&#8982;</span><span class="nav-label">Map</span>
+
+      <a
+        href="{{ url_for('pages.map_page') }}"
+        class="{% if request.endpoint == 'pages.map_page' %}is-active{% endif %}"
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#8982;
+        </span>
+
+        <span class="nav-label">Map</span>
       </a>
+
       {% else %}
-      <a href="{{ url_for('pages.overview') }}" class="{% if request.endpoint == 'pages.overview' %}is-active{% endif %}">
-        <span class="nav-glyph" aria-hidden="true">&#9635;</span><span class="nav-label">Overview</span>
+
+      <a
+        href="{{ url_for('pages.overview') }}"
+        class="{% if request.endpoint == 'pages.overview' %}is-active{% endif %}"
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#9635;
+        </span>
+
+        <span class="nav-label">Overview</span>
       </a>
-      <a href="{{ url_for('planning.action_plans_page') }}" class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}">
-        <span class="nav-glyph" aria-hidden="true">&#9638;</span><span class="nav-label">Action Plans</span>
+
+      <a
+        href="{{ url_for('planning.action_plans_page') }}"
+        class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}"
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#9638;
+        </span>
+
+        <span class="nav-label">Action Plans</span>
       </a>
-      <a href="{{ url_for('reports.reports_page') }}" class="{% if request.endpoint and request.endpoint.startswith('reports.') %}is-active{% endif %}">
-        <span class="nav-glyph" aria-hidden="true">&#9636;</span><span class="nav-label">Reports</span>
+
+      <a
+        href="{{ url_for('reports.reports_page') }}"
+        class="{% if request.endpoint and request.endpoint.startswith('reports.') %}is-active{% endif %}"
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#9636;
+        </span>
+
+        <span class="nav-label">Reports</span>
       </a>
-      <a href="{{ url_for('pages.directory') }}" class="{% if request.endpoint == 'pages.directory' or (request.endpoint and 'profile_page' in request.endpoint) %}is-active{% endif %}">
-        <span class="nav-glyph" aria-hidden="true">&#8962;</span><span class="nav-label">{{ 'Team' if current_user.role.value == 'pc' else 'People' if current_user.role.value == 'pm' else 'Directory' }}</span>
+
+      <a
+        href="{{ url_for('pages.directory') }}"
+        class="{% if request.endpoint == 'pages.directory' or (request.endpoint and 'profile_page' in request.endpoint) %}is-active{% endif %}"
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#8962;
+        </span>
+
+        <span class="nav-label">{{ 'Team' if current_user.role.value == 'pc' else 'People' if current_user.role.value == 'pm' else 'Directory' }}</span>
       </a>
-      <a href="{{ url_for('pages.map_page') }}" class="{% if request.endpoint == 'pages.map_page' %}is-active{% endif %}">
-        <span class="nav-glyph" aria-hidden="true">&#8982;</span><span class="nav-label">Map</span>
+
+      <a
+        href="{{ url_for('pages.map_page') }}"
+        class="{% if request.endpoint == 'pages.map_page' %}is-active{% endif %}"
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#8982;
+        </span>
+
+        <span class="nav-label">Map</span>
       </a>
+
       {% if current_user.role.value in ['admin', 'pm', 'pc'] %}
-      <a href="{{ url_for('pages.monitoring') }}" class="{% if request.endpoint == 'pages.monitoring' %}is-active{% endif %}">
-        <span class="nav-glyph" aria-hidden="true">&#9673;</span><span class="nav-label">Monitoring</span>
+
+      <a
+        href="{{ url_for('pages.monitoring') }}"
+        class="{% if request.endpoint == 'pages.monitoring' %}is-active{% endif %}"
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#9673;
+        </span>
+
+        <span class="nav-label">Monitoring</span>
       </a>
-      <a href="{{ url_for('pages.analytics') }}" class="{% if request.endpoint == 'pages.analytics' %}is-active{% endif %}">
-        <span class="nav-glyph" aria-hidden="true">&#9636;</span><span class="nav-label">Analytics</span>
+
+      <a
+        href="{{ url_for('pages.analytics') }}"
+        class="{% if request.endpoint == 'pages.analytics' %}is-active{% endif %}"
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#9636;
+        </span>
+
+        <span class="nav-label">Analytics</span>
       </a>
+
       {% endif %}
+
       {% if current_user.role.value in ['admin', 'pc'] %}
-      <a href="{{ url_for('pages.admin') if current_user.role.value == 'admin' else url_for('admin_transfer.page') }}" class="{% if request.endpoint == 'pages.admin' or (request.endpoint and request.endpoint.startswith('admin_transfer.')) %}is-active{% endif %}">
-        <span class="nav-glyph" aria-hidden="true">&#9881;</span><span class="nav-label">Master Data</span>
+
+      <a
+        href="{{ url_for('pages.admin') if current_user.role.value == 'admin' else url_for('admin_transfer.page') }}"
+        class="{% if request.endpoint == 'pages.admin' or (request.endpoint and request.endpoint.startswith('admin_transfer.')) %}is-active{% endif %}"
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#9881;
+        </span>
+
+        <span class="nav-label">Master Data</span>
       </a>
+
       {% endif %}
+
       {% endif %}
+
     </nav>
 
     <div class="rail-footer">
-      <div class="rail-account-strip" aria-label="Signed-in account">
-        <strong class="rail-account-name" title="{{ current_user.display_name }}">
+      <div
+        class="rail-account-strip"
+        aria-label="Signed-in account"
+      >
+        <strong
+          class="rail-account-name"
+          title="{{ current_user.display_name }}"
+        >
           {{ current_user.display_name }}
         </strong>
 
@@ -118,9 +467,24 @@
           aria-label="Open sync queue"
           title="Sync status and offline queue"
         >
-          <span class="network-dot" aria-hidden="true"></span>
-          <span class="rail-queue-count" data-queue-count>0</span>
-          <span class="sr-only" data-network-label>Online</span>
+          <span
+            class="network-dot"
+            aria-hidden="true"
+          ></span>
+
+          <span
+            class="rail-queue-count"
+            data-queue-count
+          >
+            0
+          </span>
+
+          <span
+            class="sr-only"
+            data-network-label
+          >
+            Online
+          </span>
         </button>
 
         <form
@@ -128,129 +492,849 @@
           action="{{ url_for('auth.logout') }}"
           method="post"
         >
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input
+            type="hidden"
+            name="csrf_token"
+            value="{{ csrf_token() }}"
+          >
+
           <button
             class="rail-account-logout-button"
             type="submit"
             aria-label="Sign out"
             title="Sign out"
           >
-            <span class="nav-glyph" aria-hidden="true">&#8617;</span>
+            <span
+              class="nav-glyph"
+              aria-hidden="true"
+            >
+              &#8617;
+            </span>
           </button>
         </form>
       </div>
     </div>
   </aside>
+
   {% endif %}
 
-  <main id="main-content" class="{% if current_user.is_authenticated %}app-main{% else %}anonymous-main{% endif %}">
+
+  {# ======================================================
+     MAIN CONTENT
+     ====================================================== #}
+
+  <main
+    id="main-content"
+    class="{% if current_user.is_authenticated %}app-main{% else %}anonymous-main{% endif %}"
+  >
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-      <div class="flash-stack" role="status">
+
+      <div
+        class="flash-stack"
+        role="status"
+      >
         {% for category, message in messages %}
-        <div class="flash {{ category }}">{{ message }}</div>
+        <div class="flash {{ category }}">
+          {{ message }}
+        </div>
         {% endfor %}
       </div>
+
       {% endif %}
     {% endwith %}
+
     {% block content %}{% endblock %}
   </main>
 
+
   {% if current_user.is_authenticated %}
+
+  {# ======================================================
+     MOBILE BOTTOM NAVIGATION
+     DA = new 4-item field shell.
+     Other roles preserve existing nav.
+     ====================================================== #}
+
+  {% if current_user.role.value == 'da' %}
+
+  <nav
+    class="da-field-bottom-nav"
+    aria-label="DA primary navigation"
+  >
+    <button
+      type="button"
+      class="{% if request.endpoint in ['pages.attendance', 'pages.specials'] %}is-active{% endif %}"
+      data-da-entry-menu
+      data-mobile-menu-open
+      aria-controls="mobile-menu"
+      aria-label="Open field entry options"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        ＋
+      </span>
+
+      <small>Entry</small>
+    </button>
+
+    <a
+      href="{{ url_for('planning.action_plans_page') }}"
+      class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#9638;
+      </span>
+
+      <small>Plans</small>
+    </a>
+
+    <a
+      href="{{ url_for('reports.reports_page') }}"
+      class="{% if request.endpoint and request.endpoint.startswith('reports.') %}is-active{% endif %}"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#9636;
+      </span>
+
+      <small>Reports</small>
+    </a>
+
+    <button
+      type="button"
+      data-da-more-menu
+      data-mobile-menu-open
+      aria-controls="mobile-menu"
+      aria-label="Open more navigation"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#9776;
+      </span>
+
+      <small>More</small>
+    </button>
+  </nav>
+
+  {% else %}
+
   <nav class="bottom-nav" aria-label="Mobile navigation">
-    {% if current_user.role.value == 'da' %}
-      <a href="{{ url_for('pages.attendance') }}" class="{% if request.endpoint in ['pages.attendance','pages.specials'] %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#43;</span><small>Entry</small></a>
-      <a href="{{ url_for('planning.action_plans_page') }}" class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#9638;</span><small>Plans</small></a>
-      <a href="{{ url_for('reports.reports_page') }}" class="{% if request.endpoint and request.endpoint.startswith('reports.') %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#9636;</span><small>Reports</small></a>
-      <a href="{{ url_for('pages.map_page') }}" class="{% if request.endpoint == 'pages.map_page' %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#8982;</span><small>Map</small></a>
-      <button type="button" data-mobile-menu-open aria-label="More navigation"><span class="nav-glyph" aria-hidden="true">&#9776;</span><small>More</small></button>
-    {% elif current_user.role.value == 'pc' %}
-      <a href="{{ url_for('pages.overview') }}" class="{% if request.endpoint == 'pages.overview' %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#9635;</span><small>Home</small></a>
-      <a href="{{ url_for('planning.action_plans_page') }}" class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#9638;</span><small>Plans</small></a>
-      <a href="{{ url_for('pages.directory') }}" class="{% if request.endpoint == 'pages.directory' or (request.endpoint and 'profile_page' in request.endpoint) %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#8962;</span><small>Team</small></a>
-      <a href="{{ url_for('reports.reports_page') }}" class="{% if request.endpoint and request.endpoint.startswith('reports.') %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#9636;</span><small>Reports</small></a>
-      <a href="{{ url_for('pages.map_page') }}" class="{% if request.endpoint == 'pages.map_page' %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#8982;</span><small>Map</small></a>
+
+    {% if current_user.role.value == 'pc' %}
+
+    <a
+      href="{{ url_for('pages.overview') }}"
+      class="{% if request.endpoint == 'pages.overview' %}is-active{% endif %}"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#9635;
+      </span>
+      <small>Home</small>
+    </a>
+
+    <a
+      href="{{ url_for('planning.action_plans_page') }}"
+      class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#9638;
+      </span>
+      <small>Plans</small>
+    </a>
+
+    <a
+      href="{{ url_for('pages.directory') }}"
+      class="{% if request.endpoint == 'pages.directory' or (request.endpoint and 'profile_page' in request.endpoint) %}is-active{% endif %}"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#8962;
+      </span>
+      <small>Team</small>
+    </a>
+
+    <a
+      href="{{ url_for('reports.reports_page') }}"
+      class="{% if request.endpoint and request.endpoint.startswith('reports.') %}is-active{% endif %}"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#9636;
+      </span>
+      <small>Reports</small>
+    </a>
+
+    <a
+      href="{{ url_for('pages.map_page') }}"
+      class="{% if request.endpoint == 'pages.map_page' %}is-active{% endif %}"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#8982;
+      </span>
+      <small>Map</small>
+    </a>
+
     {% elif current_user.role.value == 'pm' %}
-      <a href="{{ url_for('pages.overview') }}" class="{% if request.endpoint == 'pages.overview' %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#9635;</span><small>Home</small></a>
-      <a href="{{ url_for('pages.directory') }}" class="{% if request.endpoint == 'pages.directory' or (request.endpoint and 'profile_page' in request.endpoint) %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#8962;</span><small>People</small></a>
-      <a href="{{ url_for('planning.action_plans_page') }}" class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#9638;</span><small>Plans</small></a>
-      <a href="{{ url_for('reports.reports_page') }}" class="{% if request.endpoint and request.endpoint.startswith('reports.') %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#9636;</span><small>Reports</small></a>
-      <a href="{{ url_for('pages.map_page') }}" class="{% if request.endpoint == 'pages.map_page' %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#8982;</span><small>Map</small></a>
+
+    <a
+      href="{{ url_for('pages.overview') }}"
+      class="{% if request.endpoint == 'pages.overview' %}is-active{% endif %}"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#9635;
+      </span>
+      <small>Home</small>
+    </a>
+
+    <a
+      href="{{ url_for('pages.directory') }}"
+      class="{% if request.endpoint == 'pages.directory' or (request.endpoint and 'profile_page' in request.endpoint) %}is-active{% endif %}"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#8962;
+      </span>
+      <small>People</small>
+    </a>
+
+    <a
+      href="{{ url_for('planning.action_plans_page') }}"
+      class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#9638;
+      </span>
+      <small>Plans</small>
+    </a>
+
+    <a
+      href="{{ url_for('reports.reports_page') }}"
+      class="{% if request.endpoint and request.endpoint.startswith('reports.') %}is-active{% endif %}"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#9636;
+      </span>
+      <small>Reports</small>
+    </a>
+
+    <a
+      href="{{ url_for('pages.map_page') }}"
+      class="{% if request.endpoint == 'pages.map_page' %}is-active{% endif %}"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#8982;
+      </span>
+      <small>Map</small>
+    </a>
+
     {% else %}
-      <a href="{{ url_for('pages.overview') }}" class="{% if request.endpoint == 'pages.overview' %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#9635;</span><small>Home</small></a>
-      <a href="{{ url_for('planning.action_plans_page') }}" class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#9638;</span><small>Plans</small></a>
-      <a href="{{ url_for('reports.reports_page') }}" class="{% if request.endpoint and request.endpoint.startswith('reports.') %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#9636;</span><small>Reports</small></a>
-      <a href="{{ url_for('pages.map_page') }}" class="{% if request.endpoint == 'pages.map_page' %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#8982;</span><small>Map</small></a>
-      <a href="{{ url_for('pages.admin') }}" class="{% if request.endpoint == 'pages.admin' or (request.endpoint and request.endpoint.startswith('admin_transfer.')) %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">&#9881;</span><small>Admin</small></a>
+
+    <a
+      href="{{ url_for('pages.overview') }}"
+      class="{% if request.endpoint == 'pages.overview' %}is-active{% endif %}"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#9635;
+      </span>
+      <small>Home</small>
+    </a>
+
+    <a
+      href="{{ url_for('planning.action_plans_page') }}"
+      class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#9638;
+      </span>
+      <small>Plans</small>
+    </a>
+
+    <a
+      href="{{ url_for('reports.reports_page') }}"
+      class="{% if request.endpoint and request.endpoint.startswith('reports.') %}is-active{% endif %}"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#9636;
+      </span>
+      <small>Reports</small>
+    </a>
+
+    <a
+      href="{{ url_for('pages.map_page') }}"
+      class="{% if request.endpoint == 'pages.map_page' %}is-active{% endif %}"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#8982;
+      </span>
+      <small>Map</small>
+    </a>
+
+    <a
+      href="{{ url_for('pages.admin') }}"
+      class="{% if request.endpoint == 'pages.admin' or (request.endpoint and request.endpoint.startswith('admin_transfer.')) %}is-active{% endif %}"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#9881;
+      </span>
+      <small>Admin</small>
+    </a>
+
     {% endif %}
   </nav>
 
-  <dialog class="mobile-menu-dialog" id="mobile-menu" aria-labelledby="mobile-menu-title">
+  {% endif %}
+
+
+  {# ======================================================
+     MOBILE MENU
+     Existing role-specific menu remains intact.
+     ====================================================== #}
+
+  <dialog
+    class="mobile-menu-dialog"
+    id="mobile-menu"
+    aria-labelledby="mobile-menu-title"
+  >
     <div class="mobile-menu-sheet">
+
       <header class="mobile-menu-heading">
         <div class="mobile-menu-user">
-          <span class="avatar" aria-hidden="true">{{ current_user.display_name[:1]|upper }}</span>
-          <span><strong id="mobile-menu-title">{{ current_user.display_name }}</strong><small>{{ current_user.role.value|upper }}</small></span>
+          <span
+            class="avatar"
+            aria-hidden="true"
+          >
+            {{ current_user.display_name[:1]|upper }}
+          </span>
+
+          <span>
+            <strong id="mobile-menu-title">
+              {{ current_user.display_name }}
+            </strong>
+
+            <small>
+              {{ current_user.role.value|upper }}
+            </small>
+          </span>
         </div>
-        <button class="icon-button" type="button" data-mobile-menu-close aria-label="Close navigation menu">&times;</button>
+
+        <button
+          class="icon-button"
+          type="button"
+          data-mobile-menu-close
+          aria-label="Close navigation menu"
+        >
+          &times;
+        </button>
       </header>
 
       <nav class="mobile-menu-nav" aria-label="All navigation">
+
         {% if current_user.role.value == 'da' %}
-        <a href="{{ url_for('pages.attendance') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#10003;</span><strong>Attendance</strong><small>Field entry home</small></a>
-        <a href="{{ url_for('pages.specials') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#10022;</span><strong>Specials</strong><small>Special activity entry</small></a>
-        <a href="{{ url_for('planning.action_plans_page') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#9638;</span><strong>Action Plans</strong><small>Assigned monthly work</small></a>
-        <a href="{{ url_for('reports.reports_page') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#9636;</span><strong>Reports</strong><small>Submitted evidence</small></a>
-        <a href="{{ url_for('pages.directory') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#8962;</span><strong>My Villages</strong><small>People and committees</small></a>
-        <a href="{{ url_for('pages.map_page') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#8982;</span><strong>Map</strong><small>Assigned locations</small></a>
+
+        <a
+          href="{{ url_for('pages.attendance') }}"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#10003;
+          </span>
+
+          <strong>
+            Attendance
+          </strong>
+
+          <small>
+            Field entry home
+          </small>
+        </a>
+
+        <a
+          href="{{ url_for('pages.specials') }}"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#10022;
+          </span>
+
+          <strong>
+            Specials
+          </strong>
+
+          <small>
+            Special activity entry
+          </small>
+        </a>
+
+        <a
+          href="{{ url_for('planning.action_plans_page') }}"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#9638;
+          </span>
+
+          <strong>
+            Action Plans
+          </strong>
+
+          <small>
+            Assigned monthly work
+          </small>
+        </a>
+
+        <a
+          href="{{ url_for('reports.reports_page') }}"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#9636;
+          </span>
+
+          <strong>
+            Reports
+          </strong>
+
+          <small>
+            Submitted evidence
+          </small>
+        </a>
+
+        <a
+          href="{{ url_for('pages.directory') }}"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#8962;
+          </span>
+
+          <strong>
+            My Villages
+          </strong>
+
+          <small>
+            People and committees
+          </small>
+        </a>
+
+        <a
+          href="{{ url_for('pages.map_page') }}"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#8982;
+          </span>
+
+          <strong>
+            Map
+          </strong>
+
+          <small>
+            Assigned locations
+          </small>
+        </a>
+
         {% else %}
-        <a href="{{ url_for('pages.overview') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#9635;</span><strong>Overview</strong><small>Role-scoped home</small></a>
-        <a href="{{ url_for('planning.action_plans_page') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#9638;</span><strong>Action Plans</strong><small>Monthly planning</small></a>
-        <a href="{{ url_for('reports.reports_page') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#9636;</span><strong>Reports</strong><small>Evidence and details</small></a>
-        <a href="{{ url_for('pages.directory') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#8962;</span><strong>{{ 'Team' if current_user.role.value == 'pc' else 'People' if current_user.role.value == 'pm' else 'Directory' }}</strong><small>Profiles and scope</small></a>
-        <a href="{{ url_for('pages.map_page') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#8982;</span><strong>Map</strong><small>Village operations</small></a>
+
+        <a
+          href="{{ url_for('pages.overview') }}"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#9635;
+          </span>
+
+          <strong>
+            Overview
+          </strong>
+
+          <small>
+            Role-scoped home
+          </small>
+        </a>
+
+        <a
+          href="{{ url_for('planning.action_plans_page') }}"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#9638;
+          </span>
+
+          <strong>
+            Action Plans
+          </strong>
+
+          <small>
+            Monthly planning
+          </small>
+        </a>
+
+        <a
+          href="{{ url_for('reports.reports_page') }}"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#9636;
+          </span>
+
+          <strong>
+            Reports
+          </strong>
+
+          <small>
+            Evidence and details
+          </small>
+        </a>
+
+        <a
+          href="{{ url_for('pages.directory') }}"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#8962;
+          </span>
+
+          <strong>
+            {{ 'Team' if current_user.role.value == 'pc' else 'People' if current_user.role.value == 'pm' else 'Directory' }}
+          </strong>
+
+          <small>
+            Profiles and scope
+          </small>
+        </a>
+
+        <a
+          href="{{ url_for('pages.map_page') }}"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#8982;
+          </span>
+
+          <strong>
+            Map
+          </strong>
+
+          <small>
+            Village operations
+          </small>
+        </a>
+
         {% if current_user.role.value in ['admin', 'pm', 'pc'] %}
-        <a href="{{ url_for('pages.monitoring') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#9673;</span><strong>Monitoring</strong><small>Current delivery health</small></a>
-        <a href="{{ url_for('pages.analytics') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#9636;</span><strong>Analytics</strong><small>Trends and program analysis</small></a>
+
+        <a
+          href="{{ url_for('pages.monitoring') }}"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#9673;
+          </span>
+
+          <strong>
+            Monitoring
+          </strong>
+
+          <small>
+            Current delivery health
+          </small>
+        </a>
+
+        <a
+          href="{{ url_for('pages.analytics') }}"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#9636;
+          </span>
+
+          <strong>
+            Analytics
+          </strong>
+
+          <small>
+            Trends and program analysis
+          </small>
+        </a>
+
         {% endif %}
+
         {% if current_user.role.value == 'admin' %}
-        <a href="{{ url_for('pages.admin') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#9881;</span><strong>Master Data</strong><small>People, villages, committees</small></a>
-        <a href="{{ url_for('pages.admin', tab='recycle') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#9851;</span><strong>Recycle Bin</strong><small>Restore soft-deleted records</small></a>
-        <a href="{{ url_for('admin_transfer.page') }}" data-mobile-menu-link><span class="nav-glyph" aria-hidden="true">&#8645;</span><strong>Import / Export</strong><small>Master data workbook</small></a>
+
+        <a
+          href="{{ url_for('pages.admin') }}"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#9881;
+          </span>
+
+          <strong>
+            Master Data
+          </strong>
+
+          <small>
+            People, villages, committees
+          </small>
+        </a>
+
+        <a
+          href="{{ url_for('pages.admin', tab='recycle') }}"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#9851;
+          </span>
+
+          <strong>Recycle Bin</strong>
+
+          <small>
+            Restore soft-deleted records
+          </small>
+        </a>
+
+        <a
+          href="{{ url_for('admin_transfer.page') }}"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#8645;
+          </span>
+
+          <strong>
+            Import / Export
+          </strong>
+
+          <small>
+            Master data workbook
+          </small>
+        </a>
+
         {% endif %}
+
         {% endif %}
+
       </nav>
 
       <footer class="mobile-menu-footer">
-        <form action="{{ url_for('auth.logout') }}" method="post">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button class="button danger wide" type="submit">Sign out</button>
+        <form
+          action="{{ url_for('auth.logout') }}"
+          method="post"
+        >
+          <input
+            type="hidden"
+            name="csrf_token"
+            value="{{ csrf_token() }}"
+          >
+
+          <button
+            class="button danger wide"
+            type="submit"
+          >
+            Sign out
+          </button>
         </form>
       </footer>
+
     </div>
   </dialog>
+
   {% endif %}
 
-  <div class="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+  {# ======================================================
+     TOASTS
+     ====================================================== #}
+
+  <div
+    class="toast-region"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+
+
+  {# ======================================================
+     SYNC DIALOG
+     ====================================================== #}
 
   {% if current_user.is_authenticated %}
-  <dialog class="sync-dialog" id="sync-dialog">
+
+  <dialog
+    class="sync-dialog"
+    id="sync-dialog"
+  >
     <div class="dialog-heading">
-      <div><p class="eyebrow">Offline field work</p><h2>Sync queue</h2></div>
-      <button type="button" class="icon-button" data-close-sync aria-label="Close">×</button>
+      <div>
+        <p class="eyebrow">
+          Offline field work
+        </p>
+
+        <h2>
+          Sync queue
+        </h2>
+      </div>
+
+      <button
+        type="button"
+        class="icon-button"
+        data-close-sync
+        aria-label="Close"
+      >
+        ×
+      </button>
     </div>
-    <p class="muted">Entries are kept per signed-in profile and submitted automatically when connectivity returns.</p>
-    <div id="sync-queue-list" class="sync-list"></div>
+
+    <p class="muted">
+      Entries are kept per signed-in profile and submitted
+      automatically when connectivity returns.
+    </p>
+
+    <div
+      id="sync-queue-list"
+      class="sync-list"
+    ></div>
+
     <div class="dialog-actions">
-      <button class="button ghost" type="button" data-close-sync>Close</button>
-      <button class="button primary" type="button" data-sync-now>Sync now</button>
+      <button
+        class="button ghost"
+        type="button"
+        data-close-sync
+      >
+        Close
+      </button>
+
+      <button
+        class="button primary"
+        type="button"
+        data-sync-now
+      >
+        Sync now
+      </button>
     </div>
   </dialog>
+
   {% endif %}
 
-  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/idb-queue.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/pwa.js') }}" defer></script>
+
+  {# ======================================================
+     JAVASCRIPT
+     ====================================================== #}
+
+  <script
+    src="{{ url_for('static', filename='js/app.js') }}"
+    defer
+  ></script>
+
+  <script
+    src="{{ url_for('static', filename='js/idb-queue.js') }}"
+    defer
+  ></script>
+
+  <script
+    src="{{ url_for('static', filename='js/pwa.js') }}"
+    defer
+  ></script>
+
   {% block scripts %}{% endblock %}
+
 </body>
 </html>

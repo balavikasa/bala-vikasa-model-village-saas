@@ -19,6 +19,13 @@ def test_manifest_is_installable():
     assert {"192x192", "512x512"} <= sizes
     assert any("maskable" in icon.get("purpose", "") for icon in manifest["icons"])
 
+def test_service_worker_refreshes_static_assets_from_network():
+    source = (STATIC / "sw.js").read_text(encoding="utf-8")
+
+    assert "networkFirstStatic" in source
+    assert 'url.pathname.startsWith("/static/")' in source
+    assert "event.respondWith(networkFirstStatic(request))" in source
+
 
 def test_service_worker_has_offline_and_sync_contracts():
     source = (STATIC / "sw.js").read_text(encoding="utf-8")

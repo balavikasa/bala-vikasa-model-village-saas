@@ -302,3 +302,51 @@ def test_da_work_hub_css_contract():
     assert ".da-work-empty" in source
 
     assert "@media" in source
+
+
+def test_base_template_contains_da_field_shell_contract():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    source = (
+        root
+        / "app"
+        / "templates"
+        / "base.html"
+    ).read_text(encoding="utf-8")
+
+    assert 'class="da-field-appbar"' in source
+    assert 'class="da-field-bottom-nav"' in source
+    assert "data-da-entry-menu" in source
+    assert "data-da-more-menu" in source
+
+    for label in ("Entry", "Plans", "Reports", "More"):
+        assert f">{label}<" in source
+
+def test_da_primary_action_uses_one_time_attention_effect():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+
+    js = (
+        root
+        / "app"
+        / "static"
+        / "js"
+        / "action-plans.js"
+    ).read_text(encoding="utf-8")
+
+    css = (
+        root
+        / "app"
+        / "static"
+        / "css"
+        / "app.css"
+    ).read_text(encoding="utf-8")
+
+    assert "is-attention-pulse" in js
+    assert "animationend" in js
+    assert "prefers-reduced-motion: reduce" in js
+
+    assert ".is-attention-pulse" in css
+    assert "@keyframes mv-attention-pulse" in css

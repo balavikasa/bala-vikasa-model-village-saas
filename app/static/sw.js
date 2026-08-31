@@ -2,11 +2,32 @@
 "use strict";
 importScripts("/static/js/idb-queue.js");
 
-const VERSION = "2026.27.14";
+const VERSION = "2026.27.15";
 // Required field evidence + reliable evidence-map coordinates
 const STATIC_CACHE = `mv-static-${VERSION}`;
 const DATA_PREFIX = "mv-data-";
 let activeUser = null;
+
+const networkFirstStatic = async (request) => {
+  try {
+    const response = await fetch(request);
+
+    if (response.ok) {
+      const cache = await caches.open(STATIC_CACHE);
+      await cache.put(request, response.clone());
+    }
+
+    return response;
+  } catch (error) {
+    const cached = await caches.match(request);
+
+    if (cached) {
+      return cached;
+    }
+
+    throw error;
+  }
+};
 
 const STATIC_ASSETS = [
   "/offline",
@@ -149,7 +170,12 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(networkFirstNavigation(request));
     return;
   }
-  if (url.pathname.startsWith("/static/") || url.pathname === "/manifest.json") {
+  if (url.pathname.startsWith("/static/")) {
+    event.respondWith(networkFirstStatic(request));
+    return;
+  }
+
+  if (url.pathname === "/manifest.json") {
     event.respondWith(cacheFirst(request));
     return;
   }

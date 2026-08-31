@@ -52,6 +52,50 @@
    * ------------------------------------------------------------------
    */
 
+  function drawAttentionToFirstDaAction() {
+  const firstAction =
+    document.querySelector(
+      '[data-work-panel="today"] .da-work-go'
+    ) ||
+    document.querySelector(
+      '[data-work-panel="pending"] .da-work-go'
+    );
+
+    if (!firstAction) {
+      return;
+    }
+
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    );
+
+    if (reduceMotion.matches) {
+      return;
+    }
+
+    if (firstAction.dataset.attentionShown === "1") {
+      return;
+    }
+
+    firstAction.dataset.attentionShown = "1";
+    firstAction.classList.add(
+      "is-attention-pulse"
+    );
+
+    firstAction.addEventListener(
+      "animationend",
+      () => {
+        firstAction.classList.remove(
+          "is-attention-pulse"
+        );
+      },
+      {
+        once: true,
+      }
+    );
+  }
+
+
   const initDaWorkHub = () => {
     const todayList = document.querySelector("[data-today-work]");
     const pendingList = document.querySelector("[data-pending-work]");
