@@ -28,6 +28,7 @@ from .services.monthly_plans import (
     action_plan_status,
     build_export_workbook,
     confirm_import,
+    da_work_queue,
     month_key,
     month_label,
     month_start,
@@ -94,6 +95,15 @@ def month_data():
     except PlanningError as exc:
         return jsonify(error=str(exc)), 422
 
+@bp.get("/api/v1/planning/da-work")
+@login_required
+@json_role_required(Role.DA)
+def da_work_data():
+    return jsonify(
+        da_work_queue(
+            current_user._get_current_object()
+        )
+    )
 
 @bp.patch("/api/v1/planning/plans/<int:plan_id>")
 @login_required

@@ -22,7 +22,7 @@ bp = Blueprint("pages", __name__)
 @login_required
 def home():
     if current_user.role == Role.DA:
-        return redirect(url_for("pages.attendance"))
+        return redirect(url_for("planning.action_plans_page"))
     return redirect(url_for("pages.overview"))
 
 
@@ -30,7 +30,7 @@ def home():
 @login_required
 def overview():
     if current_user.role == Role.DA:
-        return redirect(url_for("pages.attendance"))
+        return redirect(url_for("planning.action_plans_page"))
     return render_template("overview.html")
 
 

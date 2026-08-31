@@ -18,6 +18,27 @@
   --bottom-nav: 72px;
   --touch: 44px;
   font-synthesis: none;
+    --mv-primary: #0C7C86;
+  --mv-primary-2: #13A0A8;
+  --mv-page: #F4FAFA;
+  --mv-surface: #FFFFFF;
+  --mv-text: #163036;
+  --mv-muted: #6B7F83;
+  --mv-success: #3A9B70;
+  --mv-warning: #F0A53A;
+  --mv-danger: #D95E4F;
+
+  --mv-radius-control: 14px;
+  --mv-radius-surface: 18px;
+
+  --mv-shadow-soft:
+    0 12px 32px rgba(18, 64, 70, 0.08);
+
+  --mv-shadow-float:
+    0 18px 48px rgba(18, 64, 70, 0.16);
+
+  --mv-motion-fast: 180ms;
+  --mv-motion-base: 210ms;
 }
 
 * { box-sizing: border-box; }
@@ -2556,5 +2577,872 @@ details pre{max-width:400px;max-height:220px;overflow:auto;padding:10px;border-r
 
   .analytics-frame {
     min-height: 1780px;
+  }
+}
+
+/* =========================================================
+   DA ACTION PLAN WORK HUB
+   ========================================================= */
+
+.da-work-hub {
+  max-width: 1180px;
+}
+
+.da-workspace {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Today / Pending segmented tabs */
+.work-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  margin: 14px;
+  padding: 4px;
+  border-radius: 16px;
+  background: var(--paper-2);
+}
+
+.work-tab {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background .16s ease,
+    color .16s ease,
+    box-shadow .16s ease,
+    transform .16s ease;
+}
+
+.work-tab:hover {
+  color: var(--navy);
+}
+
+.work-tab:active {
+  transform: scale(.99);
+}
+
+.work-tab.is-active {
+  background: var(--white);
+  color: var(--navy);
+  box-shadow: var(--shadow-soft);
+}
+
+.work-tab:focus-visible {
+  outline: 3px solid rgba(232, 169, 58, .42);
+  outline-offset: 2px;
+}
+
+.work-tab strong,
+.work-count {
+  min-width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(31, 78, 95, .10);
+  color: var(--navy);
+  font-size: .75rem;
+  line-height: 1;
+}
+
+.work-tab.is-active strong {
+  background: var(--navy);
+  color: var(--white);
+}
+
+/* Tab content */
+.work-tab-panels {
+  touch-action: pan-y;
+}
+
+.work-panel {
+  padding: 18px;
+}
+
+.work-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.work-panel-heading .eyebrow {
+  margin-bottom: 5px;
+}
+
+.work-panel-heading h2 {
+  margin-bottom: 0;
+}
+
+.da-plan-list {
+  display: grid;
+  gap: 12px;
+}
+
+/* Assignment card */
+.da-work-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 6px 18px rgba(31, 78, 95, .06);
+}
+
+.da-work-card-main {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: grid;
+  gap: 10px;
+}
+
+.da-work-location {
+  min-width: 0;
+}
+
+.da-work-location strong,
+.da-work-location span {
+  display: block;
+}
+
+.da-work-location strong {
+  margin-bottom: 2px;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.da-work-location span {
+  color: var(--muted);
+  font-size: .88rem;
+}
+
+.da-work-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.da-work-type {
+  min-height: 28px;
+}
+
+.da-work-type[data-plan-type="attendance"] {
+  background: rgba(31, 78, 95, .11);
+  color: var(--navy);
+}
+
+.da-work-type[data-plan-type="specials"] {
+  background: rgba(232, 169, 58, .18);
+  color: #77510D;
+}
+
+.da-work-timing {
+  font-size: .82rem;
+  font-weight: 700;
+}
+
+.da-work-timing.due-today {
+  color: #77510D;
+}
+
+.da-work-timing.overdue {
+  color: var(--clay);
+}
+
+.da-work-timing.upcoming {
+  color: var(--muted);
+}
+
+.da-work-notes {
+  margin: 0;
+  color: var(--muted);
+  font-size: .84rem;
+}
+
+.da-work-go {
+  flex: 0 0 auto;
+  min-width: 78px;
+  min-height: 48px;
+  font-size: .9rem;
+  letter-spacing: .04em;
+}
+
+.da-work-upcoming-label {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--paper-2);
+  color: var(--muted);
+  font-size: .76rem;
+  font-weight: 800;
+}
+
+/* Upcoming */
+.upcoming-work {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.upcoming-work .work-panel-heading {
+  align-items: center;
+}
+
+/* Empty states */
+.da-work-empty {
+  min-height: 128px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 5px;
+  padding: 24px;
+  border: 1px dashed rgba(31, 78, 95, .18);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, .45);
+  text-align: center;
+}
+
+.da-work-empty strong {
+  color: var(--navy);
+}
+
+.da-work-empty span {
+  color: var(--muted);
+  font-size: .88rem;
+}
+
+/* Pending tab gets a subtle urgency cue */
+[data-work-panel="pending"] .da-work-card {
+  border-left: 4px solid rgba(193, 84, 60, .55);
+}
+
+/* =========================================================
+   DA WORK HUB — MOBILE
+   ========================================================= */
+
+@media (max-width: 720px) {
+  .da-work-hub {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .da-work-hub .page-heading {
+    margin-bottom: 14px;
+  }
+
+  .da-work-hub .page-heading h1 {
+    margin-bottom: .45rem;
+  }
+
+  .da-workspace {
+    border-radius: 18px;
+  }
+
+  .work-tabs {
+    position: sticky;
+    top: calc(64px + env(safe-area-inset-top) + 6px);
+    z-index: 12;
+    margin: 8px;
+    background: rgba(233, 229, 218, .94);
+    backdrop-filter: blur(12px);
+  }
+
+  .work-tab {
+    min-height: 48px;
+    padding-inline: 10px;
+    font-size: .88rem;
+  }
+
+  .work-panel {
+    padding: 14px;
+  }
+
+  .work-panel-heading {
+    margin-bottom: 12px;
+  }
+
+  .work-panel-heading h2 {
+    font-size: 1.55rem;
+  }
+
+  .da-work-card {
+    align-items: stretch;
+    gap: 14px;
+    padding: 14px;
+  }
+
+  .da-work-location strong {
+    font-size: .94rem;
+  }
+
+  .da-work-go {
+    align-self: center;
+    min-width: 68px;
+    padding-inline: 12px;
+  }
+
+  .upcoming-work {
+    margin-top: 22px;
+    padding-top: 18px;
+  }
+}
+
+/* Very narrow phones */
+@media (max-width: 430px) {
+  .da-work-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .da-work-card-main {
+    min-width: 0;
+  }
+
+  .da-work-meta {
+    gap: 6px;
+  }
+
+  .da-work-go {
+    align-self: center;
+  }
+
+  .da-work-upcoming-label {
+    align-self: center;
+    padding-inline: 10px;
+  }
+
+  .work-count {
+    min-width: 26px;
+    height: 26px;
+  }
+}
+
+/* =========================================================
+   MODEL VILLAGE MODERN UI FOUNDATION
+   ========================================================= */
+
+.mv-enter {
+  animation:
+    mv-enter
+    var(--mv-motion-base)
+    ease-out
+    both;
+}
+
+@keyframes mv-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mv-primary-action {
+  transition:
+    transform var(--mv-motion-fast) ease,
+    box-shadow var(--mv-motion-fast) ease,
+    background var(--mv-motion-fast) ease;
+}
+
+.mv-primary-action:hover {
+  transform: translateY(-1px);
+}
+
+.mv-primary-action:active {
+  transform:
+    translateY(0)
+    scale(0.985);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mv-enter {
+    animation: none;
+  }
+
+  .mv-primary-action,
+  .work-tab,
+  .bottom-nav a,
+  .bottom-nav button {
+    transition: none !important;
+  }
+}
+
+/* =========================================================
+   DA FIELD APP SHELL
+   ========================================================= */
+
+.da-field-appbar,
+.da-field-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  body[data-role="da"] {
+    background: var(--mv-page);
+    color: var(--mv-text);
+  }
+
+  /*
+   * Hide the legacy mobile shell for DA only.
+   * Admin / PM / PC keep the existing shell.
+   */
+  body[data-role="da"] .mobile-appbar,
+  body[data-role="da"] .bottom-nav {
+    display: none;
+  }
+
+  .da-field-appbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+
+    min-height: 64px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    padding:
+      max(8px, env(safe-area-inset-top))
+      12px
+      8px;
+
+    background: rgba(255, 255, 255, 0.94);
+
+    border-bottom:
+      1px solid
+      rgba(12, 124, 134, 0.08);
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    box-shadow:
+      0 6px 20px
+      rgba(18, 64, 70, 0.05);
+  }
+
+  .da-field-brand {
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    color: var(--mv-text);
+    text-decoration: none;
+  }
+
+  .da-field-brand .brand-mark {
+    flex: 0 0 auto;
+
+    width: 40px;
+    height: 40px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 13px;
+
+    background:
+      linear-gradient(
+        145deg,
+        var(--mv-primary),
+        var(--mv-primary-2)
+      );
+
+    color: #fff;
+
+    box-shadow:
+      0 10px 24px
+      rgba(12, 124, 134, 0.20);
+  }
+
+  .da-field-brand > span:last-child {
+    min-width: 0;
+  }
+
+  .da-field-brand strong,
+  .da-field-brand small {
+    display: block;
+  }
+
+  .da-field-brand strong {
+    overflow: hidden;
+
+    color: var(--mv-primary);
+
+    font-size: 0.94rem;
+    font-weight: 800;
+    line-height: 1.1;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .da-field-brand small {
+    margin-top: 3px;
+
+    color: var(--mv-muted);
+
+    font-size: 0.68rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .da-field-appbar-actions {
+    flex: 0 0 auto;
+
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .da-sync-button,
+  .da-field-menu-button {
+    min-width: 44px;
+    min-height: 44px;
+
+    border: 0;
+
+    border-radius:
+      var(--mv-radius-control);
+
+    background:
+      color-mix(
+        in srgb,
+        var(--mv-primary) 8%,
+        #fff
+      );
+
+    color: var(--mv-primary);
+
+    cursor: pointer;
+
+    transition:
+      background var(--mv-motion-fast) ease,
+      color var(--mv-motion-fast) ease,
+      transform var(--mv-motion-fast) ease;
+  }
+
+  .da-sync-button:hover,
+  .da-field-menu-button:hover {
+    background:
+      color-mix(
+        in srgb,
+        var(--mv-primary) 13%,
+        #fff
+      );
+  }
+
+  .da-sync-button:active,
+  .da-field-menu-button:active {
+    transform: scale(0.97);
+  }
+
+  .da-sync-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    padding: 0 10px;
+
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  .da-sync-button .network-dot {
+    flex: 0 0 auto;
+  }
+
+  .da-sync-button [data-queue-count] {
+    min-width: 19px;
+    height: 19px;
+
+    display: inline-grid;
+    place-items: center;
+
+    padding: 0 5px;
+
+    border-radius: 999px;
+
+    background: var(--mv-primary);
+    color: #fff;
+
+    font-size: 0.65rem;
+  }
+
+  .da-field-menu-button {
+    display: grid;
+    place-items: center;
+
+    padding: 0;
+
+    font-size: 1.08rem;
+  }
+
+  /*
+   * Floating mobile field navigation.
+   */
+  .da-field-bottom-nav {
+    position: fixed;
+
+    left: 8px;
+    right: 8px;
+
+    bottom:
+      max(
+        8px,
+        env(safe-area-inset-bottom)
+      );
+
+    z-index: 45;
+
+    display: grid;
+
+    grid-template-columns:
+      repeat(
+        4,
+        minmax(0, 1fr)
+      );
+
+    gap: 4px;
+
+    padding: 6px;
+
+    border:
+      1px solid
+      rgba(12, 124, 134, 0.09);
+
+    border-radius: 20px;
+
+    background:
+      rgba(
+        255,
+        255,
+        255,
+        0.96
+      );
+
+    box-shadow:
+      var(--mv-shadow-float);
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .da-field-bottom-nav a,
+  .da-field-bottom-nav button {
+    min-width: 44px;
+    min-height: 52px;
+
+    display: grid;
+    place-items: center;
+    align-content: center;
+
+    gap: 3px;
+
+    padding: 5px 4px;
+
+    border: 0;
+    border-radius: 14px;
+
+    background: transparent;
+
+    color: var(--mv-muted);
+
+    text-decoration: none;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition:
+      background var(--mv-motion-fast) ease,
+      color var(--mv-motion-fast) ease,
+      transform var(--mv-motion-fast) ease;
+  }
+
+  .da-field-bottom-nav a:hover,
+  .da-field-bottom-nav button:hover {
+    background:
+      color-mix(
+        in srgb,
+        var(--mv-primary) 6%,
+        #fff
+      );
+
+    color: var(--mv-primary);
+  }
+
+  .da-field-bottom-nav a:active,
+  .da-field-bottom-nav button:active {
+    transform: scale(0.96);
+  }
+
+  .da-field-bottom-nav .nav-glyph {
+    font-size: 1.08rem;
+    line-height: 1;
+  }
+
+  .da-field-bottom-nav small {
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .da-field-bottom-nav .is-active {
+    background:
+      color-mix(
+        in srgb,
+        var(--mv-primary) 10%,
+        #fff
+      );
+
+    color: var(--mv-primary);
+
+    transform:
+      translateY(-1px);
+  }
+
+  /*
+   * Keep page content above the
+   * floating navigation.
+   */
+  body[data-role="da"] .app-main {
+    padding-bottom:
+      calc(
+        92px +
+        env(safe-area-inset-bottom)
+      );
+  }
+}
+
+
+/* =========================================================
+   SMALL PHONE SAFETY
+   ========================================================= */
+
+@media (max-width: 390px) {
+  .da-field-appbar {
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+
+  .da-field-brand {
+    gap: 8px;
+  }
+
+  .da-field-brand .brand-mark {
+    width: 38px;
+    height: 38px;
+  }
+
+  .da-field-brand strong {
+    font-size: 0.88rem;
+  }
+
+  .da-sync-button {
+    padding-inline: 8px;
+  }
+
+  .da-sync-button [data-network-label] {
+    display: none;
+  }
+
+  .da-field-bottom-nav {
+    left: 6px;
+    right: 6px;
+
+    padding: 5px;
+  }
+
+  .da-field-bottom-nav a,
+  .da-field-bottom-nav button {
+    min-height: 50px;
+  }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .da-sync-button,
+  .da-field-menu-button,
+  .da-field-bottom-nav a,
+  .da-field-bottom-nav button {
+    transition: none;
+  }
+
+  .da-field-bottom-nav .is-active {
+    transform: none;
+  }
+}
+
+/* =========================================================
+   DA PRIMARY ACTION ATTENTION
+   Runs once only; never loops.
+   ========================================================= */
+
+.is-attention-pulse {
+  animation:
+    mv-attention-pulse
+    620ms
+    ease-out
+    1;
+}
+
+@keyframes mv-attention-pulse {
+  0% {
+    box-shadow:
+      0 0 0 0
+      rgba(12, 124, 134, 0.30);
+  }
+
+  55% {
+    box-shadow:
+      0 0 0 9px
+      rgba(12, 124, 134, 0);
+  }
+
+  100% {
+    box-shadow:
+      0 0 0 0
+      rgba(12, 124, 134, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-attention-pulse {
+    animation: none;
   }
 }
