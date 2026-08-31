@@ -2558,3 +2558,362 @@ details pre{max-width:400px;max-height:220px;overflow:auto;padding:10px;border-r
     min-height: 1780px;
   }
 }
+
+/* =========================================================
+   DA ACTION PLAN WORK HUB
+   ========================================================= */
+
+.da-work-hub {
+  max-width: 1180px;
+}
+
+.da-workspace {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Today / Pending segmented tabs */
+.work-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  margin: 14px;
+  padding: 4px;
+  border-radius: 16px;
+  background: var(--paper-2);
+}
+
+.work-tab {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background .16s ease,
+    color .16s ease,
+    box-shadow .16s ease,
+    transform .16s ease;
+}
+
+.work-tab:hover {
+  color: var(--navy);
+}
+
+.work-tab:active {
+  transform: scale(.99);
+}
+
+.work-tab.is-active {
+  background: var(--white);
+  color: var(--navy);
+  box-shadow: var(--shadow-soft);
+}
+
+.work-tab:focus-visible {
+  outline: 3px solid rgba(232, 169, 58, .42);
+  outline-offset: 2px;
+}
+
+.work-tab strong,
+.work-count {
+  min-width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(31, 78, 95, .10);
+  color: var(--navy);
+  font-size: .75rem;
+  line-height: 1;
+}
+
+.work-tab.is-active strong {
+  background: var(--navy);
+  color: var(--white);
+}
+
+/* Tab content */
+.work-tab-panels {
+  touch-action: pan-y;
+}
+
+.work-panel {
+  padding: 18px;
+}
+
+.work-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.work-panel-heading .eyebrow {
+  margin-bottom: 5px;
+}
+
+.work-panel-heading h2 {
+  margin-bottom: 0;
+}
+
+.da-plan-list {
+  display: grid;
+  gap: 12px;
+}
+
+/* Assignment card */
+.da-work-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 6px 18px rgba(31, 78, 95, .06);
+}
+
+.da-work-card-main {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: grid;
+  gap: 10px;
+}
+
+.da-work-location {
+  min-width: 0;
+}
+
+.da-work-location strong,
+.da-work-location span {
+  display: block;
+}
+
+.da-work-location strong {
+  margin-bottom: 2px;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.da-work-location span {
+  color: var(--muted);
+  font-size: .88rem;
+}
+
+.da-work-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.da-work-type {
+  min-height: 28px;
+}
+
+.da-work-type[data-plan-type="attendance"] {
+  background: rgba(31, 78, 95, .11);
+  color: var(--navy);
+}
+
+.da-work-type[data-plan-type="specials"] {
+  background: rgba(232, 169, 58, .18);
+  color: #77510D;
+}
+
+.da-work-timing {
+  font-size: .82rem;
+  font-weight: 700;
+}
+
+.da-work-timing.due-today {
+  color: #77510D;
+}
+
+.da-work-timing.overdue {
+  color: var(--clay);
+}
+
+.da-work-timing.upcoming {
+  color: var(--muted);
+}
+
+.da-work-notes {
+  margin: 0;
+  color: var(--muted);
+  font-size: .84rem;
+}
+
+.da-work-go {
+  flex: 0 0 auto;
+  min-width: 78px;
+  min-height: 48px;
+  font-size: .9rem;
+  letter-spacing: .04em;
+}
+
+.da-work-upcoming-label {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--paper-2);
+  color: var(--muted);
+  font-size: .76rem;
+  font-weight: 800;
+}
+
+/* Upcoming */
+.upcoming-work {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.upcoming-work .work-panel-heading {
+  align-items: center;
+}
+
+/* Empty states */
+.da-work-empty {
+  min-height: 128px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 5px;
+  padding: 24px;
+  border: 1px dashed rgba(31, 78, 95, .18);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, .45);
+  text-align: center;
+}
+
+.da-work-empty strong {
+  color: var(--navy);
+}
+
+.da-work-empty span {
+  color: var(--muted);
+  font-size: .88rem;
+}
+
+/* Pending tab gets a subtle urgency cue */
+[data-work-panel="pending"] .da-work-card {
+  border-left: 4px solid rgba(193, 84, 60, .55);
+}
+
+/* =========================================================
+   DA WORK HUB — MOBILE
+   ========================================================= */
+
+@media (max-width: 720px) {
+  .da-work-hub {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .da-work-hub .page-heading {
+    margin-bottom: 14px;
+  }
+
+  .da-work-hub .page-heading h1 {
+    margin-bottom: .45rem;
+  }
+
+  .da-workspace {
+    border-radius: 18px;
+  }
+
+  .work-tabs {
+    position: sticky;
+    top: calc(64px + env(safe-area-inset-top) + 6px);
+    z-index: 12;
+    margin: 8px;
+    background: rgba(233, 229, 218, .94);
+    backdrop-filter: blur(12px);
+  }
+
+  .work-tab {
+    min-height: 48px;
+    padding-inline: 10px;
+    font-size: .88rem;
+  }
+
+  .work-panel {
+    padding: 14px;
+  }
+
+  .work-panel-heading {
+    margin-bottom: 12px;
+  }
+
+  .work-panel-heading h2 {
+    font-size: 1.55rem;
+  }
+
+  .da-work-card {
+    align-items: stretch;
+    gap: 14px;
+    padding: 14px;
+  }
+
+  .da-work-location strong {
+    font-size: .94rem;
+  }
+
+  .da-work-go {
+    align-self: center;
+    min-width: 68px;
+    padding-inline: 12px;
+  }
+
+  .upcoming-work {
+    margin-top: 22px;
+    padding-top: 18px;
+  }
+}
+
+/* Very narrow phones */
+@media (max-width: 430px) {
+  .da-work-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .da-work-card-main {
+    min-width: 0;
+  }
+
+  .da-work-meta {
+    gap: 6px;
+  }
+
+  .da-work-go {
+    align-self: center;
+  }
+
+  .da-work-upcoming-label {
+    align-self: center;
+    padding-inline: 10px;
+  }
+
+  .work-count {
+    min-width: 26px;
+    height: 26px;
+  }
+}
