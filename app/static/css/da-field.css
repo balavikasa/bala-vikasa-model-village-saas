@@ -1,0 +1,1058 @@
+/* =========================================================
+   BALA VIKASA MODEL VILLAGE
+   DA FIELD APP
+   ========================================================= */
+
+/*
+ * This stylesheet loads after app.css.
+ * It intentionally overrides only DA-facing mobile UI.
+ */
+
+body[data-role="da"] {
+  --da-primary: var(--mv-primary, #0C7C86);
+  --da-primary-2: var(--mv-primary-2, #13A0A8);
+  --da-page: var(--mv-page, #F4FAFA);
+  --da-surface: var(--mv-surface, #FFFFFF);
+  --da-text: var(--mv-text, #163036);
+  --da-muted: var(--mv-muted, #6B7F83);
+  --da-success: var(--mv-success, #3A9B70);
+  --da-warning: var(--mv-warning, #F0A53A);
+  --da-danger: var(--mv-danger, #D95E4F);
+
+  --da-radius-sm: 12px;
+  --da-radius-md: 16px;
+  --da-radius-lg: 20px;
+
+  --da-shadow:
+    0 12px 30px
+    rgba(18, 64, 70, 0.08);
+
+  --da-shadow-floating:
+    0 18px 48px
+    rgba(18, 64, 70, 0.16);
+}
+
+
+/* =========================================================
+   ENTRY CHOOSER
+   ========================================================= */
+
+.da-entry-dialog {
+  width:
+    min(
+      calc(100% - 16px),
+      420px
+    );
+
+  max-width: none;
+
+  margin:
+    auto
+    auto
+    max(
+      82px,
+      calc(
+        74px +
+        env(safe-area-inset-bottom)
+      )
+    );
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 22px;
+
+  background: transparent;
+
+  overflow: visible;
+}
+
+.da-entry-dialog::backdrop {
+  background:
+    rgba(10, 38, 42, 0.38);
+
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter:
+    blur(3px);
+}
+
+.da-entry-sheet {
+  padding:
+    10px
+    16px
+    18px;
+
+  border:
+    1px solid
+    rgba(12, 124, 134, 0.09);
+
+  border-radius: 22px;
+
+  background:
+    var(--da-surface);
+
+  box-shadow:
+    var(--da-shadow-floating);
+}
+
+.da-entry-handle {
+  width: 42px;
+  height: 4px;
+
+  margin:
+    0
+    auto
+    14px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(22, 48, 54, 0.14);
+}
+
+.da-entry-heading {
+  display: flex;
+
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 16px;
+
+  margin-bottom: 14px;
+}
+
+.da-entry-heading .eyebrow {
+  margin-bottom: 4px;
+}
+
+.da-entry-heading h2 {
+  margin: 0;
+
+  color:
+    var(--da-text);
+
+  font-family:
+    Inter,
+    system-ui,
+    sans-serif;
+
+  font-size: 1.15rem;
+  line-height: 1.25;
+
+  letter-spacing: -0.02em;
+}
+
+.da-entry-heading
+.icon-button {
+  flex: 0 0 auto;
+
+  min-width: 44px;
+  min-height: 44px;
+
+  border-radius: 13px;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--da-primary) 8%,
+      #fff
+    );
+
+  color:
+    var(--da-primary);
+}
+
+.da-entry-actions {
+  display: grid;
+
+  gap: 10px;
+}
+
+.da-entry-option {
+  min-height: 76px;
+
+  display: grid;
+
+  grid-template-columns:
+    46px
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 12px;
+
+  border:
+    1px solid
+    rgba(12, 124, 134, 0.10);
+
+  border-radius: 16px;
+
+  background: #fff;
+
+  color:
+    var(--da-text);
+
+  text-decoration: none;
+
+  box-shadow:
+    0 5px 15px
+    rgba(18, 64, 70, 0.04);
+
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.da-entry-option:hover {
+  border-color:
+    rgba(12, 124, 134, 0.24);
+
+  box-shadow:
+    0 9px 22px
+    rgba(18, 64, 70, 0.08);
+
+  transform:
+    translateY(-1px);
+}
+
+.da-entry-option:active {
+  transform:
+    scale(0.985);
+}
+
+.da-entry-icon {
+  width: 46px;
+  height: 46px;
+
+  display: grid;
+
+  place-items: center;
+
+  border-radius: 14px;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--da-primary) 10%,
+      #fff
+    );
+
+  color:
+    var(--da-primary);
+
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.da-entry-option strong,
+.da-entry-option small {
+  display: block;
+}
+
+.da-entry-option strong {
+  color:
+    var(--da-text);
+
+  font-size: 0.95rem;
+}
+
+.da-entry-option small {
+  margin-top: 4px;
+
+  color:
+    var(--da-muted);
+
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+.da-entry-arrow {
+  color:
+    var(--da-primary);
+
+  font-size: 1.15rem;
+}
+
+
+/* =========================================================
+   DA ACTION PLANS — PHONE
+   ========================================================= */
+
+@media (max-width: 760px) {
+
+  body[data-role="da"] {
+    background:
+      var(--da-page);
+  }
+
+  body[data-role="da"]
+  .app-main {
+    padding:
+      0
+      12px
+      calc(
+        94px +
+        env(safe-area-inset-bottom)
+      );
+
+    overflow-x: hidden;
+  }
+
+
+  /*
+   * Remove legacy page-height / spacing.
+   */
+  body[data-role="da"]
+  .planning-page.da-work-hub {
+    width: 100%;
+    max-width: none;
+
+    min-height: 0;
+
+    margin: 0;
+
+    padding:
+      22px
+      0
+      10px;
+  }
+
+
+  /*
+   * Main title section.
+   */
+  body[data-role="da"]
+  .da-work-hub
+  > .page-heading {
+    display: block;
+
+    min-height: 0;
+
+    margin: 0;
+
+    padding: 0;
+
+    border: 0;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  > .page-heading
+  > div:first-child {
+    margin: 0;
+    padding: 0;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .page-heading
+  .eyebrow {
+    margin:
+      0
+      0
+      7px;
+
+    color:
+      #C1543C;
+
+    font-size: 0.69rem;
+    font-weight: 900;
+
+    line-height: 1;
+
+    letter-spacing: 0.13em;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .page-heading h1 {
+    margin: 0;
+
+    color:
+      #194D5F;
+
+    font-size:
+      clamp(
+        2.15rem,
+        10vw,
+        2.7rem
+      );
+
+    line-height: 0.98;
+
+    letter-spacing:
+      -0.035em;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .page-heading
+  .lede {
+    max-width: 34rem;
+
+    margin:
+      9px
+      0
+      0;
+
+    color:
+      var(--da-muted);
+
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+
+
+  /*
+   * Date card.
+   */
+  body[data-role="da"]
+  .da-work-hub
+  .today-stamp {
+    width: 100%;
+
+    min-height: 0;
+
+    margin:
+      14px
+      0
+      0;
+
+    padding:
+      15px
+      17px;
+
+    border: 0;
+    border-radius: 18px;
+
+    background:
+      #1F586A;
+
+    color: #fff;
+
+    box-shadow:
+      0 12px 26px
+      rgba(31, 88, 106, 0.13);
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .today-stamp
+  > * {
+    color: inherit;
+  }
+
+
+  /*
+   * Work workspace.
+   *
+   * Critical fix:
+   * no min-height, no huge blank area,
+   * no overlapping tabs/headings.
+   */
+  body[data-role="da"]
+  .da-workspace {
+    min-height: 0 !important;
+
+    margin:
+      14px
+      0
+      0;
+
+    padding:
+      10px
+      10px
+      14px;
+
+    border:
+      1px solid
+      rgba(12, 124, 134, 0.08);
+
+    border-radius: 20px;
+
+    background:
+      rgba(255, 255, 255, 0.94);
+
+    box-shadow:
+      var(--da-shadow);
+
+    overflow: visible;
+  }
+
+
+  /*
+   * Today / Pending segmented slider.
+   */
+  body[data-role="da"]
+  .da-work-hub
+  .work-tabs {
+    position: relative;
+
+    inset: auto;
+
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+
+    gap: 4px;
+
+    margin: 0;
+
+    padding: 5px;
+
+    border: 0;
+    border-radius: 17px;
+
+    background:
+      #EEECE2;
+
+    box-shadow: none;
+
+    transform: none;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .work-tab {
+    position: relative;
+
+    min-width: 0;
+    min-height: 48px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 9px;
+
+    margin: 0;
+
+    padding:
+      8px
+      10px;
+
+    border: 0;
+    border-radius: 13px;
+
+    background:
+      transparent;
+
+    color:
+      var(--da-muted);
+
+    box-shadow: none;
+
+    font-size: 0.91rem;
+    font-weight: 850;
+
+    transform: none;
+
+    cursor: pointer;
+
+    transition:
+      background 190ms ease,
+      color 190ms ease,
+      box-shadow 190ms ease,
+      transform 190ms ease;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .work-tab.is-active {
+    background: #fff;
+
+    color:
+      #194D5F;
+
+    box-shadow:
+      0 6px 16px
+      rgba(22, 48, 54, 0.07);
+
+    transform:
+      translateY(-1px);
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .work-tab strong {
+    min-width: 28px;
+    height: 28px;
+
+    display: inline-grid;
+
+    place-items: center;
+
+    padding:
+      0
+      7px;
+
+    border-radius: 999px;
+
+    background:
+      rgba(107, 127, 131, 0.12);
+
+    color:
+      var(--da-muted);
+
+    font-size: 0.78rem;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .work-tab.is-active
+  strong {
+    background:
+      #1F586A;
+
+    color: #fff;
+  }
+
+
+  /*
+   * Panels.
+   */
+  body[data-role="da"]
+  .da-work-hub
+  .work-tab-panels {
+    min-height: 0;
+
+    margin:
+      14px
+      0
+      0;
+
+    padding: 0;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .work-panel {
+    position: static;
+
+    min-height: 0;
+
+    margin: 0;
+
+    padding: 0;
+
+    border: 0;
+
+    background:
+      transparent;
+
+    transform: none;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .work-panel.hidden,
+  body[data-role="da"]
+  .da-work-hub
+  .work-panel[hidden] {
+    display: none !important;
+  }
+
+
+  /*
+   * Section headings.
+   */
+  body[data-role="da"]
+  .da-work-hub
+  .work-panel-heading {
+    min-height: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    margin:
+      0
+      0
+      10px;
+
+    padding: 0;
+
+    border: 0;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .work-panel-heading
+  .eyebrow {
+    margin:
+      0
+      0
+      4px;
+
+    font-size: 0.65rem;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .work-panel-heading h2 {
+    margin: 0;
+
+    color:
+      #194D5F;
+
+    font-size: 1.55rem;
+    line-height: 1.08;
+
+    letter-spacing:
+      -0.025em;
+  }
+
+
+  /*
+   * Work list.
+   */
+  body[data-role="da"]
+  .da-work-hub
+  .da-plan-list {
+    display: grid;
+
+    gap: 10px;
+
+    min-height: 0;
+
+    margin: 0;
+
+    padding: 0;
+  }
+
+
+  /*
+   * Existing JS-created card.
+   */
+  body[data-role="da"]
+  .da-work-hub
+  .da-work-card {
+    position: relative;
+
+    min-height: 0;
+
+    display: grid;
+
+    grid-template-columns:
+      minmax(0, 1fr)
+      auto;
+
+    align-items: center;
+
+    gap:
+      10px
+      12px;
+
+    margin: 0;
+
+    padding:
+      15px
+      14px;
+
+    border:
+      1px solid
+      rgba(12, 124, 134, 0.10);
+
+    border-radius: 17px;
+
+    background: #fff;
+
+    box-shadow:
+      0 7px 18px
+      rgba(18, 64, 70, 0.055);
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .da-work-card
+  h3 {
+    margin:
+      0
+      0
+      4px;
+
+    color:
+      var(--da-text);
+
+    font-family:
+      Inter,
+      system-ui,
+      sans-serif;
+
+    font-size: 0.97rem;
+    line-height: 1.25;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .da-work-card
+  p {
+    margin: 0;
+
+    color:
+      var(--da-muted);
+
+    font-size: 0.80rem;
+    line-height: 1.35;
+  }
+
+
+  /*
+   * GO button.
+   */
+  body[data-role="da"]
+  .da-work-hub
+  .da-work-go {
+    min-width: 72px;
+    min-height: 52px;
+
+    align-self: center;
+
+    padding:
+      0
+      15px;
+
+    border: 0;
+    border-radius: 14px;
+
+    background:
+      #1F586A;
+
+    color: #fff;
+
+    font-size: 0.91rem;
+    font-weight: 900;
+
+    box-shadow:
+      0 9px 20px
+      rgba(31, 88, 106, 0.16);
+
+    cursor: pointer;
+  }
+
+
+  /*
+   * Upcoming now follows naturally
+   * instead of being pushed downward.
+   */
+  body[data-role="da"]
+  .da-work-hub
+  .upcoming-work {
+    min-height: 0;
+
+    margin:
+      20px
+      0
+      0;
+
+    padding:
+      17px
+      0
+      0;
+
+    border-top:
+      1px solid
+      rgba(12, 124, 134, 0.10);
+
+    background:
+      transparent;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .work-count {
+    min-width: 28px;
+    height: 28px;
+
+    display: inline-grid;
+
+    place-items: center;
+
+    padding:
+      0
+      7px;
+
+    border-radius: 999px;
+
+    background:
+      color-mix(
+        in srgb,
+        var(--da-primary) 9%,
+        #fff
+      );
+
+    color:
+      var(--da-primary);
+
+    font-size: 0.76rem;
+  }
+
+
+  /*
+   * Empty/skeleton states.
+   */
+  body[data-role="da"]
+  .da-work-hub
+  .skeleton-card {
+    min-height: 74px;
+
+    display: grid;
+
+    place-items: center;
+
+    padding: 18px;
+
+    border:
+      1px dashed
+      rgba(12, 124, 134, 0.18);
+
+    border-radius: 15px;
+
+    background:
+      rgba(255, 255, 255, 0.55);
+
+    color:
+      var(--da-muted);
+
+    text-align: center;
+
+    font-size: 0.82rem;
+  }
+
+
+  /*
+   * Do not allow old layout utility rules
+   * to re-introduce huge spacing.
+   */
+  body[data-role="da"]
+  .da-work-hub
+  .panel-card {
+    height: auto;
+
+    max-height: none;
+
+    overflow: visible;
+  }
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+   ========================================================= */
+
+@media (max-width: 390px) {
+
+  body[data-role="da"]
+  .app-main {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  body[data-role="da"]
+  .planning-page.da-work-hub {
+    padding-top: 18px;
+  }
+
+  body[data-role="da"]
+  .da-workspace {
+    padding:
+      8px
+      8px
+      12px;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .work-tab {
+    min-height: 46px;
+
+    padding-inline: 7px;
+
+    font-size: 0.86rem;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .da-work-card {
+    padding:
+      14px
+      12px;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .da-work-go {
+    min-width: 66px;
+
+    padding-inline: 12px;
+  }
+}
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media
+  (min-width: 761px)
+  and
+  (max-width: 1024px) {
+
+  body[data-role="da"]
+  .planning-page.da-work-hub {
+    max-width: 820px;
+
+    margin-inline: auto;
+  }
+
+  body[data-role="da"]
+  .da-workspace {
+    min-height: 0;
+  }
+}
+
+
+/* =========================================================
+   MOTION ACCESSIBILITY
+   ========================================================= */
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+
+  .da-entry-option {
+    transition: none;
+  }
+
+  .da-entry-option:hover,
+  .da-entry-option:active {
+    transform: none;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .work-tab {
+    transition: none;
+  }
+
+  body[data-role="da"]
+  .da-work-hub
+  .work-tab.is-active {
+    transform: none;
+  }
+}

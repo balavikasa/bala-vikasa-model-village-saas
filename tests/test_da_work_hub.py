@@ -350,3 +350,65 @@ def test_da_primary_action_uses_one_time_attention_effect():
 
     assert ".is-attention-pulse" in css
     assert "@keyframes mv-attention-pulse" in css
+
+
+def test_da_entry_chooser_contract():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+
+    base = (
+        root
+        / "app"
+        / "templates"
+        / "base.html"
+    ).read_text(encoding="utf-8")
+
+    js = (
+        root
+        / "app"
+        / "static"
+        / "js"
+        / "da-field-shell.js"
+    )
+
+    css = (
+        root
+        / "app"
+        / "static"
+        / "css"
+        / "da-field.css"
+    )
+
+    assert 'id="da-entry-menu"' in base
+    assert "data-da-entry-menu" in base
+    assert "data-da-entry-close" in base
+
+    assert "da-field-shell.js" in base
+    assert "da-field.css" in base
+
+    assert js.exists()
+    assert css.exists()
+
+
+def test_da_entry_button_does_not_open_more_menu():
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+
+    source = (
+        root
+        / "app"
+        / "templates"
+        / "base.html"
+    ).read_text(encoding="utf-8")
+
+    match = re.search(
+        r"<button[^>]*data-da-entry-menu[^>]*>",
+        source,
+        flags=re.DOTALL,
+    )
+
+    assert match is not None
+    assert "data-mobile-menu-open" not in match.group(0)

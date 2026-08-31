@@ -15,10 +15,12 @@
   <title>{% block title %}Model Village{% endblock %}</title>
 
   <link rel="manifest" href="{{ url_for('pages.manifest') }}">
+
   <link
     rel="apple-touch-icon"
     href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}"
   >
+
   <link
     rel="icon"
     type="image/png"
@@ -27,7 +29,12 @@
   >
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
 
   <link
     href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap"
@@ -37,6 +44,11 @@
   <link
     rel="stylesheet"
     href="{{ url_for('static', filename='css/app.css') }}"
+  >
+
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/da-field.css') }}"
   >
 
   {% block head %}{% endblock %}
@@ -57,8 +69,8 @@
 
   {# ======================================================
      MOBILE APP BAR
-     DA gets the new Field App shell.
-     Admin / PM / PC keep the existing shell.
+     DA gets Field App shell.
+     Admin / PM / PC keep existing shell.
      ====================================================== #}
 
   {% if current_user.role.value == 'da' %}
@@ -208,7 +220,6 @@
 
   {# ======================================================
      DESKTOP SIDE RAIL
-     Kept intact for this phase.
      ====================================================== #}
 
   <aside
@@ -552,8 +563,6 @@
 
   {# ======================================================
      MOBILE BOTTOM NAVIGATION
-     DA = new 4-item field shell.
-     Other roles preserve existing nav.
      ====================================================== #}
 
   {% if current_user.role.value == 'da' %}
@@ -566,8 +575,9 @@
       type="button"
       class="{% if request.endpoint in ['pages.attendance', 'pages.specials'] %}is-active{% endif %}"
       data-da-entry-menu
-      data-mobile-menu-open
-      aria-controls="mobile-menu"
+      aria-expanded="false"
+      aria-haspopup="dialog"
+      aria-controls="da-entry-menu"
       aria-label="Open field entry options"
     >
       <span
@@ -626,6 +636,104 @@
     </button>
   </nav>
 
+
+  {# ======================================================
+     DA ENTRY CHOOSER
+     ====================================================== #}
+
+  <dialog
+    class="da-entry-dialog"
+    id="da-entry-menu"
+    aria-labelledby="da-entry-menu-title"
+  >
+    <div class="da-entry-sheet">
+
+      <div
+        class="da-entry-handle"
+        aria-hidden="true"
+      ></div>
+
+      <header class="da-entry-heading">
+        <div>
+          <p class="eyebrow">
+            Field entry
+          </p>
+
+          <h2 id="da-entry-menu-title">
+            What are you recording?
+          </h2>
+        </div>
+
+        <button
+          type="button"
+          class="icon-button"
+          data-da-entry-close
+          aria-label="Close field entry menu"
+        >
+          &times;
+        </button>
+      </header>
+
+      <div class="da-entry-actions">
+
+        <a
+          class="da-entry-option"
+          href="{{ url_for('pages.attendance') }}"
+        >
+          <span
+            class="da-entry-icon"
+            aria-hidden="true"
+          >
+            ✓
+          </span>
+
+          <span>
+            <strong>Attendance</strong>
+
+            <small>
+              Record committee attendance
+            </small>
+          </span>
+
+          <span
+            class="da-entry-arrow"
+            aria-hidden="true"
+          >
+            →
+          </span>
+        </a>
+
+        <a
+          class="da-entry-option"
+          href="{{ url_for('pages.specials') }}"
+        >
+          <span
+            class="da-entry-icon"
+            aria-hidden="true"
+          >
+            ✦
+          </span>
+
+          <span>
+            <strong>Specials</strong>
+
+            <small>
+              Record a special activity
+            </small>
+          </span>
+
+          <span
+            class="da-entry-arrow"
+            aria-hidden="true"
+          >
+            →
+          </span>
+        </a>
+
+      </div>
+    </div>
+  </dialog>
+
   {% else %}
 
   <nav class="bottom-nav" aria-label="Mobile navigation">
@@ -642,6 +750,7 @@
       >
         &#9635;
       </span>
+
       <small>Home</small>
     </a>
 
@@ -655,6 +764,7 @@
       >
         &#9638;
       </span>
+
       <small>Plans</small>
     </a>
 
@@ -668,6 +778,7 @@
       >
         &#8962;
       </span>
+
       <small>Team</small>
     </a>
 
@@ -681,6 +792,7 @@
       >
         &#9636;
       </span>
+
       <small>Reports</small>
     </a>
 
@@ -694,6 +806,7 @@
       >
         &#8982;
       </span>
+
       <small>Map</small>
     </a>
 
@@ -709,6 +822,7 @@
       >
         &#9635;
       </span>
+
       <small>Home</small>
     </a>
 
@@ -722,6 +836,7 @@
       >
         &#8962;
       </span>
+
       <small>People</small>
     </a>
 
@@ -735,6 +850,7 @@
       >
         &#9638;
       </span>
+
       <small>Plans</small>
     </a>
 
@@ -748,6 +864,7 @@
       >
         &#9636;
       </span>
+
       <small>Reports</small>
     </a>
 
@@ -761,6 +878,7 @@
       >
         &#8982;
       </span>
+
       <small>Map</small>
     </a>
 
@@ -776,6 +894,7 @@
       >
         &#9635;
       </span>
+
       <small>Home</small>
     </a>
 
@@ -789,6 +908,7 @@
       >
         &#9638;
       </span>
+
       <small>Plans</small>
     </a>
 
@@ -802,6 +922,7 @@
       >
         &#9636;
       </span>
+
       <small>Reports</small>
     </a>
 
@@ -815,6 +936,7 @@
       >
         &#8982;
       </span>
+
       <small>Map</small>
     </a>
 
@@ -828,6 +950,7 @@
       >
         &#9881;
       </span>
+
       <small>Admin</small>
     </a>
 
@@ -839,7 +962,7 @@
 
   {# ======================================================
      MOBILE MENU
-     Existing role-specific menu remains intact.
+     Keep exact opening-tag format: tests rely on it.
      ====================================================== #}
 
   <dialog
@@ -894,9 +1017,7 @@
             &#10003;
           </span>
 
-          <strong>
-            Attendance
-          </strong>
+          <strong>Attendance</strong>
 
           <small>
             Field entry home
@@ -914,9 +1035,7 @@
             &#10022;
           </span>
 
-          <strong>
-            Specials
-          </strong>
+          <strong>Specials</strong>
 
           <small>
             Special activity entry
@@ -934,9 +1053,7 @@
             &#9638;
           </span>
 
-          <strong>
-            Action Plans
-          </strong>
+          <strong>Action Plans</strong>
 
           <small>
             Assigned monthly work
@@ -954,9 +1071,7 @@
             &#9636;
           </span>
 
-          <strong>
-            Reports
-          </strong>
+          <strong>Reports</strong>
 
           <small>
             Submitted evidence
@@ -974,9 +1089,7 @@
             &#8962;
           </span>
 
-          <strong>
-            My Villages
-          </strong>
+          <strong>My Villages</strong>
 
           <small>
             People and committees
@@ -994,9 +1107,7 @@
             &#8982;
           </span>
 
-          <strong>
-            Map
-          </strong>
+          <strong>Map</strong>
 
           <small>
             Assigned locations
@@ -1016,9 +1127,7 @@
             &#9635;
           </span>
 
-          <strong>
-            Overview
-          </strong>
+          <strong>Overview</strong>
 
           <small>
             Role-scoped home
@@ -1036,9 +1145,7 @@
             &#9638;
           </span>
 
-          <strong>
-            Action Plans
-          </strong>
+          <strong>Action Plans</strong>
 
           <small>
             Monthly planning
@@ -1056,9 +1163,7 @@
             &#9636;
           </span>
 
-          <strong>
-            Reports
-          </strong>
+          <strong>Reports</strong>
 
           <small>
             Evidence and details
@@ -1096,9 +1201,7 @@
             &#8982;
           </span>
 
-          <strong>
-            Map
-          </strong>
+          <strong>Map</strong>
 
           <small>
             Village operations
@@ -1118,9 +1221,7 @@
             &#9673;
           </span>
 
-          <strong>
-            Monitoring
-          </strong>
+          <strong>Monitoring</strong>
 
           <small>
             Current delivery health
@@ -1138,9 +1239,7 @@
             &#9636;
           </span>
 
-          <strong>
-            Analytics
-          </strong>
+          <strong>Analytics</strong>
 
           <small>
             Trends and program analysis
@@ -1162,9 +1261,7 @@
             &#9881;
           </span>
 
-          <strong>
-            Master Data
-          </strong>
+          <strong>Master Data</strong>
 
           <small>
             People, villages, committees
@@ -1200,9 +1297,7 @@
             &#8645;
           </span>
 
-          <strong>
-            Import / Export
-          </strong>
+          <strong>Import / Export</strong>
 
           <small>
             Master data workbook
@@ -1321,6 +1416,11 @@
 
   <script
     src="{{ url_for('static', filename='js/app.js') }}"
+    defer
+  ></script>
+
+  <script
+    src="{{ url_for('static', filename='js/da-field-shell.js') }}"
     defer
   ></script>
 
