@@ -3446,3 +3446,10 @@ details pre{max-width:400px;max-height:220px;overflow:auto;padding:10px;border-r
     animation: none;
   }
 }
+/* DA evidence sources: separate native pickers, usable on narrow phone screens. */
+.evidence-sources { display:flex;flex-direction:column;align-items:stretch;gap:10px;cursor:default; }
+.photo-source-actions { display:flex;flex-wrap:wrap;gap:8px; }
+.photo-source-actions .button { flex:1 1 90px;min-height:44px; }
+.location-card { flex-wrap:wrap; }
+.location-card > span:nth-child(2) { min-width:140px; }
+.location-card #retry-location { min-height:44px; }

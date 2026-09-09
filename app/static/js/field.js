@@ -1115,134 +1115,99 @@
     );
   };
 
-  const captureLocation = () => {
-    const label =
-      document.getElementById(
-        "location-label"
-      );
+  const locationLabel = document.getElementById("location-label");
+  const locationDetail = document.getElementById("location-detail");
+  const locationButton = document.getElementById("retry-location");
+  let locationPending = false;
+  let locationRequest = 0;
 
-    const detail =
-      document.getElementById(
-        "location-detail"
-      );
-
+  const resetLocation = () => {
+    locationRequest += 1;
+    locationPending = false;
+    locationButton.disabled = false;
     latitude.value = "";
     longitude.value = "";
+    locationLabel.textContent = "Location access needed";
+    locationDetail.textContent = "Tap Enable location and allow precise location. Turn on Location Services in your phone settings. We attach your current location to this entry, including when offline; GPS availability depends on your device.";
+    locationButton.textContent = "Enable location";
+  };
 
-    if (
-      !navigator.geolocation
-    ) {
-      label.textContent =
-        "Location unavailable";
-
-      detail.textContent =
-        "This device/browser cannot provide GPS location. Location is required.";
-
+  const captureLocation = () => {
+    if (locationPending) return;
+    latitude.value = "";
+    longitude.value = "";
+    if (window.isSecureContext === false) {
+      locationLabel.textContent = "Secure connection required";
+      locationDetail.textContent = "Open the app using HTTPS to allow location access.";
+      return;
+    }
+    if (!navigator.geolocation) {
+      locationLabel.textContent = "Location unavailable";
+      locationDetail.textContent = "This device/browser cannot provide GPS location. Try a browser with location support.";
       return;
     }
 
-    label.textContent =
-      "Finding current location…";
+    const request = ++locationRequest;
+    locationPending = true;
+    locationButton.disabled = true;
+    locationButton.textContent = "Finding location…";
+    locationLabel.textContent = "Finding current location…";
+    locationDetail.textContent = navigator.onLine
+      ? "Allow precise location if asked. Keep this page open while GPS is captured."
+      : "You are offline. Allow location if asked and keep phone Location Services on. GPS may take longer; move to an open area.";
 
-    detail.textContent =
-      "Keep location permission enabled while GPS is captured.";
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat =
-          Number(
-            position.coords
-              .latitude
-          );
-
-        const lon =
-          Number(
-            position.coords
-              .longitude
-          );
-
-        if (
-          !Number.isFinite(lat) ||
-          !Number.isFinite(lon) ||
-          lat < -90 ||
-          lat > 90 ||
-          lon < -180 ||
-          lon > 180 ||
-          (
-            Math.abs(lat) <
-              0.000001 &&
-            Math.abs(lon) <
-              0.000001
-          )
-        ) {
-          latitude.value = "";
-          longitude.value = "";
-
-          label.textContent =
-            "Location required";
-
-          detail.textContent =
-            "The device returned an invalid location. Tap Retry.";
-
-          return;
-        }
-
-        latitude.value =
-          lat.toFixed(6);
-
-        longitude.value =
-          lon.toFixed(6);
-
-        label.textContent =
-          "Current location captured";
-
-        detail.textContent =
-          `${latitude.value}, ${longitude.value}` +
-          ` · ±${Math.round(
-            position.coords
-              .accuracy
-          )} m`;
-      },
-      (error) => {
-        latitude.value = "";
-        longitude.value = "";
-
-        label.textContent =
-          "Location required";
-
-        if (
-          error?.code === 1
-        ) {
-          detail.textContent =
-            "Location permission is blocked. Allow precise location, then tap Retry.";
-        } else if (
-          error?.code === 3
-        ) {
-          detail.textContent =
-            "GPS timed out. Move to an open area and tap Retry.";
-        } else {
-          detail.textContent =
-            "Current GPS location could not be captured. Tap Retry.";
-        }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0,
+    const finish = () => {
+      locationPending = false;
+      locationButton.disabled = false;
+      locationButton.textContent = "Retry location";
+    };
+    const failed = (error) => {
+      if (request !== locationRequest) return;
+      finish();
+      latitude.value = "";
+      longitude.value = "";
+      locationLabel.textContent = "Location required";
+      if (error?.code === 1) {
+        locationDetail.textContent = "Location permission is blocked. In browser/app settings, allow location for this site and enable precise location in phone settings, then tap Retry location.";
+      } else if (error?.code === 3) {
+        locationDetail.textContent = "GPS timed out. Keep Location Services on, move to an open area and tap Retry location. Offline GPS may take longer.";
+      } else {
+        locationDetail.textContent = "Current GPS location is unavailable. Turn on Location Services in phone settings, move to an open area and tap Retry location. Some devices need connectivity to obtain a fix.";
       }
-    );
+    };
+
+    // Permission and GPS requests must also run without an internet connection.
+    // The browser/OS owns its permission dialog; the app cannot enable phone GPS.
+    try {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          if (request !== locationRequest) return;
+          finish();
+          const lat = Number(position.coords.latitude);
+          const lon = Number(position.coords.longitude);
+          if (!Number.isFinite(lat) || !Number.isFinite(lon) ||
+              lat < -90 || lat > 90 || lon < -180 || lon > 180 ||
+              (Math.abs(lat) < 0.000001 && Math.abs(lon) < 0.000001)) {
+            locationLabel.textContent = "Location required";
+            locationDetail.textContent = "The device returned an invalid location. Tap Retry location.";
+            return;
+          }
+          latitude.value = lat.toFixed(6);
+          longitude.value = lon.toFixed(6);
+          locationLabel.textContent = "Current location captured";
+          locationDetail.textContent = `${latitude.value}, ${longitude.value} · ±${Math.round(position.coords.accuracy)} m`;
+          locationButton.textContent = "Refresh location";
+        },
+        failed,
+        { enableHighAccuracy: true, timeout: navigator.onLine ? 20000 : 45000, maximumAge: 0 }
+      );
+    } catch (error) {
+      failed(error);
+    }
   };
 
-  document
-    .getElementById(
-      "retry-location"
-    )
-    ?.addEventListener(
-      "click",
-      captureLocation
-    );
-
-  captureLocation();
+  locationButton.addEventListener("click", captureLocation);
+  resetLocation();
 
   const imageBitmap =
     async (file) => {
@@ -1427,115 +1392,57 @@
       );
     };
 
-  photoInput.addEventListener(
-    "change",
-    async () => {
-      clearError();
+  const photoInputs = [photoInput, document.getElementById("album-input"), document.getElementById("file-input")];
+  let photoSelection = 0;
 
-      const file =
-        photoInput.files?.[0];
+  const clearPhoto = () => {
+    // Invalidate pending conversions so removed/replaced photos cannot reappear.
+    photoSelection += 1;
+    compressedPhoto = null;
+    const image = preview.querySelector("img");
+    if (image.dataset.objectUrl) URL.revokeObjectURL(image.dataset.objectUrl);
+    image.removeAttribute("src");
+    delete image.dataset.objectUrl;
+    preview.classList.add("hidden");
+    photoInputs.forEach((input) => { input.value = ""; });
+  };
 
-      if (!file) {
-        return;
-      }
+  document.querySelectorAll("[data-photo-source]").forEach((button) => {
+    button.addEventListener("click", () => {
+      // Native pickers expose only a user-selected image. Camera access and the
+      // exact Album/Files chooser are controlled by the browser and phone OS.
+      document.getElementById(button.dataset.photoSource).click();
+    });
+  });
 
-      try {
-        draftState.textContent =
-          "Converting photo…";
-
-        compressedPhoto =
-          await compressImage(
-            file
-          );
-
-        const image =
-          preview.querySelector(
-            "img"
-          );
-
-        if (
-          image.dataset
-            .objectUrl
-        ) {
-          URL.revokeObjectURL(
-            image.dataset
-              .objectUrl
-          );
-        }
-
-        const url =
-          URL.createObjectURL(
-            compressedPhoto
-          );
-
-        image.src = url;
-
-        image.dataset.objectUrl =
-          url;
-
-        preview.classList.remove(
-          "hidden"
-        );
-
-        draftState.textContent =
-          `${Math.max(
-            1,
-            Math.round(
-              compressedPhoto.size /
-                1024
-            )
-          )} KB WebP ready`;
-      } catch (error) {
-        compressedPhoto = null;
-        photoInput.value = "";
-
-        showError(
-          error.message
-        );
-
-        draftState.textContent =
-          "Photo not ready";
-      }
+  photoInputs.forEach((input) => input.addEventListener("change", async () => {
+    const file = input.files?.[0];
+    if (!file) return; // Cancelling a picker preserves the previous photo.
+    clearError();
+    clearPhoto();
+    const selection = photoSelection;
+    draftState.textContent = "Converting photo…";
+    try {
+      const converted = await compressImage(file);
+      if (selection !== photoSelection) return;
+      compressedPhoto = converted;
+      const image = preview.querySelector("img");
+      const url = URL.createObjectURL(compressedPhoto);
+      image.src = url;
+      image.dataset.objectUrl = url;
+      preview.classList.remove("hidden");
+      draftState.textContent = `${Math.max(1, Math.round(compressedPhoto.size / 1024))} KB WebP ready`;
+    } catch (error) {
+      if (selection !== photoSelection) return;
+      showError(error.message);
+      draftState.textContent = "Photo not ready";
     }
-  );
+  }));
 
-  document
-    .getElementById(
-      "remove-photo"
-    )
-    ?.addEventListener(
-      "click",
-      () => {
-        const image =
-          preview.querySelector(
-            "img"
-          );
-
-        if (
-          image.dataset
-            .objectUrl
-        ) {
-          URL.revokeObjectURL(
-            image.dataset
-              .objectUrl
-          );
-        }
-
-        image.removeAttribute(
-          "src"
-        );
-
-        delete image.dataset
-          .objectUrl;
-
-        preview.classList.add(
-          "hidden"
-        );
-
-        photoInput.value = "";
-        compressedPhoto = null;
-      }
-    );
+  document.getElementById("remove-photo")?.addEventListener("click", () => {
+    clearPhoto();
+    draftState.textContent = "Choose an evidence photo";
+  });
 
   const formData = () => {
     const data =
@@ -1602,18 +1509,10 @@
 
     villageSelect.value = "";
 
-    compressedPhoto = null;
-
-    preview.classList.add(
-      "hidden"
-    );
-
-    latitude.value = "";
-    longitude.value = "";
-
+    clearPhoto();
+    resetLocation();
     updateCounts();
     updateStatus();
-    captureLocation();
 
     draftState.textContent =
       "Ready";
@@ -1665,7 +1564,7 @@
       }
 
       if (!compressedPhoto) {
-        photoInput.focus();
+        document.querySelector("[data-photo-source]")?.focus();
 
         return showError(
           "A field evidence photo is required before submitting."
@@ -1675,8 +1574,6 @@
       if (
         !hasDeviceLocation()
       ) {
-        captureLocation();
-
         document
           .getElementById(
             "retry-location"

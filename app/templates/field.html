@@ -124,25 +124,30 @@
       <section class="form-section">
         <div class="form-section-heading"><span>3</span><div><h2>Evidence & location</h2><p>Photo and current device location are required for every submission.</p></div></div>
         <div class="evidence-grid">
-          <label class="camera-card" for="photo-input">
-            <input id="photo-input" name="photo" type="file" accept="image/*" capture="environment" required>
-            <span class="camera-icon" aria-hidden="true">◎</span>
-            <span>
-              <strong>Capture photo <b>*</b></strong>
-              <small>Required · camera or gallery · max 12 MB before compression</small>
-            </span>
-          </label>
+          <div class="camera-card evidence-sources" role="group" aria-labelledby="photo-heading" aria-describedby="photo-help">
+            <strong id="photo-heading">Evidence photo <b>*</b></strong>
+            <small id="photo-help">Choose a source and allow access if your phone asks. Only the photo you select is shared. Max 12 MB before compression.</small>
+            <div class="photo-source-actions">
+              <button type="button" class="button ghost" data-photo-source="photo-input">Camera</button>
+              <button type="button" class="button ghost" data-photo-source="album-input">Photo Album</button>
+              <button type="button" class="button ghost" data-photo-source="file-input">Files</button>
+            </div>
+            <input id="photo-input" type="file" accept="image/*" capture="environment" aria-label="Take an evidence photo" hidden>
+            <input id="album-input" type="file" accept="image/*" aria-label="Choose an evidence photo from your album" hidden>
+            <input id="file-input" type="file" accept=".jpg,.jpeg,.png,.webp,.gif,.bmp,.heic,.heif,.avif" aria-label="Choose an evidence image file" hidden>
+            <small>Camera, album and file options depend on your phone. If access is blocked, allow it in your browser/app settings. Offline, choose a photo stored on this device.</small>
+          </div>
           <figure class="photo-preview hidden" id="photo-preview">
             <img alt="Selected field evidence preview">
             <button type="button" class="text-button" id="remove-photo">Remove</button>
           </figure>
           <div class="location-card">
             <span class="location-icon" aria-hidden="true">⌖</span>
-            <span>
-              <strong><span id="location-label">Finding current location…</span> <b>*</b></strong>
-              <small id="location-detail">Required · allow precise location permission before submitting.</small>
+            <span role="status" aria-live="polite">
+              <strong><span id="location-label">Location access needed</span> <b>*</b></strong>
+              <small id="location-detail">Tap Enable location and allow precise location. Turn on Location Services in your phone settings. We attach your current location to this entry, including when offline; GPS availability depends on your device.</small>
             </span>
-            <button type="button" class="text-button" id="retry-location">Retry</button>
+            <button type="button" class="button ghost" id="retry-location">Enable location</button>
           </div>
         </div>
       </section>

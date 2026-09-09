@@ -43,7 +43,8 @@ def test_photo_and_location_are_required_in_field_ui_and_server():
     entries = read("app/services/entries.py")
 
     assert 'id="photo-input"' in template
-    assert 'capture="environment" required' in template
+    # Each picker is optional; field.js requires one processed photo across all sources.
+    assert 'capture="environment"' in template
     assert "A field evidence photo is required before submitting." in field_js
     assert "Current GPS location is required." in field_js
     assert "def _required_photo(" in entries
