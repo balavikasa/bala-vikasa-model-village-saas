@@ -217,7 +217,7 @@ def create_attendance(
 
     male = _integer(payload.get("male_count", 0), "male_count")
     female = _integer(payload.get("female_count", 0), "female_count")
-    new_members = _integer(payload.get("new_members_count", 0), "new_members_count")
+    new_members = _integer(payload.get("new_members_count") or 0, "new_members_count")
     selected_members = _selected_members(committee, payload.get("visit_member_ids"))
     designations = list(dict.fromkeys(member.designation for member in selected_members if member.designation))
     latitude, longitude, geolocation_source = _coordinates(payload, village)

@@ -19,7 +19,7 @@
       {% if current_user.role.value == 'admin' %}
       <a class="button ghost" href="{{ url_for('pages.admin', resource='action-plans', edit=detail.plan_id) }}">Edit plan</a>
       {% if detail.entry %}
-      <a class="button ghost" href="{{ url_for('pages.admin', resource=('attendance-entries' if detail.type == 'Attendance' else 'specials-entries'), edit=detail.entry.id) }}">Edit submission</a>
+      <a class="button ghost" href="{{ url_for('pages.admin', resource=('attendance-entries' if detail.type == 'Attendance' else 'specials-entries'), edit=detail.entry.id) }}">Edit report</a>
       {% endif %}
       <a class="button ghost" href="{{ url_for('pages.admin', tab='recycle') }}">Recycle Bin</a>
       <button class="button danger" type="button" data-report-delete-plan="{{ detail.plan_id }}">Delete report</button>

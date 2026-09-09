@@ -94,6 +94,8 @@
   ];
 
   let plans = new Map();
+  let committeeRequest = 0;
+  let planRequest = 0;
   let committeeMembers = [];
   let selectedMembers = new Map();
   let activePickerDesignation = null;
@@ -180,6 +182,9 @@
   };
 
   const clearCommitteeState = () => {
+    // Any in-flight plan response now belongs to an obsolete committee.
+    planRequest += 1;
+
     committeeSelect.innerHTML =
       `<option value="">Select committee</option>`;
 
@@ -214,6 +219,11 @@
   const loadCommittees = async (
     villageId
   ) => {
+    const request = ++committeeRequest;
+    const isCurrentCommitteeRequest = () =>
+      request === committeeRequest &&
+      String(villageSelect.value || "") === String(villageId || "");
+
     clearError();
     clearCommitteeState();
 
@@ -228,6 +238,10 @@
             villageId
           )}/committees`
         );
+
+      if (!isCurrentCommitteeRequest()) {
+        return [];
+      }
 
       const items =
         data.items || [];
@@ -250,7 +264,9 @@
 
       return items;
     } catch (error) {
-      showError(error.message);
+      if (isCurrentCommitteeRequest()) {
+        showError(error.message);
+      }
       return [];
     }
   };
@@ -271,6 +287,10 @@
     const {
       deepLinkLookup = false,
     } = options;
+    const request = ++planRequest;
+    const isCurrentPlanRequest = () =>
+      request === planRequest &&
+      String(committeeSelect.value || "") === String(committeeId || "");
 
     clearError();
 
@@ -280,6 +300,15 @@
     planSelect.disabled = true;
     plans.clear();
     clearMembers();
+
+    const planHelp =
+      document.getElementById(
+        "plan-help"
+      );
+
+    if (planHelp) {
+      planHelp.textContent = "";
+    }
 
     const option =
       committeeSelect.selectedOptions[0];
@@ -351,6 +380,10 @@
             }),
       ]);
 
+      if (!isCurrentPlanRequest()) {
+        return [];
+      }
+
       let items =
         planData.items || [];
 
@@ -398,11 +431,6 @@
       planSelect.disabled =
         !items.length;
 
-      const planHelp =
-        document.getElementById(
-          "plan-help"
-        );
-
       if (planHelp) {
         planHelp.textContent =
           items.length
@@ -427,7 +455,9 @@
 
       return items;
     } catch (error) {
-      showError(error.message);
+      if (isCurrentPlanRequest()) {
+        showError(error.message);
+      }
       return [];
     }
   };
@@ -1052,19 +1082,20 @@
       return;
     }
 
-    liveTotal.textContent =
-      Math.max(
-        0,
-        Number(
-          male?.value || 0
-        )
-      ) +
-      Math.max(
-        0,
-        Number(
-          female?.value || 0
-        )
-      );
+    const maleValue =
+      male?.value?.trim() || "";
+    const femaleValue =
+      female?.value?.trim() || "";
+
+    if (!maleValue || !femaleValue) {
+      liveTotal.textContent = "—";
+      return;
+    }
+
+    liveTotal.textContent = String(
+      Math.max(0, Number(maleValue)) +
+      Math.max(0, Number(femaleValue))
+    );
   };
 
   male?.addEventListener(

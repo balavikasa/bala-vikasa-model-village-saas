@@ -201,6 +201,18 @@
     }
   };
 
+  const loadEditingRecord = async (id) => {
+    const existing = state.records.find(
+      (item) => String(item.id) === String(id)
+    );
+    if (existing) return existing;
+
+    const payload = await api(
+      `/api/v1/admin/${encodeURIComponent(state.resource)}/${encodeURIComponent(id)}`
+    );
+    return payload.item || payload;
+  };
+
   const createInput = async (field, value) => {
     const wrapper = document.createElement(field.type === "boolean" ? "label" : "div");
     wrapper.className = field.type === "boolean" ? "check-row" : "field";
@@ -270,7 +282,7 @@
     clearError();
     moveAck.checked = false;
     moveAckRow.classList.add("hidden");
-    state.editing = id ? state.records.find((item) => String(item.id) === String(id)) : null;
+    state.editing = id ? await loadEditingRecord(id) : null;
     $("#admin-dialog-eyebrow").textContent = resourceMeta().label || labelize(state.resource);
     $("#admin-dialog-title").textContent = state.editing ? "Edit record" : "Add record";
     fieldsHost.replaceChildren();
@@ -424,7 +436,10 @@
             <p>Deleted ${escapeHtml(displayValue(item, "deleted_at"))}</p>
             <p class="muted">Purge due ${escapeHtml(displayValue({ expires }, "expires"))}</p>
           </div>
-          <button class="button primary" type="button" data-restore="${escapeHtml(item.id)}">Restore</button>
+          <div class="row-actions">
+            <button class="button primary" type="button" data-restore="${escapeHtml(item.id)}">Restore</button>
+            <button class="button danger" type="button" data-purge="${escapeHtml(item.id)}">Delete permanently</button>
+          </div>
         </article>`;
       }).join("");
       emptyState.classList.toggle("hidden", items.length !== 0);
@@ -434,6 +449,21 @@
           await api(`/api/v1/admin/recycle-bin/${encodeURIComponent(button.dataset.restore)}/restore`, { method: "POST" });
           state.relationships.clear();
           await loadRecycle();
+        } catch (error) {
+          window.MV.toast?.(error.message, "error");
+        }
+      }));
+      $$("[data-purge]", host).forEach((button) => button.addEventListener("click", async () => {
+        if (!(await confirm(
+          "Delete permanently?",
+          "This cannot be undone. Linked records must be deleted first.",
+          "Delete permanently"
+        ))) return;
+        try {
+          await api(`/api/v1/admin/recycle-bin/${encodeURIComponent(button.dataset.purge)}`, { method: "DELETE" });
+          state.relationships.clear();
+          await loadRecycle();
+          window.MV.toast?.("Record permanently deleted", "success");
         } catch (error) {
           window.MV.toast?.(error.message, "error");
         }
@@ -531,11 +561,10 @@
 
       const requestedEdit = deepLink.get("edit");
       if (requestedEdit) {
-        const exists = state.records.some((item) => String(item.id) === String(requestedEdit));
-        if (exists) {
+        try {
           await openEditor(requestedEdit);
-        } else {
-          window.MV.toast?.("The requested record was not found in the active resource.", "error");
+        } catch (error) {
+          window.MV.toast?.(error.message || "The requested record was not found.", "error");
         }
       }
     } catch (error) {

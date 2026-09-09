@@ -441,23 +441,10 @@
     );
 
     const setLoading = () => {
-      todayList.innerHTML = `
-        <div class="skeleton-card">
-          Loading today's assignments…
-        </div>
-      `;
-
-      pendingList.innerHTML = `
-        <div class="skeleton-card">
-          Loading pending assignments…
-        </div>
-      `;
-
-      upcomingList.innerHTML = `
-        <div class="skeleton-card">
-          Loading upcoming assignments…
-        </div>
-      `;
+      // Keep the existing layout stable without flashing loading copy.
+      todayList.innerHTML = '<div class="skeleton-card" aria-hidden="true"></div>';
+      pendingList.innerHTML = '<div class="skeleton-card" aria-hidden="true"></div>';
+      upcomingList.innerHTML = '<div class="skeleton-card" aria-hidden="true"></div>';
     };
 
     const showLoadFailure = (message) => {

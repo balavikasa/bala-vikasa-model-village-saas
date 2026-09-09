@@ -19,6 +19,7 @@ from .models import (
     ActionPlanType,
     AttendanceEntry,
     AttendanceStatus,
+    AttendanceVisitMember,
     AuditAction,
     AuditLog,
     Cluster,
@@ -46,6 +47,7 @@ from .services.entries import (
     create_attendance,
     create_specials,
 )
+from .services.files import delete_photo
 
 bp = Blueprint("admin_api", __name__, url_prefix="/api/v1/admin")
 
@@ -454,6 +456,24 @@ def collection(slug: str):
         return jsonify(error=str(exc)), 422
 
 
+@bp.get("/<slug>/<int:record_id>")
+def get_record(slug: str, record_id: int):
+    try:
+        spec = _resource(slug)
+    except LookupError as exc:
+        return jsonify(error=str(exc)), 404
+
+    stmt = db.select(spec.model).where(
+        spec.model.id == record_id,
+        spec.model.is_deleted.is_(False),
+    )
+    stmt = _relationship_options(stmt, spec.model)
+    record = db.session.scalar(stmt)
+    if record is None:
+        return jsonify(error="Record not found."), 404
+    return jsonify(item=_serialize(record))
+
+
 @bp.patch("/<slug>/<int:record_id>")
 def update(slug: str, record_id: int):
     try:
@@ -556,6 +576,58 @@ def recycle_items():
         ],
         total=len(rows),
     )
+
+
+@bp.delete("/recycle-bin/<int:item_id>")
+def permanent_delete_recycle_item(item_id: int):
+    row = db.session.get(RecycleBin, item_id)
+    if row is None or row.restored_at is not None:
+        return jsonify(error="Recycle-bin item not found."), 404
+
+    model = MODEL_BY_NAME.get(row.entity_type)
+    if model is None:
+        return jsonify(error="The record type can no longer be permanently deleted here."), 409
+
+    record = db.session.get(model, row.entity_id)
+    if record is not None:
+        if not getattr(record, "is_deleted", False):
+            return jsonify(error="Restore or soft-delete the underlying record before permanent deletion."), 409
+        dependency = _permanent_delete_dependency(record)
+        if dependency:
+            return jsonify(error=dependency), 409
+
+    photo_path = (
+        record.photo_path
+        if isinstance(record, (AttendanceEntry, SpecialsEntry))
+        else None
+    )
+
+    try:
+        db.session.add(
+            AuditLog(
+                actor_user_id=current_user.id,
+                action=AuditAction.PURGE,
+                entity_type=row.entity_type,
+                entity_id=row.entity_id,
+                before_json=row.snapshot_json,
+            )
+        )
+        if record is not None:
+            db.session.delete(record)
+        db.session.delete(row)
+        db.session.flush()
+        if photo_path:
+            delete_photo(photo_path)
+        db.session.commit()
+        return jsonify(ok=True, message="Record permanently deleted.")
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(
+            error="Permanent deletion is blocked while linked records still exist."
+        ), 409
+    except ValueError as exc:
+        db.session.rollback()
+        return jsonify(error=str(exc)), 409
 
 
 @bp.post("/recycle-bin/<int:item_id>/restore")
@@ -844,6 +916,62 @@ def _active_dependency(record: Any) -> str | None:
         )
         if count:
             return f"Move or delete the active {label} records first."
+    return None
+
+
+def _permanent_delete_dependency(record: Any) -> str | None:
+    checks: list[tuple[str, type, Any]] = []
+    if isinstance(record, PM):
+        checks.append(("user account", User, User.pm_id == record.id))
+    elif isinstance(record, PC):
+        checks.extend([
+            ("development agent", DA, DA.pc_id == record.id),
+            ("user account", User, User.pc_id == record.id),
+        ])
+    elif isinstance(record, DA):
+        checks.extend([
+            ("village", Village, Village.da_id == record.id),
+            ("user account", User, User.da_id == record.id),
+        ])
+    elif isinstance(record, Village):
+        checks.extend([
+            ("committee", Committee, Committee.village_id == record.id),
+            ("attendance entry", AttendanceEntry, AttendanceEntry.village_id == record.id),
+            ("specials entry", SpecialsEntry, SpecialsEntry.village_id == record.id),
+        ])
+    elif isinstance(record, Committee):
+        checks.extend([
+            ("committee member", CommitteeMember, CommitteeMember.committee_id == record.id),
+            ("action plan", ActionPlan, ActionPlan.committee_id == record.id),
+            ("attendance entry", AttendanceEntry, AttendanceEntry.committee_id == record.id),
+            ("specials entry", SpecialsEntry, SpecialsEntry.committee_id == record.id),
+        ])
+    elif isinstance(record, CommitteeMember):
+        checks.append((
+            "attendance visit",
+            AttendanceVisitMember,
+            AttendanceVisitMember.committee_member_id == record.id,
+        ))
+    elif isinstance(record, ActionPlan):
+        checks.extend([
+            ("attendance entry", AttendanceEntry, AttendanceEntry.action_plan_id == record.id),
+            ("specials entry", SpecialsEntry, SpecialsEntry.action_plan_id == record.id),
+        ])
+    elif isinstance(record, User):
+        checks.extend([
+            ("attendance submission", AttendanceEntry, AttendanceEntry.submitted_by_user_id == record.id),
+            ("specials submission", SpecialsEntry, SpecialsEntry.submitted_by_user_id == record.id),
+        ])
+
+    for label, model, condition in checks:
+        count = db.session.scalar(
+            db.select(func.count(model.id)).where(condition)
+        )
+        if count:
+            return (
+                f"Permanent deletion is blocked by linked {label} records. "
+                "Delete those linked records permanently first."
+            )
     return None
 
 
