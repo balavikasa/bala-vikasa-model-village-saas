@@ -1,6 +1,42 @@
 # Bala Vikasa Model Village SaaS — 2026–27
 
-Release **2026.27.9** is the mobile-first SaaS rebuild for the Sopar-funded Bala Vikasa Model Village
+## Update: Village Attendance workflow (27 October 2026)
+
+The active DA workflow now uses **Attendance only**; the Specials entry screen
+and new Specials submissions are retired. Existing historical Specials records
+remain in PostgreSQL for audit and older reports. One Attendance submission
+per village includes committee-wise male/female attendance, selected members,
+remarks and date-based status; all committee rows share one uploaded WebP
+photo and one captured GPS fix. A new `village_attendance_visits` table groups
+those existing committee-level `attendance_entries` without losing legacy rows.
+
+DA location permission is requested on application entry, with automatic GPS
+capture after consent, a prompt if disabled, and a fresh fix before submitting.
+Browser/device security prohibits automatically switching on device GPS when
+it has been disabled. Map monitoring now uses compact evidence cards; locations
+are **latest submitted field GPS fixes**, not continuous real-time tracking.
+
+An existing valid committee Action Plan assignment is carried forward into
+future calendar months, including Type=Attendance and date-of-month, until a
+PC/Admin changes it manually or imports a new schedule. The recurrence anchor
+retains e.g. the 31st when February clamps to its last day. Existing human
+changes override inherited defaults. Committees that have **no dated prior
+schedule** still require initial PC assignment; do not invent dates.
+
+**Deployment:** Back up PostgreSQL and the uploads directory first; deploy
+code and run `python -m flask --app wsgi db upgrade` to add the new table and
+nullable `attendance_entries.village_visit_id` FK. Do not restore the supplied
+old database dump over existing live data. Clear/install the updated PWA and
+verify DA combined submission/offline sync, PC recurring plans, map/report
+views and Admin recycle handling in a staging environment before production.
+
+The checks in `docs/VALIDATION_REPORT.md` verify source/static contracts only
+when Flask dependencies and a PostgreSQL test database are unavailable; do not
+interpret them as a successful live integration test.
+
+---
+
+The original **2026.27.9** baseline is the mobile-first SaaS rebuild for the Sopar-funded Bala Vikasa Model Village
 Program. It uses the approved project documentation and dashboard prototype as the product baseline,
 while preserving the normalized master data and Flask/PostgreSQL architecture.
 
@@ -25,7 +61,7 @@ Role behavior:
 | Admin | Global administration, users, master data, audit, recycle bin, imports |
 | PM | Global read-only monitoring |
 | PC | Own-team monitoring and monthly Action Plan management |
-| DA | Own-village field execution: Attendance and Specials |
+| DA | One combined Attendance submission per village; historical Specials remain archived |
 
 ## What changed in the SaaS rebuild
 
@@ -55,7 +91,7 @@ PC can:
 - upload and Validate;
 - review New / Changed / Unchanged / Error rows;
 - Confirm atomically;
-- Prepare Next Month by copying Type/Notes and structure, **not dates**.
+- Prepare Next Month by carrying a valid Attendance Type/Notes/assigned day forward, unless changed manually or by import.
 
 Past/completed/overdue schedule history is immutable to PC edits. Each committee has at most one plan
 occurrence per month.
@@ -85,10 +121,9 @@ For Visit Designations:
 
 Selected people are stored by master ID plus name/designation/gender snapshots for immutable history.
 
-### DA Specials
+### Retired Specials
 
-Specials uses an assigned current-month Specials plan. Current Special name follows Committee until
-the real Specials catalogue is supplied. Scope is exactly **Under GP** or **Under VDC**.
+New Specials submissions are disabled. Historical Specials records remain accessible for authorized reporting and audit. The DA entry UI has no Specials option.
 
 ### Reports
 

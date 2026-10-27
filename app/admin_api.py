@@ -18,6 +18,7 @@ from .models import (
     ActionPlan,
     ActionPlanType,
     AttendanceEntry,
+    VillageAttendanceVisit,
     AttendanceStatus,
     AttendanceVisitMember,
     AuditAction,
@@ -181,7 +182,7 @@ RESOURCES: dict[str, ResourceSpec] = {
             FieldSpec("title", required=True),
             FieldSpec("description", "textarea"),
             FieldSpec("plan_month", "date", label="Plan month"),
-            FieldSpec("plan_type", "select", choices=("Attendance", "Specials")),
+            FieldSpec("plan_type", "select", choices=("Attendance",)),
             FieldSpec("assigned_date", "date"),
             FieldSpec("notes", "textarea"),
             *COMMON_LIFECYCLE,
@@ -192,6 +193,7 @@ RESOURCES: dict[str, ResourceSpec] = {
     ),
     "attendance-entries": ResourceSpec(
         AttendanceEntry,
+    VillageAttendanceVisit,
         "Attendance Entries",
         (
             FieldSpec("village_id", "relationship", required=True, related_resource="villages"),
@@ -257,6 +259,7 @@ RESOURCES: dict[str, ResourceSpec] = {
 
 
 MODEL_BY_NAME = {spec.model.__name__: spec.model for spec in RESOURCES.values()}
+MODEL_BY_NAME["VillageAttendanceVisit"] = VillageAttendanceVisit
 
 
 @bp.before_request
@@ -297,7 +300,7 @@ def resources():
                 "columns": list(spec.columns),
                 "allow_create": spec.allow_create,
             }
-            for slug, spec in RESOURCES.items()
+            for slug, spec in RESOURCES.items() if slug != "specials-entries"
         }
     )
 
@@ -598,7 +601,7 @@ def permanent_delete_recycle_item(item_id: int):
 
     photo_path = (
         record.photo_path
-        if isinstance(record, (AttendanceEntry, SpecialsEntry))
+        if isinstance(record, (AttendanceEntry, SpecialsEntry, VillageAttendanceVisit))
         else None
     )
 
@@ -617,7 +620,16 @@ def permanent_delete_recycle_item(item_id: int):
         db.session.delete(row)
         db.session.flush()
         if photo_path:
-            delete_photo(photo_path)
+            # One village photo is shared across several committee attendance rows.
+            # Do not remove it while another record or the parent visit retains it.
+            in_use = db.session.scalar(db.select(func.count(AttendanceEntry.id)).where(
+                AttendanceEntry.photo_path == photo_path,
+            )) or 0
+            parent_use = db.session.scalar(db.select(func.count(VillageAttendanceVisit.id)).where(
+                VillageAttendanceVisit.photo_path == photo_path,
+            )) or 0
+            if not in_use and not parent_use:
+                delete_photo(photo_path)
         db.session.commit()
         return jsonify(ok=True, message="Record permanently deleted.")
     except IntegrityError:
@@ -795,7 +807,10 @@ def _validate_record(record: Any) -> None:
         if record.plan_month:
             record.plan_month = record.plan_month.replace(day=1)
         if record.assigned_date and not record.plan_type:
-            raise EntryValidationError("Choose Attendance or Specials before assigning a date.")
+            raise EntryValidationError("Choose Attendance before assigning a date.")
+        if record.plan_type == ActionPlanType.SPECIALS and not record.is_deleted:
+            # Historical Specials plans remain readable; new active schedules are Attendance-only.
+            raise EntryValidationError("New and edited action plans must use Attendance.")
         if (record.plan_type or record.assigned_date) and not record.plan_month:
             raise EntryValidationError("Assigned Action Plans must have a Plan Month.")
         if record.assigned_date and record.plan_month and (
@@ -989,6 +1004,8 @@ def _missing_parent(record: Any) -> str | None:
         parents = [record.committee]
     elif isinstance(record, AttendanceEntry):
         parents = [record.village, record.committee, record.action_plan, record.submitted_by]
+    elif isinstance(record, VillageAttendanceVisit):
+        parents = [record.village]
     elif isinstance(record, SpecialsEntry):
         parents = [record.village, record.committee, record.submitted_by]
     elif isinstance(record, User):

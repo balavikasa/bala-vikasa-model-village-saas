@@ -2,7 +2,7 @@
 "use strict";
 importScripts("/static/js/idb-queue.js");
 
-const VERSION = "2026.27.17";
+const VERSION = "2026.27.18-village-attendance";
 // Explicit DA location permission and Camera / Photo Album / Files choices
 const STATIC_CACHE = `mv-static-${VERSION}`;
 const DATA_PREFIX = "mv-data-";
@@ -36,7 +36,8 @@ const STATIC_ASSETS = [
   "/static/js/app.js",
   "/static/js/idb-queue.js",
   "/static/js/pwa.js",
-  "/static/js/field.js",
+  "/static/js/village-attendance.js",
+  "/static/js/da-location.js",
   "/static/js/overview.js",
   "/static/js/directory.js",
   "/static/js/monitoring.js",
@@ -124,7 +125,7 @@ const networkFirstNavigation = async (request) => {
 const isEntryPost = (request) => {
   if (request.method !== "POST") return false;
   const path = new URL(request.url).pathname;
-  return path === "/api/v1/attendance" || path === "/api/v1/specials";
+  return path === "/api/v1/attendance/village";
 };
 
 const entryNetworkFirst = async (request) => {

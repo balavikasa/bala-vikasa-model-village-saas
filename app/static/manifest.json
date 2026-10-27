@@ -50,21 +50,8 @@
     {
       "name": "Attendance entry",
       "short_name": "Attendance",
-      "description": "Record a committee action-plan visit",
+      "description": "One submission for every committee in the village",
       "url": "/field/attendance",
-      "icons": [
-        {
-          "src": "/static/icons/icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Specials entry",
-      "short_name": "Specials",
-      "description": "Record a special program entry",
-      "url": "/field/specials",
       "icons": [
         {
           "src": "/static/icons/icon-192.png",

@@ -6,7 +6,7 @@ from flask import Blueprint, current_app, jsonify, render_template, request, sen
 from flask_login import current_user, login_required
 
 from .extensions import db
-from .models import ActionPlan, Role
+from .models import ActionPlan, Role, VillageAttendanceVisit, AttendanceEntry
 from .scoping import ScopeError, require_scoped
 from .services.audit import soft_delete
 from .services.monthly_plans import PlanningError, month_key, month_label, month_start
@@ -29,6 +29,20 @@ def reports_page():
         selected_month=month_key(selected),
         selected_month_label=month_label(selected),
     )
+
+
+@bp.get("/reports/village/<int:visit_id>")
+@login_required
+def village_report(visit_id: int):
+    try:
+        visit = require_scoped(VillageAttendanceVisit, visit_id, current_user)
+    except ScopeError:
+        return ("Not found", 404)
+    entries = [entry for entry in visit.entries if entry.is_enabled and not entry.is_deleted]
+    entries.sort(key=lambda entry: entry.committee.name.casefold())
+    if not entries:
+        return ("No active attendance for this visit", 404)
+    return render_template("village_attendance_report.html", visit=visit, entries=entries)
 
 
 @bp.get("/reports/plan/<int:plan_id>")
@@ -61,6 +75,31 @@ def report_data():
         )
     except (PlanningError, ValueError) as exc:
         return jsonify(error=str(exc)), 422
+
+
+@bp.delete("/api/v1/reports/village/<int:visit_id>")
+@login_required
+def delete_village_report(visit_id: int):
+    if current_user.role != Role.ADMIN:
+        return jsonify(error="Administrator access required."), 403
+    try:
+        visit = require_scoped(VillageAttendanceVisit, visit_id, current_user)
+    except ScopeError:
+        return jsonify(error="Report not found."), 404
+    actor = current_user._get_current_object()
+    retention = current_app.config["RECYCLE_RETENTION_DAYS"]
+    try:
+        for entry in visit.entries:
+            if not entry.is_deleted:
+                soft_delete(entry, actor, retention)
+                if not entry.action_plan.is_deleted:
+                    soft_delete(entry.action_plan, actor, retention)
+        soft_delete(visit, actor, retention)
+        db.session.commit()
+        return jsonify(ok=True, message="All committee reports moved to Recycle Bin."), 200
+    except Exception:
+        db.session.rollback()
+        raise
 
 
 @bp.delete("/api/v1/reports/plan/<int:plan_id>")

@@ -18,6 +18,7 @@ from .models import (
     ActionPlan,
     ActionPlanType,
     AttendanceEntry,
+    VillageAttendanceVisit,
     AuditAction,
     Committee,
     CommitteeMember,
@@ -35,7 +36,7 @@ from .scoping import (
     scoped_select,
 )
 from .services.audit import model_snapshot, record_audit
-from .services.entries import EntryValidationError, create_attendance, create_specials
+from .services.entries import EntryValidationError, create_attendance, create_specials, create_village_attendance
 from .services.files import UploadProblem
 from .services.monitoring import (
     action_plan_status,
@@ -139,6 +140,7 @@ def _plan_json(plan: ActionPlan) -> dict[str, Any]:
         "assigned_date": _iso(plan.assigned_date),
         "status": action_plan_status(plan),
         "attendance_entry_id": attendance_id,
+        "has_recycled_attendance": bool(plan.attendance_entry and plan.attendance_entry.is_deleted),
         "specials_entry_id": specials_id,
         "is_executable": plan.is_executable,
         "is_enabled": plan.is_enabled,
@@ -148,6 +150,7 @@ def _attendance_json(entry: AttendanceEntry) -> dict[str, Any]:
     return {
         "id": entry.id,
         "client_submission_id": entry.client_submission_id,
+        "village_visit_id": entry.village_visit_id,
         "village_id": entry.village_id,
         "village_name": entry.village.name,
         "committee_id": entry.committee_id,
@@ -365,7 +368,9 @@ def create_action_plan_route():
         if len(plan_month_raw) == 7:
             plan_month_raw += "-01"
         plan_month = date.fromisoformat(plan_month_raw).replace(day=1)
-        plan_type = ActionPlanType(str(data.get("plan_type") or "").strip())
+        if str(data.get("plan_type") or "").strip() != "Attendance":
+            raise EntryValidationError("Only Attendance can be scheduled.")
+        plan_type = ActionPlanType.ATTENDANCE
         assigned_date = date.fromisoformat(str(data.get("assigned_date") or ""))
         if (assigned_date.year, assigned_date.month) != (plan_month.year, plan_month.month):
             raise EntryValidationError("Assigned date must be inside the selected month.")
@@ -401,6 +406,27 @@ def create_action_plan_route():
         return jsonify(error=str(exc)), 422
 
 
+@bp.post("/attendance/village")
+@login_required
+@json_role_required(Role.DA)
+def submit_village_attendance():
+    try:
+        visit, created = create_village_attendance(
+            _payload(), request.files.get("photo"), current_user._get_current_object()
+        )
+        db.session.commit()
+        return jsonify(
+            id=visit.id, village_id=visit.village_id,
+            committee_count=len(visit.entries), idempotent=not created,
+        ), 201 if created else 200
+    except ScopeError as exc:
+        db.session.rollback()
+        return jsonify(error=str(exc)), 403
+    except (EntryValidationError, UploadProblem, ValueError) as exc:
+        db.session.rollback()
+        return jsonify(error=str(exc)), 422
+
+
 @bp.get("/attendance")
 @login_required
 def list_attendance():
@@ -428,6 +454,7 @@ def list_attendance():
 @login_required
 @json_role_required(Role.DA)
 def submit_attendance():
+    return jsonify(error="Use the new village attendance form for a single combined submission."), 410
     data = _payload()
     photo = request.files.get("photo")
     try:
@@ -468,6 +495,7 @@ def list_specials():
 @login_required
 @json_role_required(Role.DA)
 def submit_specials():
+    return jsonify(error="Specials submissions have been retired. Historical records remain available."), 410
     data = _payload()
     photo = request.files.get("photo")
     try:

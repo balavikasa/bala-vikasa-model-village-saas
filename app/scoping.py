@@ -14,6 +14,7 @@ from .models import (
     PC,
     ActionPlan,
     AttendanceEntry,
+    VillageAttendanceVisit,
     AuditLog,
     Committee,
     CommitteeMember,
@@ -109,6 +110,8 @@ def scoped_select(
             )
         if model is AttendanceEntry:
             return stmt.join(AttendanceEntry.village).join(Village.da).where(DA.pc_id == pc_id)
+        if model is VillageAttendanceVisit:
+            return stmt.join(VillageAttendanceVisit.village).join(Village.da).where(DA.pc_id == pc_id)
         if model is SpecialsEntry:
             return stmt.join(SpecialsEntry.village).join(Village.da).where(DA.pc_id == pc_id)
         if model is User:
@@ -134,6 +137,8 @@ def scoped_select(
             return stmt.join(ActionPlan.committee).join(Committee.village).where(Village.da_id == da_id)
         if model is AttendanceEntry:
             return stmt.join(AttendanceEntry.village).where(Village.da_id == da_id)
+        if model is VillageAttendanceVisit:
+            return stmt.join(VillageAttendanceVisit.village).where(Village.da_id == da_id)
         if model is SpecialsEntry:
             return stmt.join(SpecialsEntry.village).where(Village.da_id == da_id)
         if model is User:

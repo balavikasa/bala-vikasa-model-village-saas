@@ -38,14 +38,15 @@
   const adminActions = (row, mobile = false) => {
     if (!isAdmin) return "";
     const editUrl = `/admin?resource=action-plans&edit=${encodeURIComponent(row.plan_id)}`;
+    const deleteId = row.village_visit_id ? `data-village-delete="${Number(row.village_visit_id)}"` : `data-report-delete="${Number(row.plan_id)}"`;
     if (mobile) {
       return `<div class="report-row-admin-actions">
         <a class="button ghost" href="${editUrl}">Edit</a>
-        <button class="button danger" type="button" data-report-delete="${esc(row.plan_id)}">Delete</button>
+        <button class="button danger" type="button" ${deleteId}>Delete</button>
       </div>`;
     }
     return `<a class="button ghost compact-action" href="${editUrl}">Edit</a>
-      <button class="button danger compact-action" type="button" data-report-delete="${esc(row.plan_id)}">Delete</button>`;
+      <button class="button danger compact-action" type="button" ${deleteId}>Delete</button>`;
   };
 
   const render = () => {
@@ -81,7 +82,7 @@
       </article>`).join("")}</div>`;
   };
 
-  const deleteReport = async (planId) => {
+  const deleteReport = async (planId, villageVisit = false) => {
     if (!isAdmin || !planId) return;
     const confirmed = window.confirm(
       "Move this report to the Recycle Bin? Linked field submission data will also be soft-deleted and can be restored by an administrator."
@@ -89,7 +90,8 @@
     if (!confirmed) return;
 
     try {
-      const response = await window.MV.api(`/api/v1/reports/plan/${encodeURIComponent(planId)}`, {
+      const url = villageVisit ? `/api/v1/reports/village/${encodeURIComponent(planId)}` : `/api/v1/reports/plan/${encodeURIComponent(planId)}`;
+      const response = await window.MV.api(url, {
         method: "DELETE",
       });
       const payload = await response.json().catch(() => ({}));
@@ -124,7 +126,9 @@
 
   list.addEventListener("click", (event) => {
     const button = event.target.closest("[data-report-delete]");
-    if (button) deleteReport(button.dataset.reportDelete);
+    if (button) return deleteReport(button.dataset.reportDelete);
+    const villageButton = event.target.closest("[data-village-delete]");
+    if (villageButton) return deleteReport(villageButton.dataset.villageDelete, true);
   });
 
   const step = (delta) => {

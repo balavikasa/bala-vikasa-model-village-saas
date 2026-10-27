@@ -18,7 +18,6 @@
       <div class="hero-actions">
         {% if current_user.role.value == 'da' %}
         <a class="button primary" href="{{ url_for('pages.attendance') }}">Record attendance</a>
-        <a class="button paper" href="{{ url_for('pages.specials') }}">Record special</a>
         {% elif current_user.role.value in ['admin', 'pm', 'pc'] %}
         <a class="button primary" href="{{ url_for('pages.monitoring') }}">Open monitoring</a>
         <a class="button paper" href="{{ url_for('pages.directory') }}">Browse directory</a>
@@ -43,7 +42,7 @@
     <article class="metric-card"><span>Villages</span><strong data-kpi="villages">—</strong><small>Your visible scope</small></article>
     <article class="metric-card"><span>Committees</span><strong data-kpi="committees">—</strong><small>Active master records</small></article>
     <article class="metric-card"><span>Action plans</span><strong data-kpi="action_plans">—</strong><small>Assigned committee work</small></article>
-    <article class="metric-card"><span>Entries</span><strong data-kpi="entries">—</strong><small>Attendance + specials</small></article>
+    <article class="metric-card"><span>Entries</span><strong data-kpi="entries">—</strong><small>Committee attendance records</small></article>
   </section>
 
   <section class="overview-grid">
@@ -53,7 +52,6 @@
         <a class="action-card" href="{{ url_for('planning.action_plans_page') }}"><span class="action-icon navy">▦</span><span><strong>Action Plans</strong><small>{{ 'Your assigned monthly work' if current_user.role.value == 'da' else 'Monthly planning & history' }}</small></span><b>›</b></a>
         {% if current_user.role.value == 'da' %}
         <a class="action-card" href="{{ url_for('pages.attendance') }}"><span class="action-icon saffron">✓</span><span><strong>Attendance entry</strong><small>Action-plan visit and photo</small></span><b>›</b></a>
-        <a class="action-card" href="{{ url_for('pages.specials') }}"><span class="action-icon green">✦</span><span><strong>Specials entry</strong><small>GP or VDC program</small></span><b>›</b></a>
         {% endif %}
         <a class="action-card" href="{{ url_for('reports.reports_page') }}"><span class="action-icon clay">▤</span><span><strong>Reports</strong><small>Open each report with evidence & map</small></span><b>›</b></a>
         <a class="action-card" href="{{ url_for('pages.directory') }}"><span class="action-icon navy">⌂</span><span><strong>{{ 'My villages' if current_user.role.value == 'da' else 'Directory' }}</strong><small>People, committees and scope</small></span><b>›</b></a>

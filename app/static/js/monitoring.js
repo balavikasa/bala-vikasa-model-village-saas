@@ -32,12 +32,12 @@
   };
 
   const popup = (item) => `
-    <div class="map-popup">
-      <span class="badge ${statusKind(item.status)}">${window.MV.escapeHtml(item.status)}</span>
-      <h3>${window.MV.escapeHtml(item.name)}</h3>
-      <p>${window.MV.escapeHtml(item.cluster)} · DA ${window.MV.escapeHtml(item.da_name)}</p>
-      <p>${Number(item.committee_count).toLocaleString()} committees · Last visit ${window.MV.escapeHtml(item.last_visit_date ? window.MV.formatDate(item.last_visit_date) : "not recorded")}</p>
-      ${item.photo_url ? `<img src="${window.MV.escapeHtml(item.photo_url)}" alt="Latest visit evidence for ${window.MV.escapeHtml(item.name)}" loading="lazy">` : ""}
+    <div class="map-popup mv-compact-map-card">
+      <div class="mv-map-card-heading"><strong>${window.MV.escapeHtml(item.name)}</strong><span class="badge ${statusKind(item.status)}">${window.MV.escapeHtml(item.status)}</span></div>
+      <small>${window.MV.escapeHtml(item.cluster)} · DA ${window.MV.escapeHtml(item.da_name)}</small>
+      ${item.photo_url ? `<img loading="lazy" src="${window.MV.escapeHtml(item.photo_url)}" alt="Recent field evidence">` : ""}
+      <div class="mv-map-quick-info"><span>${Number(item.committee_count || 0)} committees</span><span>${window.MV.escapeHtml(item.last_visit_date || "No visit")}</span></div>
+      <a href="/directory/village/${Number(item.id)}">Village details</a>
     </div>`;
 
   const renderMap = (items) => {
@@ -66,7 +66,7 @@
       });
       const position = [Number(item.latitude), Number(item.longitude)];
       bounds.push(position);
-      window.L.marker(position, { icon, title: item.name }).addTo(map).bindPopup(popup(item), { maxWidth: 280 });
+      window.L.marker(position, { icon, title: item.name }).addTo(map).bindPopup(popup(item), { maxWidth: 270 });
     });
     map.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
     window.setTimeout(() => map.invalidateSize(), 150);

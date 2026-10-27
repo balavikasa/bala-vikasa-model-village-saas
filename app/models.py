@@ -323,6 +323,32 @@ class User(UserMixin, LifecycleMixin, db.Model):
         return f"<User {self.display_name!r} {self.role.value}>"
 
 
+class VillageAttendanceVisit(LifecycleMixin, db.Model):
+    """One DA field visit, one photo/GPS fix, multiple committee attendance rows.
+
+    Legacy AttendanceEntry records have no village_visit_id and are retained as-is.
+    """
+
+    __tablename__ = "village_attendance_visits"
+    __table_args__ = (
+        UniqueConstraint("client_submission_id", name="uq_village_visit_submission"),
+        Index("ix_village_attendance_visit_date", "village_id", "visit_date"),
+    )
+
+    village_id: Mapped[int] = mapped_column(ForeignKey("villages.id", ondelete="RESTRICT"), nullable=False, index=True)
+    visit_date: Mapped[date] = mapped_column(Date, nullable=False)
+    photo_path: Mapped[str] = mapped_column(String(500), nullable=False)
+    latitude: Mapped[float] = mapped_column(Float, nullable=False)
+    longitude: Mapped[float] = mapped_column(Float, nullable=False)
+    geolocation_source: Mapped[str] = mapped_column(String(32), nullable=False, default="device")
+    remarks: Mapped[str | None] = mapped_column(Text)
+    client_submission_id: Mapped[str] = mapped_column(String(80), nullable=False)
+    submitted_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True)
+    submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow)
+    village: Mapped[Village] = relationship()
+    entries: Mapped[list[AttendanceEntry]] = relationship(back_populates="village_visit")
+
+
 class AttendanceEntry(LifecycleMixin, db.Model):
     __tablename__ = "attendance_entries"
     __table_args__ = (
@@ -338,6 +364,7 @@ class AttendanceEntry(LifecycleMixin, db.Model):
     committee_id: Mapped[int] = mapped_column(ForeignKey("committees.id", ondelete="RESTRICT"), nullable=False, index=True)
     action_plan_id: Mapped[int] = mapped_column(ForeignKey("action_plans.id", ondelete="RESTRICT"), nullable=False, index=True)
     visit_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    village_visit_id: Mapped[int | None] = mapped_column(ForeignKey("village_attendance_visits.id", ondelete="RESTRICT"), nullable=True, index=True)
     male_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     female_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     total_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -355,6 +382,7 @@ class AttendanceEntry(LifecycleMixin, db.Model):
     submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow)
 
     village: Mapped[Village] = relationship(back_populates="attendance_entries")
+    village_visit: Mapped[VillageAttendanceVisit | None] = relationship(back_populates="entries")
     committee: Mapped[Committee] = relationship(back_populates="attendance_entries")
     action_plan: Mapped[ActionPlan] = relationship(back_populates="attendance_entry")
     submitted_by: Mapped[User] = relationship(foreign_keys=[submitted_by_user_id])

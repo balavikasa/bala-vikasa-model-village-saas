@@ -3453,3 +3453,15 @@ details pre{max-width:400px;max-height:220px;overflow:auto;padding:10px;border-r
 .location-card { flex-wrap:wrap; }
 .location-card > span:nth-child(2) { min-width:140px; }
 .location-card #retry-location { min-height:44px; }
+
+/* Compact evidence cards shared by admin, PC and DA monitoring maps. */
+.leaflet-popup-content { margin: 11px 12px !important; width: 240px !important; }
+.mv-compact-map-card { min-width: 0; width: 240px; display: grid; gap: 6px; font-size: .83rem; }
+.mv-map-card-heading { display: flex; gap: 6px; align-items: flex-start; justify-content: space-between; }
+.mv-map-card-heading strong { font-size: .94rem; color: var(--navy); }
+.mv-map-card-heading .badge { font-size: .65rem; flex-shrink: 0; }
+.mv-compact-map-card > small { color: var(--muted); line-height: 1.3; }
+.mv-compact-map-card > img { margin: 2px 0; width: 100%; height: 118px; max-height: 118px; object-fit: cover; border-radius: 9px; }
+.mv-map-quick-info { display: flex; flex-wrap: wrap; gap: 8px; font-weight: 600; }
+.mv-map-source { color: var(--muted); font-size: .72rem; }
+.mv-compact-map-card > a { font-size: .8rem; font-weight: 700; color: var(--navy); }

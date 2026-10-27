@@ -34,7 +34,7 @@
         villages: counts.villages || 0,
         committees: counts.committees || 0,
         action_plans: counts.action_plans || 0,
-        entries: (counts.attendance_entries || 0) + (counts.specials_entries || 0),
+        entries: counts.attendance_entries || 0,
       };
       Object.entries(values).forEach(([key, value]) => {
         const node = document.querySelector(`[data-kpi="${key}"]`);

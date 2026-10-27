@@ -38,14 +38,17 @@ def overview():
 @login_required
 @role_required(Role.DA)
 def attendance():
-    return render_template("field.html", entry_type="attendance")
+    from .services.monthly_plans import ensure_recurring_attendance
+    from .timeutils import current_month
+    ensure_recurring_attendance(current_user._get_current_object(), current_month())
+    return render_template("village_attendance.html")
 
 
 @bp.get("/field/specials")
 @login_required
 @role_required(Role.DA)
 def specials():
-    return render_template("field.html", entry_type="specials")
+    return redirect(url_for("pages.attendance"))
 
 
 @bp.get("/directory")

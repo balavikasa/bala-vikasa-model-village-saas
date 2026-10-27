@@ -15,6 +15,7 @@ from ..models import (
     AttendanceEntry,
     AttendanceStatus,
     AttendanceVisitMember,
+    VillageAttendanceVisit,
     AuditAction,
     Committee,
     CommitteeMember,
@@ -361,3 +362,130 @@ def create_specials(
 
     record_audit(AuditAction.CREATE, entry, after=model_snapshot(entry), actor=user)
     return entry, True
+
+
+def create_village_attendance(
+    payload: dict[str, Any], photo: FileStorage | None, user: User,
+) -> tuple[VillageAttendanceVisit, bool]:
+    """Submit all pending scheduled committees together, atomically.
+
+    One stored photo, one device fix, and one idempotency ID are shared by
+    committee-level AttendanceEntry rows. Existing per-committee reports continue
+    to operate; no old attendance or Specials history is altered.
+    """
+    client_id = _submission_id(payload.get("client_submission_id"))
+    existing = db.session.scalar(db.select(VillageAttendanceVisit).where(
+        VillageAttendanceVisit.client_submission_id == client_id
+    ))
+    if existing:
+        if existing.submitted_by_user_id != user.id:
+            raise ScopeError("That submission belongs to another DA.")
+        return existing, False
+
+    village = require_scoped(Village, _integer(payload.get("village_id"), "village_id", minimum=1), user)
+    if not can_submit_for_village(user, village):
+        raise ScopeError("You cannot submit attendance for this village.")
+    visit_date = _date(payload.get("visit_date"), "visit_date")
+    latitude, longitude, source = _coordinates(payload, village)
+    raw = payload.get("committees")
+    try:
+        items = json.loads(raw) if isinstance(raw, str) else raw
+    except (TypeError, ValueError) as exc:
+        raise EntryValidationError("Committee attendance must be a valid list.") from exc
+    if not isinstance(items, list) or not items:
+        raise EntryValidationError("Add attendance for all available committees in the village.")
+
+    from .monthly_plans import monthly_plans
+    plans = monthly_plans(user, current_month())
+    available = {
+        c.id: c for c in db.session.scalars(db.select(Committee).where(
+            Committee.village_id == village.id, Committee.is_enabled.is_(True), Committee.is_deleted.is_(False)
+        ))
+    }
+    # Do not fabricate PC assignments; only collect for executable Attendance
+    # action plans. A committee with no current plan must be scheduled by PC.
+    eligible = {cid: plans[cid] for cid in available if cid in plans
+                and plans[cid].is_executable and plans[cid].plan_type == ActionPlanType.ATTENDANCE
+                and plans[cid].attendance_entry is None}
+    supplied_ids = []
+    prepared = []
+    for item in items:
+        if not isinstance(item, dict):
+            raise EntryValidationError("Each committee must contain attendance details.")
+        cid = _integer(item.get("committee_id"), "committee_id", minimum=1)
+        if cid in supplied_ids:
+            raise EntryValidationError("A committee appears more than once.")
+        supplied_ids.append(cid)
+        if cid not in eligible:
+            raise EntryValidationError("A committee is completed, unscheduled, or outside this village. Refresh your plan.")
+        plan = eligible[cid]
+        male = _integer(item.get("male_count"), "male_count")
+        female = _integer(item.get("female_count"), "female_count")
+        new_members = _integer(item.get("new_members_count", 0), "new_members_count")
+        selected = _selected_members(available[cid], item.get("visit_member_ids"))
+        status = attendance_status(plan.assigned_date, visit_date)
+        reason = str(item.get("reason") or "").strip() or None
+        if status in {AttendanceStatus.EARLY, AttendanceStatus.POSTPONED} and not reason:
+            raise EntryValidationError(f"Reason required for {available[cid].name}: {status.value}.")
+        prepared.append((cid, plan, male, female, new_members, selected, status, reason, str(item.get("remarks") or "").strip() or None))
+    if set(supplied_ids) != set(eligible):
+        missing = [available[cid].name for cid in eligible if cid not in supplied_ids]
+        raise EntryValidationError("Complete every pending scheduled committee: " + ", ".join(missing))
+    if not prepared:
+        raise EntryValidationError("No pending scheduled attendance plans for this village.")
+
+    photo_path = _required_photo(photo, "village-attendance", f"{client_id}-{uuid.uuid4().hex}")
+    try:
+        visit = VillageAttendanceVisit(
+            village_id=village.id, visit_date=visit_date, photo_path=photo_path,
+            latitude=latitude, longitude=longitude, geolocation_source=source,
+            remarks=str(payload.get("remarks") or "").strip() or None,
+            submitted_by_user_id=user.id, client_submission_id=client_id,
+        )
+        db.session.add(visit)
+        db.session.flush()
+        for cid, plan, male, female, newcomers, members, status, reason, remarks in prepared:
+            entry = AttendanceEntry(
+                village_id=village.id, committee_id=cid, action_plan_id=plan.id,
+                village_visit_id=visit.id, visit_date=visit_date,
+                male_count=male, female_count=female, total_count=male + female,
+                new_members_count=newcomers,
+                visit_designations=list(dict.fromkeys(m.designation for m in members if m.designation)),
+                status=status, reason=reason, remarks=remarks,
+                photo_path=photo_path, latitude=latitude, longitude=longitude,
+                geolocation_source=source, submitted_by_user_id=user.id,
+                client_submission_id=f"{client_id[:50]}:{cid}",
+            )
+            db.session.add(entry)
+            db.session.flush()
+            for member in members:
+                db.session.add(AttendanceVisitMember(
+                    attendance_entry_id=entry.id, committee_member_id=member.id,
+                    member_name_snapshot=member.full_name,
+                    designation_snapshot=member.designation or "Member", gender_snapshot=member.gender,
+                ))
+            record_audit(AuditAction.CREATE, entry, after=model_snapshot(entry), actor=user)
+        db.session.flush()
+        record_audit(AuditAction.CREATE, visit, after=model_snapshot(visit), actor=user)
+        return visit, True
+    except IntegrityError as exc:
+        db.session.rollback()
+        # A concurrent retry can carry the same idempotency key; retrieve the
+        # winning submission instead of treating it as a new failed visit.
+        duplicate = db.session.scalar(db.select(VillageAttendanceVisit).where(
+            VillageAttendanceVisit.client_submission_id == client_id
+        ))
+        if duplicate:
+            # Each attempt stores a unique path, so removing a losing upload
+            # does not remove the photograph of the winning submission.
+            delete_photo(photo_path)
+            if duplicate.submitted_by_user_id != user.id:
+                raise ScopeError("That submission belongs to another DA.") from exc
+            return duplicate, False
+        delete_photo(photo_path)
+        raise EntryValidationError("One or more committee plans were already submitted. Refresh the form.") from exc
+    except Exception:
+        db.session.rollback()
+        # A shared image is deleted only on failure of the entire transaction.
+        delete_photo(photo_path)
+        raise

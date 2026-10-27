@@ -42,18 +42,13 @@
   };
 
   const popup = (item) => `
-    <div class="map-popup">
-      <strong>${esc(item.name)}</strong>
+    <div class="map-popup mv-compact-map-card">
+      <div class="mv-map-card-heading"><strong>${esc(item.name)}</strong><span class="badge" data-status="${esc(item.status)}">${esc(item.status)}</span></div>
       <small>${esc(item.cluster)} · ${esc(item.da_name)}</small>
-      <span class="badge" data-status="${esc(item.status)}">${esc(item.status)}</span>
-      <dl>
-        <div><dt>Committees</dt><dd>${Number(item.committee_count || 0)}</dd></div>
-        <div><dt>Latest evidence</dt><dd>${esc(item.last_visit_date || "No evidence")}</dd></div>
-        <div><dt>Evidence type</dt><dd>${esc(item.evidence_type || "—")}</dd></div>
-        <div><dt>Location</dt><dd>${esc(locationLabel(item))}</dd></div>
-      </dl>
-      ${item.photo_url ? `<img src="${esc(item.photo_url)}" alt="Latest field evidence">` : ""}
-      <a class="button ghost wide" href="/directory/village/${Number(item.id)}">View village</a>
+      ${item.photo_url ? `<img loading="lazy" src="${esc(item.photo_url)}" alt="Village field visit evidence">` : ""}
+      <div class="mv-map-quick-info"><span>${Number(item.committee_count || 0)} committees</span><span>${esc(item.last_visit_date || "No visit")}</span></div>
+      <div class="mv-map-source">${esc(locationLabel(item))}</div>
+      <a href="/directory/village/${Number(item.id)}">Village details</a>
     </div>`;
 
   const renderMap = () => {
@@ -89,7 +84,7 @@
       });
       window.L.marker(position, { icon, title: item.name })
         .addTo(map)
-        .bindPopup(popup(item), { maxWidth: 290 });
+        .bindPopup(popup(item), { maxWidth: 270 });
     });
 
     if (bounds.length === 1) {

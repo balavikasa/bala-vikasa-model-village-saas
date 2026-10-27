@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import secrets
 from collections.abc import Iterable
+from calendar import monthrange
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -35,7 +36,7 @@ TEMPLATE_VERSION = "2.0"
 STAGE_TTL_MINUTES = 30
 EXPORT_SHEET = "Action Plans"
 META_SHEET = "__META__"
-PLAN_TYPES = tuple(member.value for member in ActionPlanType)
+PLAN_TYPES = (ActionPlanType.ATTENDANCE.value,)
 SYSTEM_HEADERS = (
     "Plan ID",
     "Month",
@@ -116,6 +117,96 @@ def add_months(value: date, months: int) -> date:
         index % 12 + 1,
         1,
     )
+
+
+def _carried_date(previous: date | None, target_month: date) -> date | None:
+    """Carry the scheduled *day* across months (clamped e.g. 31 -> 28)."""
+    if previous is None:
+        return None
+    last_day = monthrange(target_month.year, target_month.month)[1]
+    return date(target_month.year, target_month.month, min(previous.day, last_day))
+
+
+def _recurrence_anchor(plan: ActionPlan) -> date | None:
+    """Retain the last explicit scheduled day across short months.
+
+    Automatically prepared records can be clamped in February; carry the
+    original January 31 anchor into March rather than permanently using 28.
+    Any human-edited/imported plan is the new recurrence anchor.
+    """
+    visited: set[int] = set()
+    current = plan
+    while current.prepared_from_id and current.assigned_by_user_id is None:
+        if current.id in visited:
+            break
+        visited.add(current.id)
+        source = db.session.get(ActionPlan, current.prepared_from_id)
+        if source is None or not source.assigned_date:
+            break
+        current = source
+    return current.assigned_date or plan.assigned_date
+
+
+def ensure_recurring_attendance(user: User, target_month: date) -> int:
+    """Fill *missing* current/future monthly slots from the last real assignment.
+
+    Never replace any existing slot, including a deliberately blank draft or
+    imported/monthly manual override. Older completed plans remain immutable.
+    Idempotent across DA/PC/Admin reads via the unique committee/month key.
+    A committee with no past scheduled date remains a PC setup task.
+    """
+    if target_month < current_month():
+        return 0
+    slots = _monthly_plan_slots(user, target_month)
+    created = 0
+    for committee in visible_committees(user):
+        slot = slots.get(committee.id)
+        if slot is not None and not (
+            slot.prepared_from_id is not None
+            and (slot.assigned_by_user_id is None or (slot.assigned_date is None and slot.plan_type is None))
+            and slot.attendance_entry is None and slot.specials_entry is None
+        ):
+            continue  # Imported/manual/previously submitted monthly plans win.
+        last = db.session.scalar(
+            db.select(ActionPlan).where(
+                ActionPlan.committee_id == committee.id,
+                ActionPlan.plan_month.is_not(None),
+                ActionPlan.plan_month < target_month,
+                ActionPlan.assigned_date.is_not(None),
+                ActionPlan.is_deleted.is_(False),
+                ActionPlan.is_enabled.is_(True),
+            ).order_by(ActionPlan.plan_month.desc()).limit(1)
+        )
+        if last is None:
+            continue  # No date to infer. Do not invent the first PC schedule.
+        if slot is not None:
+            # A future system-generated row follows later manual changes in the
+            # source month, but no human-created or imported slot is overwritten.
+            slot.description = last.description
+            slot.plan_type = ActionPlanType.ATTENDANCE
+            slot.assigned_date = _carried_date(_recurrence_anchor(last), target_month)
+            slot.prepared_from_id = last.id
+            slot.notes = last.notes
+            continue
+        plan = ActionPlan(
+            committee_id=committee.id, title=committee.name,
+            description=last.description, plan_month=target_month,
+            plan_type=ActionPlanType.ATTENDANCE,
+            assigned_date=_carried_date(_recurrence_anchor(last), target_month),
+            assigned_by_user_id=None, prepared_from_id=last.id,
+            notes=last.notes,
+        )
+        db.session.add(plan)
+        created += 1
+    if created or db.session.dirty:
+        try:
+            db.session.commit()
+        except IntegrityError:
+            # Concurrent first visits may prepare the same slots; the request can
+            # safely reload plans committed by another worker.
+            db.session.rollback()
+            return 0
+    return created
 
 
 def action_plan_status(
@@ -430,21 +521,7 @@ def da_work_queue(
     *,
     today: date | None = None,
 ) -> dict[str, Any]:
-    """Return incomplete executable field work for a DA.
-
-    Today:
-        Assignments due exactly today.
-
-    Pending:
-        Any unfinished assignment whose assigned date has passed.
-        Previous-month missed work remains visible here.
-
-    Upcoming:
-        Unfinished assignments later in the current month.
-
-    Draft, completed, disabled and soft-deleted plans are excluded by
-    scoped_select and the executable/entry checks below.
-    """
+    """One DA work card per village, covering its incomplete monthly committees."""
 
     today = today or local_today()
 
@@ -463,12 +540,9 @@ def da_work_queue(
             user,
         )
         .where(
-            ActionPlan.plan_type.is_not(
-                None
-            ),
-            ActionPlan.assigned_date.is_not(
-                None
-            ),
+            ActionPlan.plan_type == ActionPlanType.ATTENDANCE,
+            ActionPlan.plan_month == current_month_start,
+            ActionPlan.assigned_date.is_not(None),
         )
         .options(
             selectinload(
@@ -562,12 +636,7 @@ def da_work_queue(
             plan.committee.village
         )
 
-        path = (
-            "/field/attendance"
-            if plan.plan_type
-            == ActionPlanType.ATTENDANCE
-            else "/field/specials"
-        )
+        path = "/field/attendance"
 
         item: dict[str, Any] = {
             "plan_id": plan.id,
@@ -594,7 +663,7 @@ def da_work_queue(
             ),
             "notes": plan.notes,
             "go_url": (
-                f"{path}?plan={plan.id}"
+                f"{path}?village={village.id}"
             ),
         }
 
@@ -607,6 +676,24 @@ def da_work_queue(
         result[bucket].append(
             item
         )
+
+    # Group all pending/current/upcoming committees of a village under one GO.
+    # A mixed schedule shows just one village card in the highest-priority bucket.
+    groups: dict[int, list[tuple[str, dict[str, Any]]]] = {}
+    for category, items in result.items():
+        for item in items:
+            groups.setdefault(item["village_id"], []).append((category, item))
+    result = {"today": [], "pending": [], "upcoming": []}
+    for village_items in groups.values():
+        order = {"today": 0, "pending": 1, "upcoming": 2}
+        category, representative = min(village_items, key=lambda pair: (
+            order[pair[0]], pair[1]["assigned_date"]
+        ))
+        card = dict(representative)
+        card["committee_count"] = len(village_items)
+        card["committee_name"] = f"{len(village_items)} committees · one visit"
+        card["plan_type"] = "Attendance"
+        result[category].append(card)
 
     for bucket in result.values():
         bucket.sort(
@@ -659,16 +746,9 @@ def _parse_type(
     if raw is None:
         return None
 
-    for member in ActionPlanType:
-        if raw.casefold() in {
-            member.value.casefold(),
-            member.name.casefold(),
-        }:
-            return member
-
-    raise PlanningError(
-        "Type must be Attendance or Specials."
-    )
+    if raw.casefold() == "attendance":
+        return ActionPlanType.ATTENDANCE
+    raise PlanningError("Only Attendance is supported in new action plans.")
 
 
 def _parse_excel_date(
@@ -866,10 +946,10 @@ def _export_styles(
 
     validation = DataValidation(
         type="list",
-        formula1='"Attendance,Specials"',
+        formula1='"Attendance"',
         allow_blank=True,
         error=(
-            "Choose Attendance or Specials."
+            "Choose Attendance."
         ),
         errorTitle=(
             "Invalid action-plan type"
@@ -1340,7 +1420,7 @@ def preview_import(
             and plan_type is None
         ):
             errors.append(
-                "Choose Attendance or Specials "
+                "Choose Attendance "
                 "before assigning a date."
             )
 
@@ -2099,13 +2179,9 @@ def prepare_next_month(
                 else None
             ),
             plan_month=target_month,
-            plan_type=(
-                previous.plan_type
-                if previous
-                else None
-            ),
-            assigned_date=None,
-            assigned_by_user_id=user.id,
+            plan_type=(ActionPlanType.ATTENDANCE if previous and previous.assigned_date else None),
+            assigned_date=_carried_date(_recurrence_anchor(previous), target_month) if previous else None,
+            assigned_by_user_id=None,
             prepared_from_id=(
                 previous.id
                 if previous

@@ -157,9 +157,7 @@
     };
 
     const typeClass = (type) => {
-      return type === "Specials"
-        ? "specials"
-        : "attendance";
+      return "attendance";
     };
 
     const emptyState = (title, message) => `

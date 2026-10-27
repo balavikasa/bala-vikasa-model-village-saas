@@ -91,7 +91,29 @@ def report_row(plan: ActionPlan) -> dict[str, Any]:
 
 
 def report_rows(user: User, month: date, *, plan_type: str | None = None, status: str | None = None):
-    return [report_row(plan) for plan in report_plans(user, month, plan_type=plan_type, status=status)]
+    """Group new village visits into one visible report, retain legacy rows."""
+    rows: list[dict[str, Any]] = []
+    grouped: dict[int, list[ActionPlan]] = {}
+    for plan in report_plans(user, month, plan_type=plan_type, status=None):
+        entry = plan.attendance_entry
+        if entry and not entry.is_deleted and entry.village_visit_id is not None:
+            grouped.setdefault(entry.village_visit_id, []).append(plan)
+        else:
+            rows.append(report_row(plan))
+    for visit_id, plans in grouped.items():
+        representative = report_row(plans[0])
+        representative.update(
+            village_visit_id=visit_id,
+            committee=f"{len(plans)} committees · Village attendance",
+            type="Attendance",
+            view_url=f"/reports/village/{visit_id}",
+            status=("Postponed" if any(action_plan_status(p) == "Postponed" for p in plans)
+                    else "Early" if any(action_plan_status(p) == "Early" for p in plans) else "On-time"),
+        )
+        rows.append(representative)
+    if status:
+        rows = [row for row in rows if row["status"] == status]
+    return sorted(rows, key=lambda row: row.get("date") or "", reverse=True)
 
 
 def report_detail(plan: ActionPlan) -> dict[str, Any]:

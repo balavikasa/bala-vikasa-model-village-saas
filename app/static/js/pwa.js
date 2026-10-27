@@ -31,7 +31,7 @@
     listHost.innerHTML = records.map((record) => `
       <article class="sync-item" data-status="${window.MV.escapeHtml(record.status)}">
         <div>
-          <strong>${record.entryType === "specials" ? "Specials entry" : "Attendance entry"}</strong>
+          <strong>${"Village attendance"}</strong>
           <small>${window.MV.formatDate(record.createdAt, true)} · ${window.MV.escapeHtml(record.status)}</small>
           ${record.lastError ? `<small>${window.MV.escapeHtml(record.lastError)}</small>` : ""}
         </div>

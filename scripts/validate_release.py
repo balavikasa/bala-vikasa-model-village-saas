@@ -27,6 +27,7 @@ EXPECTED_TABLES = {
     "committee_members",
     "action_plans",
     "attendance_entries",
+    "village_attendance_visits",
     "attendance_visit_members",
     "specials_entries",
     "users",
@@ -241,12 +242,29 @@ def static_checks() -> list[Check]:
             ),
         ),
         "WebP camera compression": (
-            "app/static/js/field.js",
+            "app/static/js/village-attendance.js",
             (
                 "image/webp",
                 "toBlob",
-                "geolocation",
+                "MVLocation",
             ),
+        ),
+        "One village / all committees submission": (
+            "app/services/entries.py",
+            (
+                "create_village_attendance",
+                "VillageAttendanceVisit",
+                "visit_member_ids",
+                '"village-attendance"',
+            ),
+        ),
+        "Automatic DA geolocation": (
+            "app/static/js/da-location.js",
+            ("getCurrentPosition", "permissions", "mv:location"),
+        ),
+        "Recurring attendance plan inheritance": (
+            "app/services/monthly_plans.py",
+            ("ensure_recurring_attendance", "_carried_date", "_recurrence_anchor"),
         ),
         "Attendance business rules": (
             "app/services/entries.py",
@@ -391,7 +409,7 @@ def static_checks() -> list[Check]:
 
     checks.append(
         Check(
-            "Thirteen-table Alembic migration",
+            "Fourteen-table Alembic migration",
             "PASS" if not missing_tables else "FAIL",
             f"missing: {', '.join(missing_tables)}"
             if missing_tables

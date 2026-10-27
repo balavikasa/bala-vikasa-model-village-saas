@@ -36,6 +36,7 @@ from .services.monthly_plans import (
     planning_rows,
     planning_summary,
     prepare_next_month,
+    ensure_recurring_attendance,
     stage_import,
 )
 from .timeutils import current_month
@@ -79,6 +80,7 @@ def month_data():
     try:
         selected = month_start(request.args.get("month"))
 
+        ensure_recurring_attendance(current_user._get_current_object(), selected)
         rows = planning_rows(
             current_user._get_current_object(),
             selected,
@@ -99,6 +101,7 @@ def month_data():
 @login_required
 @json_role_required(Role.DA)
 def da_work_data():
+    ensure_recurring_attendance(current_user._get_current_object(), current_month())
     return jsonify(
         da_work_queue(
             current_user._get_current_object()
@@ -145,14 +148,12 @@ def update_monthly_plan(plan_id: int):
 
         if assigned_raw and not plan_type_raw:
             raise PlanningError(
-                "Choose Attendance or Specials before assigning a date."
+                "Choose Attendance before assigning a date."
             )
 
-        plan_type = (
-            ActionPlanType(plan_type_raw)
-            if plan_type_raw
-            else None
-        )
+        if plan_type_raw not in {"", "Attendance"}:
+            raise PlanningError("Only Attendance can be scheduled in the new workflow.")
+        plan_type = ActionPlanType.ATTENDANCE if plan_type_raw else None
 
         assigned_date = None
 
@@ -276,15 +277,13 @@ def create_monthly_plan():
 
         if assigned_raw and not plan_type_raw:
             raise PlanningError(
-                "Choose Attendance or Specials "
+                "Choose Attendance "
                 "before assigning a date."
             )
 
-        plan_type = (
-            ActionPlanType(plan_type_raw)
-            if plan_type_raw
-            else None
-        )
+        if plan_type_raw not in {"", "Attendance"}:
+            raise PlanningError("Only Attendance can be scheduled in the new workflow.")
+        plan_type = ActionPlanType.ATTENDANCE if plan_type_raw else None
 
         assigned = None
 

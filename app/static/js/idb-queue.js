@@ -197,7 +197,7 @@
         let payload = {};
         try { payload = await response.json(); } catch (_) { /* no JSON */ }
         const message = payload.error || `Server rejected entry (${response.status}).`;
-        if ([400, 403, 404, 409, 413, 422].includes(response.status)) {
+        if ([400, 403, 404, 409, 410, 413, 422].includes(response.status)) {
           record.status = "failed";
           record.lastError = message;
           await update(record);

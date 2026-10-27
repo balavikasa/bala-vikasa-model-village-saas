@@ -264,20 +264,6 @@
       </a>
 
       <a
-        href="{{ url_for('pages.specials') }}"
-        class="{% if request.endpoint == 'pages.specials' %}is-active{% endif %}"
-      >
-        <span
-          class="nav-glyph"
-          aria-hidden="true"
-        >
-          &#10022;
-        </span>
-
-        <span class="nav-label">Specials</span>
-      </a>
-
-      <a
         href="{{ url_for('planning.action_plans_page') }}"
         class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}"
       >
@@ -573,7 +559,7 @@
   >
     <button
       type="button"
-      class="{% if request.endpoint in ['pages.attendance', 'pages.specials'] %}is-active{% endif %}"
+      class="{% if request.endpoint in ['pages.attendance'] %}is-active{% endif %}"
       data-da-entry-menu
       aria-expanded="false"
       aria-haspopup="dialog"
@@ -691,34 +677,7 @@
             <strong>Attendance</strong>
 
             <small>
-              Record committee attendance
-            </small>
-          </span>
-
-          <span
-            class="da-entry-arrow"
-            aria-hidden="true"
-          >
-            →
-          </span>
-        </a>
-
-        <a
-          class="da-entry-option"
-          href="{{ url_for('pages.specials') }}"
-        >
-          <span
-            class="da-entry-icon"
-            aria-hidden="true"
-          >
-            ✦
-          </span>
-
-          <span>
-            <strong>Specials</strong>
-
-            <small>
-              Record a special activity
+              One visit for every village committee
             </small>
           </span>
 
@@ -1021,24 +980,6 @@
 
           <small>
             Field entry home
-          </small>
-        </a>
-
-        <a
-          href="{{ url_for('pages.specials') }}"
-          data-mobile-menu-link
-        >
-          <span
-            class="nav-glyph"
-            aria-hidden="true"
-          >
-            &#10022;
-          </span>
-
-          <strong>Specials</strong>
-
-          <small>
-            Special activity entry
           </small>
         </a>
 
@@ -1434,6 +1375,14 @@
     defer
   ></script>
 
+  {% if current_user.is_authenticated and current_user.role.value == 'da' %}
+  <dialog class="da-location-dialog" id="da-location-dialog" aria-labelledby="da-location-title">
+    <h2 id="da-location-title">Enable current location</h2>
+    <p id="da-location-help">This app needs your current GPS location for field attendance.</p>
+    <div class="dialog-actions"><button type="button" class="button ghost" data-location-dismiss>Close</button><button type="button" class="button primary" data-location-retry>Try again</button></div>
+  </dialog>
+  <script src="{{ url_for('static', filename='js/da-location.js') }}" defer></script>
+  {% endif %}
   {% block scripts %}{% endblock %}
 
 </body>
