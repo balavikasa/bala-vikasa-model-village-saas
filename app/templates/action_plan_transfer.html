@@ -16,7 +16,7 @@
       <span class="step-orb">1</span>
       <p class="eyebrow">Export</p>
       <h2>Download planning sheet</h2>
-      <p class="muted">The workbook is scoped to your access. Grey columns are system-controlled; yellow cells are the fields to complete.</p>
+      <p class="muted">The workbook is scoped to your access. Enter a date for only one committee per village; blank committee dates in that village are filled automatically during import preview. Explicit dates are preserved.</p>
       <label class="field"><span>Month</span><input type="month" id="transfer-month" value="{{ selected_month }}"></label>
       <a class="button primary wide" id="export-workbook" href="{{ url_for('planning.export_month', month=selected_month) }}">Export Excel</a>
     </article>

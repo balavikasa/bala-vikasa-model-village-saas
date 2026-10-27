@@ -13,7 +13,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from .config import CONFIGS
 from .extensions import csrf, db, login_manager, migrate
 
-APP_RELEASE = "2026.27.19"
+APP_RELEASE = "2026.27.20"
 
 
 def create_app(config: str | dict | None = None) -> Flask:

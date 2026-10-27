@@ -29,6 +29,8 @@ from .services.monthly_plans import (
     build_export_workbook,
     confirm_import,
     da_work_queue,
+    ensure_recurring_attendance,
+    fill_blank_village_schedules,
     month_key,
     month_label,
     month_start,
@@ -36,7 +38,6 @@ from .services.monthly_plans import (
     planning_rows,
     planning_summary,
     prepare_next_month,
-    ensure_recurring_attendance,
     stage_import,
 )
 from .timeutils import current_month
@@ -189,10 +190,13 @@ def update_monthly_plan(plan_id: int):
             before=before,
             after=model_snapshot(plan),
         )
+        filled_committee_ids = fill_blank_village_schedules(plan, current_user._get_current_object())
 
         db.session.commit()
 
         return jsonify(
+            village_dates_filled=len(filled_committee_ids),
+            filled_committee_ids=filled_committee_ids,
             item={
                 "id": plan.id,
                 "plan_type": (
@@ -326,10 +330,11 @@ def create_monthly_plan():
             plan,
             after=model_snapshot(plan),
         )
+        filled = fill_blank_village_schedules(plan, current_user._get_current_object())
 
         db.session.commit()
 
-        return jsonify(id=plan.id), 201
+        return jsonify(id=plan.id, village_dates_filled=len(filled)), 201
 
     except ScopeError as exc:
         db.session.rollback()

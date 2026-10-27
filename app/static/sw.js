@@ -2,7 +2,7 @@
 "use strict";
 importScripts("/static/js/idb-queue.js");
 
-const VERSION = "2026.27.19-village-attendance-ci";
+const VERSION = "2026.27.20-tap-attendance";
 // Explicit DA location permission and Camera / Photo Album / Files choices
 const STATIC_CACHE = `mv-static-${VERSION}`;
 const DATA_PREFIX = "mv-data-";
@@ -33,6 +33,7 @@ const STATIC_ASSETS = [
   "/offline",
   "/manifest.json",
   "/static/css/app.css",
+  "/static/css/da-field.css",
   "/static/js/app.js",
   "/static/js/idb-queue.js",
   "/static/js/pwa.js",

@@ -419,10 +419,23 @@ def create_village_attendance(
         if cid not in eligible:
             raise EntryValidationError("A committee is completed, unscheduled, or outside this village. Refresh your plan.")
         plan = eligible[cid]
-        male = _integer(item.get("male_count"), "male_count")
-        female = _integer(item.get("female_count"), "female_count")
         new_members = _integer(item.get("new_members_count", 0), "new_members_count")
         selected = _selected_members(available[cid], item.get("visit_member_ids"))
+        if item.get("counts_mode") == "selected_members":
+            # The selected name cards, not manually entered numbers, define
+            # attendance. Gender stays private in the interface and persists
+            # in the existing member records for accurate reporting.
+            unknown = [m.full_name for m in selected if str(m.gender or "").strip().casefold() not in {"male", "female"}]
+            if unknown:
+                raise EntryValidationError(
+                    f"Update gender in Master Data before attendance for {available[cid].name}: " + ", ".join(unknown)
+                )
+            male = sum(str(m.gender or "").strip().casefold() == "male" for m in selected)
+            female = len(selected) - male
+        else:
+            # Legacy queued offline submissions remain valid.
+            male = _integer(item.get("male_count"), "male_count")
+            female = _integer(item.get("female_count"), "female_count")
         status = attendance_status(plan.assigned_date, visit_date)
         reason = str(item.get("reason") or "").strip() or None
         if status in {AttendanceStatus.EARLY, AttendanceStatus.POSTPONED} and not reason:

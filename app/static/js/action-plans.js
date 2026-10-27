@@ -1163,7 +1163,9 @@
       dialog.close();
 
       window.MV.toast(
-        "Action plan saved",
+        result.village_dates_filled
+          ? `Saved. ${result.village_dates_filled} other committee dates filled for this village.`
+          : "Action plan saved",
         "success"
       );
 
@@ -1183,7 +1185,7 @@
 
         if (
           !confirm(
-            `Prepare the month after ${label.textContent}? Dates are intentionally not copied.`
+            `Prepare the month after ${label.textContent}? Existing assigned dates carry forward; blank plans remain blank.`
           )
         ) {
           return;

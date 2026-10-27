@@ -193,7 +193,6 @@ RESOURCES: dict[str, ResourceSpec] = {
     ),
     "attendance-entries": ResourceSpec(
         AttendanceEntry,
-    VillageAttendanceVisit,
         "Attendance Entries",
         (
             FieldSpec("village_id", "relationship", required=True, related_resource="villages"),
@@ -446,8 +445,12 @@ def collection(slug: str):
     data = dict(request.get_json(silent=True) or {})
     try:
         record = _create(spec, data)
+        propagated = 0
+        if isinstance(record, ActionPlan) and record.assigned_date:
+            from .services.monthly_plans import fill_blank_village_schedules
+            propagated = len(fill_blank_village_schedules(record, current_user._get_current_object()))
         db.session.commit()
-        return jsonify(item=_serialize(record)), 201
+        return jsonify(item=_serialize(record), village_dates_filled=propagated), 201
     except EntryValidationError as exc:
         db.session.rollback()
         return jsonify(error=str(exc)), 422
@@ -498,8 +501,12 @@ def update(slug: str, record_id: int):
         changed = before != after
         if changed:
             record_audit(AuditAction.MOVE if changed_parent else AuditAction.UPDATE, record, before=before, after=after)
+        propagated = 0
+        if isinstance(record, ActionPlan) and changed and record.assigned_date:
+            from .services.monthly_plans import fill_blank_village_schedules
+            propagated = len(fill_blank_village_schedules(record, current_user._get_current_object()))
         db.session.commit()
-        return jsonify(item=_serialize(record))
+        return jsonify(item=_serialize(record), village_dates_filled=propagated)
     except EntryValidationError as exc:
         db.session.rollback()
         return jsonify(error=str(exc)), 422

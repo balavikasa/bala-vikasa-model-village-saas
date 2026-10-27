@@ -1077,3 +1077,85 @@ body[data-role="da"] {
 .da-location-dialog h2 { margin: 0 0 8px; font-size: 1.2rem; }
 .da-location-dialog p { color: #526d70; line-height: 1.55; }
 .da-location-dialog .dialog-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+
+/* Village attendance v2026.27.20 — calm, compact, tap-first field entry. */
+.village-attendance-page { --att-ink: #274653; --att-teal: #188a90; --att-edge: #d9e7e5; }
+.village-attendance-page .page-heading { margin-bottom: 14px; }
+.village-attendance-page .entry-form { padding: clamp(12px, 2vw, 22px); background: #fff; }
+.village-attendance-page .form-section { padding-block: 14px; }
+.village-attendance-page .form-section-heading { margin-bottom: 12px; }
+.village-attendance-page .form-section-heading h2 { font-size: 1.12rem; }
+.village-attendance-page .visit-basics .form-grid { gap: 10px; }
+.village-committee-list { display: grid; gap: 8px; }
+.attendance-progress { display: grid; gap: 8px; margin: 0 0 12px; color: #40616b; font-size: .83rem; }
+.attendance-progress-track { height: 6px; background: #ecf3f2; border-radius: 99px; overflow: hidden; }
+.attendance-progress-track > span { display: block; height: 100%; width: 0; border-radius: inherit; background: #31b2a5; transition: width .2s ease; }
+.village-attendance-page .mv-committee-card { border: 1px solid var(--att-edge); border-radius: 14px; box-shadow: 0 2px 8px rgba(48,88,98,.04); }
+.village-attendance-page .mv-committee-card[open] { border-color: #7dcfc7; box-shadow: 0 5px 20px rgba(42,130,131,.1); }
+.village-attendance-page .mv-committee-card > summary { min-height: 64px; gap: 8px; padding: 11px 12px; }
+.village-attendance-page .mv-committee-name { flex: 1; }
+.village-attendance-page .mv-committee-name strong { font-size: .92rem; color: var(--att-ink); }
+.village-attendance-page .mv-committee-name small { font-size: .72rem; }
+.village-attendance-page .mv-committee-number { width: 30px; height: 30px; border-radius: 9px; }
+.village-attendance-page .mv-committee-card.has-selection .mv-committee-number { background: #d7f5e5; color: #157449; }
+.committee-selected-count { font-size: .76rem; color: #39827c; white-space: nowrap; font-weight: 800; }
+.committee-chevron { font-size: 1.3rem; color: #658080; transition: transform .15s ease; }
+.mv-committee-card[open] .committee-chevron { transform: rotate(180deg); }
+.village-attendance-page .mv-committee-details { padding: 12px; gap: 11px; }
+.attendee-help { color: #647e84; font-size: .8rem; }
+.village-attendance-page .mv-member-list { padding: 0; gap: 10px; }
+.attendee-role-group { border-radius: 13px; padding: 10px; background: #f4f7f8; }
+.attendee-role-president { background: #eaf3ff; }
+.attendee-role-vice-president { background: #ebf8ee; }
+.attendee-role-secretary { background: #fff5e9; }
+.attendee-role-member { background: #f4effd; }
+.attendee-role-title { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .045em; color: #476c78; margin: 0 0 8px; }
+.attendee-role-president .attendee-role-title { color: #376ca8; }
+.attendee-role-vice-president .attendee-role-title { color: #34724d; }
+.attendee-role-secretary .attendee-role-title { color: #97602b; }
+.attendee-role-member .attendee-role-title { color: #6b55a3; }
+.attendee-chip-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,142px),1fr)); gap: 7px; }
+.attendee-chip { appearance: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1.5px solid rgba(85,113,124,.16); background: rgba(255,255,255,.9); border-radius: 12px; padding: 9px 10px; min-height: 48px; text-align: left; color: #294a56; font: inherit; font-weight: 650; font-size: .84rem; cursor: pointer; transition: background .15s, border-color .15s, box-shadow .15s, transform .1s; }
+.attendee-chip:active { transform: scale(.98); }
+.attendee-chip:focus-visible { outline: 3px solid #60cbbd; outline-offset: 2px; }
+.attendee-chip[aria-pressed="true"] { border-color: #32a99f; color: #075a61; background: #d6f6ef; box-shadow: 0 0 0 1px rgba(41,161,145,.22) inset; }
+.attendee-chip-check { display: grid; place-items: center; width: 21px; height: 21px; flex: 0 0 21px; border-radius: 50%; font-size: .72rem; color: transparent; background: #f1f5f4; border: 1px solid #d9e7e5; }
+.attendee-chip[aria-pressed="true"] .attendee-chip-check { background: #1b9a8d; border-color: #1b9a8d; color: white; }
+.committee-count-footer { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: space-between; padding: 9px 10px; background: #f3f9f8; border-radius: 10px; font-size: .76rem; }
+.committee-count-footer span { color: #6c8387; }
+.committee-count-footer strong { color: #216e71; }
+.village-attendance-page .next-committee { width: 100%; min-height: 44px; }
+.village-totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+.village-totals > div { display: grid; gap: 4px; padding: 11px 8px; text-align: center; border-radius: 12px; background: #ecf8f5; }
+.village-totals > div:nth-child(2) { background: #f3f2fc; }
+.village-totals > div:nth-child(3) { background: #eaf4ff; }
+.village-totals span { font-size: .73rem; color: #56767c; }
+.village-totals strong { font-size: 1.25rem; color: #236d76; }
+.shared-date-reason { margin-bottom: 14px; }
+.new-member-panel { background: #fafcfb; border: 1px solid #dce9e8; border-radius: 12px; margin: 0 0 14px; }
+.new-member-panel summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px; list-style: none; cursor: pointer; min-height: 50px; }
+.new-member-panel summary::-webkit-details-marker { display: none; }
+.new-member-panel summary span:first-child { display: grid; gap: 2px; }
+.new-member-panel summary small { color: #68868a; font-size: .72rem; }
+.new-member-panel summary span:last-child { font-size: 1.35rem; font-weight: 700; color: #1e8d8c; }
+.new-member-panel[open] summary span:last-child { transform: rotate(45deg); }
+.new-member-rows { display: grid; padding: 10px 12px 14px; gap: 8px; border-top: 1px solid #dce9e8; }
+.new-member-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: .84rem; color: #36545a; }
+.new-member-row input { width: 72px; min-height: 42px; text-align: center; border: 1px solid #bdd4d2; border-radius: 10px; background: white; }
+.village-attendance-page .compact-evidence { margin-top: 14px; }
+.village-attendance-page .light-field-tip { background: linear-gradient(145deg,#eaf7f4,#f7fbfe); color: #28525e; }
+.village-attendance-page .light-field-tip h2, .village-attendance-page .light-field-tip p { color: #28525e; }
+@media (max-width: 700px) {
+ .village-attendance-page { padding-bottom: 100px; }
+ .village-attendance-page .entry-form { padding: 10px; }
+ .village-attendance-page .form-section-heading h2 { font-size: 1rem; }
+ .village-attendance-page .visit-basics .form-grid { grid-template-columns: 1fr 1fr; }
+ .attendee-chip-grid { grid-template-columns: 1fr 1fr; }
+ .attendee-chip { min-height: 48px; padding: 9px 8px; }
+ .village-attendance-page .sticky-form-actions { gap: 8px; }
+ .village-attendance-page .sticky-form-actions .draft-state { font-size: .7rem; }
+}
+@media (max-width: 370px) {
+ .village-attendance-page .visit-basics .form-grid { grid-template-columns: 1fr; }
+ .attendee-chip-grid { grid-template-columns: 1fr; }
+}

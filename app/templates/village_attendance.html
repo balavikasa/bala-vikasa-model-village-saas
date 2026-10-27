@@ -2,40 +2,44 @@
 {% block title %}Village Attendance · Model Village{% endblock %}
 {% block content %}
 <section class="page-shell field-page village-attendance-page" data-current-month="{{ local_now.strftime('%Y-%m') }}" data-today="{{ local_now.strftime('%Y-%m-%d') }}">
-  <header class="page-heading split-heading"><div><p class="eyebrow">DA field mode</p><h1>Village Attendance</h1><p class="lede">One village · All scheduled committees · One photo · One GPS location · One submission.</p></div></header>
-  <div class="field-layout">
+  <header class="page-heading split-heading"><div><p class="eyebrow">DA FIELD VISIT</p><h1>Village Attendance</h1><p class="lede">Pick a village, tap the members present, and submit once.</p></div></header>
+  <div class="field-layout compact-attendance-layout">
     <form id="village-attendance-form" class="entry-form panel-card" enctype="multipart/form-data" novalidate>
-      <section class="form-section">
-        <div class="form-section-heading"><span>1</span><div><h2>Village visit</h2><p>Choose one of your assigned villages.</p></div></div>
+      <section class="form-section visit-basics">
+        <div class="form-section-heading"><span>1</span><div><h2>Your village visit</h2><p>All committees in one entry</p></div></div>
         <div class="form-grid">
           <label class="field"><span>Village <b>*</b></span><select id="village-select" required><option value="">Select village</option></select></label>
-          <label class="field"><span>Visit date <b>*</b></span><input id="visit-date" type="date" required value="{{ local_now.strftime('%Y-%m-%d') }}"></label>
+          <label class="field"><span>Date <b>*</b></span><input id="visit-date" type="date" required value="{{ local_now.strftime('%Y-%m-%d') }}"></label>
         </div>
-        <div id="village-plan-note" class="field-help" aria-live="polite">Choose a village to load all its committees.</div>
+        <p id="village-plan-note" class="field-help" aria-live="polite">Select a village to begin.</p>
       </section>
-      <section class="form-section">
-        <div class="form-section-heading"><span>2</span><div><h2>Committee-wise attendance</h2><p>Enter each committee's counts and members below. All committees are included in one village visit.</p></div></div>
+      <section class="form-section quick-attendance-section">
+        <div class="form-section-heading"><span>2</span><div><h2>Tap members who attended</h2><p>Open one committee at a time. No typing counts.</p></div></div>
+        <div class="attendance-progress" aria-live="polite"><strong id="committee-progress">0 of 0 committees</strong><span class="attendance-progress-track"><span id="committee-progress-bar"></span></span></div>
         <div id="committee-attendance-cards" class="village-committee-list"><div class="empty-state"><p>Choose a village to begin.</p></div></div>
-        <p class="field-help">Completed committees are shown as completed and are not submitted twice. A committee without an assigned monthly Attendance plan needs PC scheduling.</p>
+        <p class="field-help">Selected names are highlighted. Male, female and total attendance are calculated automatically.</p>
       </section>
-      <section class="form-section">
-        <div class="form-section-heading"><span>3</span><div><h2>One photo and live GPS</h2><p>The same evidence is linked to every committee in this village submission.</p></div></div>
-        <div class="evidence-grid">
-          <div class="camera-card evidence-sources"><strong>Evidence photo <b>*</b></strong><small>Capture or select one image (max 12 MB) for this village visit.</small>
-            <div class="photo-source-actions"><button class="button ghost" type="button" data-photo-picker="camera">Camera</button><button class="button ghost" type="button" data-photo-picker="album">Photo album</button><button class="button ghost" type="button" data-photo-picker="files">Files</button></div>
+      <section class="form-section village-final-section">
+        <div class="form-section-heading"><span>3</span><div><h2>Finish village visit</h2><p>Shared information — enter only once</p></div></div>
+        <div class="village-totals" aria-live="polite"><div><span>Male</span><strong id="village-male">0</strong></div><div><span>Female</span><strong id="village-female">0</strong></div><div><span>Total present</span><strong id="village-total">0</strong></div></div>
+        <div class="shared-date-reason hidden" id="shared-date-reason-wrap"><label class="field"><span>Early / Postponed reason <b>*</b></span><textarea id="shared-date-reason" rows="2" placeholder="One reason for the village visit"></textarea><small>This same reason is saved for each committee whose date changed.</small></label></div>
+        <details class="new-member-panel"><summary><span><strong>New members</strong><small>Optional · add counts per committee</small></span><span aria-hidden="true">+</span></summary><div id="new-members-entries" class="new-member-rows"></div></details>
+        <label class="field"><span>Visit remarks (optional)</span><textarea id="village-notes" rows="2" placeholder="One remark for the whole village"></textarea></label>
+        <div class="evidence-grid compact-evidence">
+          <div class="camera-card evidence-sources"><strong>One photo <b>*</b></strong><small>Shared by all committees (max 12 MB)</small>
+            <div class="photo-source-actions"><button class="button ghost" type="button" data-photo-picker="camera">Camera</button><button class="button ghost" type="button" data-photo-picker="album">Gallery</button><button class="button ghost" type="button" data-photo-picker="files">Files</button></div>
             <input type="file" id="camera-file" accept="image/*" capture="environment" hidden>
             <input type="file" id="album-file" accept="image/*" hidden>
             <input type="file" id="files-file" accept="image/*" hidden>
           </div>
-          <figure class="photo-preview hidden" id="photo-preview"><img alt="Village evidence photo preview"><button type="button" class="text-button" id="remove-photo">Remove photo</button></figure>
-          <div class="location-card"><span class="location-icon" aria-hidden="true">⌖</span><span role="status" aria-live="polite"><strong id="location-label">Finding device location…</strong><small id="location-detail">Location permission is requested when the DA application opens.</small></span><button class="button ghost" type="button" id="retry-location">Enable location</button></div>
+          <figure class="photo-preview hidden" id="photo-preview"><img alt="Village visit evidence preview"><button type="button" class="text-button" id="remove-photo">Remove</button></figure>
+          <div class="location-card"><span class="location-icon" aria-hidden="true">⌖</span><span role="status" aria-live="polite"><strong id="location-label">Getting GPS…</strong><small id="location-detail">Automatic after permission is granted.</small></span><button class="button ghost" type="button" id="retry-location">Enable location</button></div>
         </div>
-        <label class="field" style="margin-top:1rem"><span>Village visit notes (optional)</span><textarea id="village-notes" rows="3" placeholder="Notes for the whole village visit"></textarea></label>
       </section>
       <div id="entry-error" class="form-alert hidden" role="alert"></div>
-      <footer class="sticky-form-actions"><span class="draft-state" id="draft-state">Ready</span><button type="submit" id="submit-village-attendance" class="button primary">Submit village attendance →</button></footer>
+      <footer class="sticky-form-actions"><span class="draft-state" id="draft-state">Select a village</span><button type="submit" id="submit-village-attendance" class="button primary">Submit village visit →</button></footer>
     </form>
-    <aside class="field-aside"><article class="panel-card field-tip"><p class="eyebrow">Offline ready</p><h2>Single submission, even offline.</h2><p>One queued entry contains the details of all scheduled committees, one photo and the captured device location.</p><button class="button ghost wide" type="button" data-sync-trigger>Open sync queue</button></article><article class="panel-card field-checklist"><h2>Before submitting</h2><ul><li>Correct village and date</li><li>Every pending scheduled committee is completed</li><li>Visit member names and counts checked</li><li>One photo attached</li><li>Current device GPS captured</li></ul></article></aside>
+    <aside class="field-aside"><article class="panel-card field-tip light-field-tip"><p class="eyebrow">ONE VISIT · ALL COMMITTEES</p><h2>A simpler way to record attendance.</h2><p>Tap the names. Counts update automatically. One reason, one photo, one location and one submission for the village.</p><button class="button ghost wide" type="button" data-sync-trigger>Offline sync queue</button></article></aside>
   </div>
 </section>
 {% endblock %}

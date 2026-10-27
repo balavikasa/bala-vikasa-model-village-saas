@@ -30,12 +30,22 @@ def login():
         identifier = request.form.get("identifier", "").strip()
         password = request.form.get("password", "")
         normalized_email = identifier.casefold()
-        normalized_mobile = "".join(ch for ch in identifier if ch.isdigit() or ch == "+")
+        # Compare numeric digits without punctuation. Indian +91/0-prefixed
+        # phone entries are accepted while never bypassing password checks.
+        phone_characters = identifier.replace("+", "").replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+        digits = "".join(ch for ch in identifier if ch.isdigit()) if phone_characters.isdigit() else ""
+        mobile_variants = {identifier.strip(), digits, f"+{digits}"} if digits else set()
+        if len(digits) == 12 and digits.startswith("91"):
+            mobile_variants.update({digits[2:], f"0{digits[2:]}"})
+        if len(digits) == 11 and digits.startswith("0"):
+            mobile_variants.add(digits[1:])
+        if len(digits) == 10:
+            mobile_variants.update({f"91{digits}", f"+91{digits}", f"0{digits}"})
         user = db.session.scalar(
             db.select(User).where(
                 or_(
                     func.lower(User.email) == normalized_email,
-                    User.mobile == normalized_mobile,
+                    User.mobile.in_(mobile_variants) if mobile_variants else User.mobile.is_(None) & (User.id == -1),
                 )
             )
         )

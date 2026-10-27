@@ -11,6 +11,7 @@ from typing import Any
 
 from flask import current_app
 from openpyxl import Workbook, load_workbook
+from openpyxl.comments import Comment
 from openpyxl.formatting.rule import FormulaRule
 from openpyxl.styles import Font, PatternFill, Protection
 from openpyxl.utils import get_column_letter
@@ -207,6 +208,62 @@ def ensure_recurring_attendance(user: User, target_month: date) -> int:
             db.session.rollback()
             return 0
     return created
+
+
+
+def fill_blank_village_schedules(source: ActionPlan, user: User) -> list[int]:
+    """Share a village's newly assigned day with its unscheduled committees.
+
+    A single schedule entry is enough for that village. Explicitly dated,
+    archived and locked plans are never overwritten, and all changes are
+    audited in the same transaction as the source edit. Does not commit.
+    """
+    if not source.assigned_date or source.plan_type != ActionPlanType.ATTENDANCE:
+        return []
+    village_id = source.committee.village_id
+    if not can_manage_action_plan(user, source.committee):
+        raise PlanningError("You cannot schedule this village.")
+    siblings = list(db.session.scalars(
+        db.select(Committee).where(
+            Committee.village_id == village_id,
+            Committee.is_enabled.is_(True),
+            Committee.is_deleted.is_(False),
+        ).order_by(Committee.id)
+    ))
+    slot_rows = list(db.session.scalars(
+        db.select(ActionPlan).join(Committee, ActionPlan.committee_id == Committee.id)
+        .where(Committee.village_id == village_id, ActionPlan.plan_month == source.plan_month)
+        .options(selectinload(ActionPlan.attendance_entry), selectinload(ActionPlan.specials_entry))
+    ))
+    slots = {row.committee_id: row for row in slot_rows}
+    changed: list[int] = []
+    for committee in siblings:
+        if committee.id == source.committee_id or not can_manage_action_plan(user, committee):
+            continue
+        plan = slots.get(committee.id)
+        if plan is not None:
+            if plan.is_deleted or not plan.is_enabled or plan_locked(plan):
+                continue
+            # An explicit different date is intentional; preserve it.
+            if plan.assigned_date is not None or plan.plan_type not in (None, ActionPlanType.ATTENDANCE):
+                continue
+            before = model_snapshot(plan)
+            plan.plan_type = ActionPlanType.ATTENDANCE
+            plan.assigned_date = source.assigned_date
+            plan.assigned_by_user_id = user.id
+            record_audit(AuditAction.UPDATE, plan, before=before,
+                         after=model_snapshot(plan), actor=user)
+        else:
+            plan = ActionPlan(
+                committee_id=committee.id, title=committee.name,
+                plan_month=source.plan_month, plan_type=ActionPlanType.ATTENDANCE,
+                assigned_date=source.assigned_date, assigned_by_user_id=user.id,
+            )
+            db.session.add(plan)
+            db.session.flush()
+            record_audit(AuditAction.CREATE, plan, after=model_snapshot(plan), actor=user)
+        changed.append(committee.id)
+    return changed
 
 
 def action_plan_status(
@@ -1004,6 +1061,13 @@ def _export_styles(
         ),
     )
 
+    ws.cell(1, headers["Assigned Date"]).comment = Comment(
+        "Enter a date for one committee in the village. During import preview, "
+        "other blank committee dates in that village are filled automatically. "
+        "Already assigned dates are preserved.",
+        "Bala Vikasa",
+    )
+
     ws.freeze_panes = "A2"
     ws.auto_filter.ref = (
         ws.dimensions
@@ -1415,14 +1479,10 @@ def preview_import(
                 str(exc)
             )
 
-        if (
-            assigned is not None
-            and plan_type is None
-        ):
-            errors.append(
-                "Choose Attendance "
-                "before assigning a date."
-            )
+        if assigned is not None and plan_type is None:
+            # A date in any row is enough: Attendance is the only new
+            # activity type, and sibling dates are inferred below.
+            plan_type = ActionPlanType.ATTENDANCE
 
         if assigned and (
             assigned.year
@@ -1620,6 +1680,38 @@ def preview_import(
                 ),
             )
         )
+
+    # A PC enters one date per village in Excel. Fill *only* blank rows
+    # belonging to that village. Explicit dates always win. If a village
+    # contains multiple explicit dates, blanks are ambiguous and must be set.
+    village_dates: dict[int, set[date]] = {}
+    for row in parsed:
+        if row.committee_id in visible and row.assigned_date and not row.errors:
+            vid = visible[row.committee_id].village_id
+            village_dates.setdefault(vid, set()).add(row.assigned_date)
+    for row in parsed:
+        if row.errors or row.committee_id not in visible or row.assigned_date is not None:
+            continue
+        vid = visible[row.committee_id].village_id
+        dates = village_dates.get(vid, set())
+        if not dates:
+            continue
+        if len(dates) != 1:
+            row.errors.append("Village has different scheduled dates; choose a date for this committee.")
+            row.action = "Error"
+            continue
+        inherited_date = next(iter(dates))
+        plan = existing.get(row.committee_id)
+        if plan and plan_locked(plan) and (plan.assigned_date != inherited_date or plan.plan_type != ActionPlanType.ATTENDANCE):
+            row.errors.append("This plan is locked and cannot inherit a village date.")
+            row.action = "Error"
+            continue
+        row.assigned_date = inherited_date
+        row.plan_type = ActionPlanType.ATTENDANCE
+        if plan is None:
+            row.action = "New"
+        else:
+            row.action = "Changed" if (plan.plan_type != row.plan_type or plan.assigned_date != row.assigned_date or (plan.notes or None) != row.notes) else "Unchanged"
 
     counts = {
         key: 0
