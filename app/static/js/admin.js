@@ -29,6 +29,13 @@
   const form = $("#admin-form");
   const fieldsHost = $("#admin-fields");
   const formError = $("#admin-form-error");
+  const passwordDialog = $("#admin-password-dialog");
+  const passwordForm = $("#admin-password-form");
+  const passwordError = $("#admin-password-error");
+  const passwordTarget = $("#admin-password-target");
+  const passwordField = $("#admin-new-password");
+  const passwordConfirm = $("#admin-confirm-password");
+  let passwordRecord = null;
   const moveAckRow = $("#move-ack-row");
   const moveAck = $("#move-ack");
 
@@ -115,6 +122,10 @@
         <td data-label="Actions">
           <div class="row-actions">
             <button class="text-button" type="button" data-edit="${escapeHtml(record.id)}">Edit</button>
+            ${(["pcs", "das"].includes(state.resource) && record.login_user_id) ||
+              (state.resource === "users" && ["pc", "da"].includes(record.role))
+              ? `<button class="text-button" type="button" data-password-reset="${escapeHtml(record.id)}">Reset password</button>`
+              : (["pcs", "das"].includes(state.resource) ? `<span class="muted" title="Create a linked account under Users">No login linked</span>` : "")}
             ${Object.hasOwn(record, "is_enabled") ? `<button class="text-button" type="button" data-toggle="${escapeHtml(record.id)}">${record.is_enabled ? "Disable" : "Enable"}</button>` : ""}
             ${Object.hasOwn(record, "is_deleted") && !record.is_deleted ? `<button class="text-button danger-text" type="button" data-delete="${escapeHtml(record.id)}">Delete</button>` : ""}
           </div>
@@ -129,6 +140,7 @@
     $("#admin-next").disabled = state.page * state.perPage >= state.total;
 
     $$("[data-edit]", table).forEach((button) => button.addEventListener("click", () => openEditor(button.dataset.edit)));
+    $$("[data-password-reset]", table).forEach((button) => button.addEventListener("click", () => openPasswordReset(button.dataset.passwordReset)));
     $$("[data-toggle]", table).forEach((button) => button.addEventListener("click", () => toggleRecord(button.dataset.toggle)));
     $$("[data-delete]", table).forEach((button) => button.addEventListener("click", () => deleteRecord(button.dataset.delete)));
   };
@@ -287,7 +299,8 @@
     $("#admin-dialog-title").textContent = state.editing ? "Edit record" : "Add record";
     fieldsHost.replaceChildren();
 
-    const fields = fieldMeta().filter((field) => !field.hidden);
+    const fields = fieldMeta().filter((field) => !field.hidden &&
+      !(state.resource === "users" && state.editing && field.name === "password"));
     for (const field of fields) {
       const value = state.editing?.[field.name];
       fieldsHost.append(await createInput(field, value));
@@ -368,6 +381,57 @@
       setStatus("Save failed", "error");
     } finally {
       $("#admin-save").disabled = false;
+    }
+  };
+
+  const openPasswordReset = (id) => {
+    passwordRecord = state.records.find((item) => String(item.id) === String(id));
+    if (!passwordRecord) return;
+    passwordForm.reset();
+    passwordError.textContent = "";
+    passwordError.classList.add("hidden");
+    const display = passwordRecord.full_name || passwordRecord.display_name || `Record #${id}`;
+    passwordTarget.textContent = `New login password for ${display}`;
+    passwordDialog.showModal();
+    passwordField.focus();
+  };
+
+  const savePasswordReset = async () => {
+    if (!passwordRecord) return;
+    passwordError.textContent = "";
+    passwordError.classList.add("hidden");
+    const password = passwordField.value;
+    const confirmPassword = passwordConfirm.value;
+    if (password.length < 6 || password.length > 128) {
+      passwordError.textContent = "Use a password between 6 and 128 characters.";
+      passwordError.classList.remove("hidden");
+      return;
+    }
+    if (password !== confirmPassword) {
+      passwordError.textContent = "Passwords do not match.";
+      passwordError.classList.remove("hidden");
+      return;
+    }
+    const saveButton = $("#admin-password-save");
+    saveButton.disabled = true;
+    try {
+      const result = await api(`/api/v1/admin/${encodeURIComponent(state.resource)}/${encodeURIComponent(passwordRecord.id)}/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password, confirm_password: confirmPassword }),
+      });
+      passwordForm.reset();
+      passwordDialog.close();
+      passwordRecord = null;
+      await loadRecords();
+      const message = result.account_enabled ? "Password updated successfully" : "Password updated; enable this user in Users to allow login";
+      setStatus(message, "success");
+      window.MV.toast?.(message, "success");
+    } catch (error) {
+      passwordError.textContent = error.message;
+      passwordError.classList.remove("hidden");
+    } finally {
+      saveButton.disabled = false;
     }
   };
 
@@ -538,6 +602,16 @@
   $("#audit-refresh").addEventListener("click", loadAudit);
   $("#audit-search").addEventListener("input", renderAudit);
   $$("[data-admin-tab]").forEach((button) => button.addEventListener("click", () => activateTab(button.dataset.adminTab)));
+
+  passwordForm.addEventListener("submit", (event) => {
+    if (event.submitter?.value === "save") {
+      event.preventDefault();
+      savePasswordReset();
+    } else {
+      passwordForm.reset();
+      passwordRecord = null;
+    }
+  });
 
   form.addEventListener("submit", (event) => {
     if (event.submitter?.value === "default") {

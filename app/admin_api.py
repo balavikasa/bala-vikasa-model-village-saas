@@ -306,8 +306,17 @@ def resources():
 
 def _serialize(record: Any) -> dict[str, Any]:
     data = model_snapshot(record)
-    if isinstance(record, DA):
-        data.update(pc_name=record.pc.full_name, cluster=record.pc.cluster.value)
+    if isinstance(record, PC):
+        linked = next((user for user in record.users if not user.is_deleted and user.role == Role.PC), None)
+        data.update(login_user_id=linked.id if linked else None, login_enabled=linked.is_enabled if linked else None)
+    elif isinstance(record, DA):
+        linked = next((user for user in record.users if not user.is_deleted and user.role == Role.DA), None)
+        data.update(
+            pc_name=record.pc.full_name,
+            cluster=record.pc.cluster.value,
+            login_user_id=linked.id if linked else None,
+            login_enabled=linked.is_enabled if linked else None,
+        )
     elif isinstance(record, Village):
         data.update(
             da_name=record.da.full_name,
@@ -375,8 +384,10 @@ def _resource(slug: str) -> ResourceSpec:
 
 
 def _relationship_options(stmt, model: type):
+    if model is PC:
+        return stmt.options(selectinload(PC.users))
     if model is DA:
-        return stmt.options(selectinload(DA.pc))
+        return stmt.options(selectinload(DA.pc), selectinload(DA.users))
     if model is Village:
         return stmt.options(selectinload(Village.da).selectinload(DA.pc))
     if model is Committee:
@@ -516,6 +527,61 @@ def update(slug: str, record_id: int):
     except (TypeError, ValueError) as exc:
         db.session.rollback()
         return jsonify(error=str(exc)), 409 if "move" in str(exc).lower() else 422
+
+
+@bp.post("/<slug>/<int:record_id>/reset-password")
+def reset_password(slug: str, record_id: int):
+    """Reset the linked DA/PC login, not the personnel profile itself.
+
+    This administrator-only operation intentionally does not return, serialize,
+    or write the supplied password to audit history.
+    """
+    if slug not in {"users", "pcs", "das"}:
+        return jsonify(error="Password reset is only available for DA and PC accounts."), 404
+
+    model = {"users": User, "pcs": PC, "das": DA}[slug]
+    record = db.session.get(model, record_id)
+    if record is None or record.is_deleted:
+        return jsonify(error="Record not found."), 404
+
+    if isinstance(record, User):
+        user = record if record.role in {Role.PC, Role.DA} else None
+    else:
+        expected_role = Role.PC if isinstance(record, PC) else Role.DA
+        user = db.session.scalar(
+            db.select(User).where(
+                (User.pc_id == record.id) if isinstance(record, PC) else (User.da_id == record.id),
+                User.role == expected_role,
+                User.is_deleted.is_(False),
+            )
+        )
+    if user is None:
+        return jsonify(error="No DA/PC login account is linked. Create or restore it under Users first."), 409
+
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify(error="Provide a new password and confirmation."), 422
+    password = data.get("password")
+    confirmation = data.get("confirm_password")
+    if not isinstance(password, str) or not 6 <= len(password) <= 128:
+        return jsonify(error="Password must contain between 6 and 128 characters."), 422
+    if confirmation != password:
+        return jsonify(error="Password confirmation does not match."), 422
+    if user.check_password(password):
+        return jsonify(error="Choose a password different from the existing one."), 422
+
+    previous_change = user.password_changed_at.isoformat() if user.password_changed_at else None
+    user.set_password(password)
+    user.failed_login_count = 0
+    user.locked_until = None
+    record_audit(
+        AuditAction.UPDATE,
+        user,
+        before={"password_changed_at": previous_change},
+        after={"password_changed_at": user.password_changed_at.isoformat(), "password_reset": True},
+    )
+    db.session.commit()
+    return jsonify(message="Password updated. The employee can sign in using the new password.", account_enabled=user.is_active)
 
 
 @bp.post("/<slug>/<int:record_id>/toggle")

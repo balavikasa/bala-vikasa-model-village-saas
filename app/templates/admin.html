@@ -111,6 +111,33 @@
   </form>
 </dialog>
 
+<dialog id="admin-password-dialog" class="admin-dialog">
+  <form method="dialog" id="admin-password-form" novalidate>
+    <header class="dialog-heading">
+      <div>
+        <p class="eyebrow">Account security</p>
+        <h2>Reset login password</h2>
+        <p class="muted" id="admin-password-target"></p>
+      </div>
+      <button class="icon-button" value="cancel" aria-label="Close password reset" type="submit">×</button>
+    </header>
+    <div id="admin-password-error" class="form-alert hidden" role="alert"></div>
+    <div class="form-grid">
+      <label class="field"><span>New password</span>
+        <input id="admin-new-password" name="new_password" type="password" minlength="6" maxlength="128" autocomplete="new-password" required>
+      </label>
+      <label class="field"><span>Confirm new password</span>
+        <input id="admin-confirm-password" name="confirm_password" type="password" minlength="6" maxlength="128" autocomplete="new-password" required>
+      </label>
+      <p class="muted">Passwords are stored securely as hashes, never displayed or exported. This action is recorded in the audit log.</p>
+    </div>
+    <footer class="dialog-actions">
+      <button class="button ghost" value="cancel" type="submit">Cancel</button>
+      <button class="button primary" id="admin-password-save" value="save" type="submit">Update password</button>
+    </footer>
+  </form>
+</dialog>
+
 <dialog id="confirm-dialog" class="confirm-dialog">
   <form method="dialog">
     <h2 id="confirm-title">Confirm action</h2>
