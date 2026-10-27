@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import UTC, timedelta
 from urllib.parse import urlsplit
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
@@ -50,7 +50,12 @@ def login():
             )
         )
         now = utcnow()
-        if user and user.locked_until and user.locked_until > now:
+        locked_until = user.locked_until if user else None
+        # SQLite returns naive values for DateTime(timezone=True); PostgreSQL
+        # normally returns aware ones. Both must be comparable to UTC now.
+        if locked_until and locked_until.tzinfo is None:
+            locked_until = locked_until.replace(tzinfo=UTC)
+        if user and locked_until and locked_until > now:
             flash("This account is temporarily locked. Contact an administrator or try later.", "error")
         elif user and user.is_active and user.check_password(password):
             user.failed_login_count = 0

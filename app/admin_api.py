@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
+from email_validator import EmailNotValidError, validate_email
 from flask import Blueprint, current_app, jsonify, request
 from flask_login import current_user
 from sqlalchemy import func, or_
@@ -32,6 +33,7 @@ from .models import (
     User,
     Village,
     VillageAttendanceVisit,
+    utcnow,
 )
 from .services.audit import (
     display_name,
@@ -308,14 +310,25 @@ def _serialize(record: Any) -> dict[str, Any]:
     data = model_snapshot(record)
     if isinstance(record, PC):
         linked = next((user for user in record.users if not user.is_deleted and user.role == Role.PC), None)
-        data.update(login_user_id=linked.id if linked else None, login_enabled=linked.is_enabled if linked else None)
+        data.update(
+            login_user_id=linked.id if linked else None,
+            login_enabled=linked.is_active if linked else None,
+            login_email=linked.email if linked else None,
+            login_mobile=linked.mobile if linked else None,
+            login_locked=bool(linked and linked.locked_until and
+                              linked.locked_until.replace(tzinfo=linked.locked_until.tzinfo or UTC) > utcnow()),
+        )
     elif isinstance(record, DA):
         linked = next((user for user in record.users if not user.is_deleted and user.role == Role.DA), None)
         data.update(
             pc_name=record.pc.full_name,
             cluster=record.pc.cluster.value,
             login_user_id=linked.id if linked else None,
-            login_enabled=linked.is_enabled if linked else None,
+            login_enabled=linked.is_active if linked else None,
+            login_email=linked.email if linked else None,
+            login_mobile=linked.mobile if linked else None,
+            login_locked=bool(linked and linked.locked_until and
+                              linked.locked_until.replace(tzinfo=linked.locked_until.tzinfo or UTC) > utcnow()),
         )
     elif isinstance(record, Village):
         data.update(
@@ -567,21 +580,89 @@ def reset_password(slug: str, record_id: int):
         return jsonify(error="Password must contain between 6 and 128 characters."), 422
     if confirmation != password:
         return jsonify(error="Password confirmation does not match."), 422
-    if user.check_password(password):
-        return jsonify(error="Choose a password different from the existing one."), 422
+    # A DA/PC profile may have an email/mobile distinct from its linked
+    # login User. Admins may explicitly correct the LOGIN identifiers as part
+    # of resetting credentials; changing staff contact fields alone is not enough.
+    email = user.email
+    mobile = user.mobile
+    if "login_email" in data:
+        raw_email = data["login_email"]
+        if not isinstance(raw_email, str):
+            return jsonify(error="Login email must be text."), 422
+        email = raw_email.strip().casefold() or None
+        if email:
+            try:
+                email = validate_email(email, check_deliverability=False).normalized
+            except EmailNotValidError:
+                return jsonify(error="Enter a valid login email address."), 422
+            if len(email) > 254:
+                return jsonify(error="Login email is too long."), 422
+    if "login_mobile" in data:
+        raw_mobile = data["login_mobile"]
+        if not isinstance(raw_mobile, str):
+            return jsonify(error="Login mobile must be text."), 422
+        mobile = raw_mobile.strip() or None
+        if mobile:
+            digits = "".join(c for c in mobile if c.isdigit())
+            stripped = mobile.replace("+", "").replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+            if not stripped.isdigit() or not (
+                len(digits) == 10 or
+                (len(digits) == 11 and digits.startswith("0")) or
+                (len(digits) == 12 and digits.startswith("91"))
+            ):
+                return jsonify(error="Enter a valid 10-digit Indian mobile number."), 422
+            mobile = digits[-10:]
+    if not email and not mobile:
+        return jsonify(error="At least one login email or mobile number is required."), 422
 
-    previous_change = user.password_changed_at.isoformat() if user.password_changed_at else None
+    def normalized_mobile(value: str | None) -> str:
+        digits = "".join(ch for ch in (value or "") if ch.isdigit())
+        return digits[-10:] if len(digits) >= 10 else digits
+
+    # Check across all accounts (including inactive/archived accounts) because
+    # database unique constraints apply to those records too.
+    others = db.session.scalars(db.select(User).where(User.id != user.id)).all()
+    if email and any(other.email and other.email.casefold() == email.casefold() for other in others):
+        return jsonify(error="This login email belongs to another account."), 409
+    if mobile and any(normalized_mobile(other.mobile) == normalized_mobile(mobile) for other in others):
+        return jsonify(error="This mobile number belongs to another login account."), 409
+
+    if "enable_account" in data and not isinstance(data["enable_account"], bool):
+        return jsonify(error="Enable account must be true or false."), 422
+    enable_account = data.get("enable_account") is True
+    if user.check_password(password) and email == user.email and mobile == user.mobile and not enable_account:
+        return jsonify(error="Choose a different password or update the login details."), 422
+
+    before = {
+        "email": user.email, "mobile": user.mobile, "is_enabled": user.is_enabled,
+        "password_changed_at": user.password_changed_at.isoformat() if user.password_changed_at else None,
+    }
+    user.email = email
+    user.mobile = mobile
+    if enable_account:
+        user.is_enabled = True
     user.set_password(password)
     user.failed_login_count = 0
     user.locked_until = None
     record_audit(
         AuditAction.UPDATE,
         user,
-        before={"password_changed_at": previous_change},
-        after={"password_changed_at": user.password_changed_at.isoformat(), "password_reset": True},
+        before=before,
+        after={
+            "email": user.email, "mobile": user.mobile, "is_enabled": user.is_enabled,
+            "password_changed_at": user.password_changed_at.isoformat(), "password_reset": True,
+        },
     )
-    db.session.commit()
-    return jsonify(message="Password updated. The employee can sign in using the new password.", account_enabled=user.is_active)
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(error="Email or mobile is already in use. Check the linked Users accounts."), 409
+    return jsonify(
+        message="Login details and password saved.",
+        login_email=user.email, login_mobile=user.mobile,
+        account_enabled=user.is_active,
+    )
 
 
 @bp.post("/<slug>/<int:record_id>/toggle")

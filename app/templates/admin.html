@@ -111,29 +111,43 @@
   </form>
 </dialog>
 
-<dialog id="admin-password-dialog" class="admin-dialog">
-  <form method="dialog" id="admin-password-form" novalidate>
-    <header class="dialog-heading">
+<dialog id="admin-password-dialog" class="admin-dialog admin-password-dialog" aria-labelledby="admin-access-title">
+  <form method="dialog" id="admin-password-form" class="access-form" novalidate>
+    <header class="dialog-heading access-heading">
       <div>
-        <p class="eyebrow">Account security</p>
-        <h2>Reset login password</h2>
+        <p class="eyebrow">Account access</p>
+        <h2 id="admin-access-title">Reset staff login</h2>
         <p class="muted" id="admin-password-target"></p>
       </div>
       <button class="icon-button" value="cancel" aria-label="Close password reset" type="submit">×</button>
     </header>
-    <div id="admin-password-error" class="form-alert hidden" role="alert"></div>
-    <div class="form-grid">
-      <label class="field"><span>New password</span>
-        <input id="admin-new-password" name="new_password" type="password" minlength="6" maxlength="128" autocomplete="new-password" required>
+    <div class="access-content">
+      <p class="access-state" id="admin-login-state" role="status"></p>
+      <div id="admin-password-error" class="form-alert hidden" role="alert"></div>
+      <p id="admin-profile-identifier-note" class="access-hint hidden"></p>
+      <div class="access-grid">
+        <label class="field"><span>Login email</span>
+          <input id="admin-login-email" name="login_email" type="email" maxlength="254" autocomplete="off" placeholder="name@example.org">
+        </label>
+        <label class="field"><span>Login mobile</span>
+          <input id="admin-login-mobile" name="login_mobile" type="tel" maxlength="24" autocomplete="off" inputmode="tel" placeholder="10-digit mobile">
+        </label>
+        <label class="field"><span>New password</span>
+          <input id="admin-new-password" name="new_password" type="password" minlength="6" maxlength="128" autocomplete="new-password" required>
+        </label>
+        <label class="field"><span>Confirm password</span>
+          <input id="admin-confirm-password" name="confirm_password" type="password" minlength="6" maxlength="128" autocomplete="new-password" required>
+        </label>
+      </div>
+      <label class="access-enable-row hidden" id="admin-enable-account-row">
+        <input type="checkbox" id="admin-enable-account">
+        <span>Enable this account for login</span>
       </label>
-      <label class="field"><span>Confirm new password</span>
-        <input id="admin-confirm-password" name="confirm_password" type="password" minlength="6" maxlength="128" autocomplete="new-password" required>
-      </label>
-      <p class="muted">Passwords are stored securely as hashes, never displayed or exported. This action is recorded in the audit log.</p>
+      <p class="access-hint">Sign in with the login email or mobile above, not necessarily the staff profile contact. The new password is securely hashed and never recorded in the audit log.</p>
     </div>
-    <footer class="dialog-actions">
+    <footer class="dialog-actions access-actions">
       <button class="button ghost" value="cancel" type="submit">Cancel</button>
-      <button class="button primary" id="admin-password-save" value="save" type="submit">Update password</button>
+      <button class="button primary" id="admin-password-save" value="save" type="submit">Save login &amp; password</button>
     </footer>
   </form>
 </dialog>

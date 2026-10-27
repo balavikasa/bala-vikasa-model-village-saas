@@ -3465,3 +3465,88 @@ details pre{max-width:400px;max-height:220px;overflow:auto;padding:10px;border-r
 .mv-map-quick-info { display: flex; flex-wrap: wrap; gap: 8px; font-weight: 600; }
 .mv-map-source { color: var(--muted); font-size: .72rem; }
 .mv-compact-map-card > a { font-size: .8rem; font-weight: 700; color: var(--navy); }
+
+
+/* Admin account access dialog: narrow, centered, responsive, and independent
+   of the full-screen record editor or mobile bottom-sheet styles. */
+#admin-password-dialog.admin-password-dialog {
+  box-sizing: border-box;
+  width: min(520px, calc(100vw - 28px));
+  max-width: min(520px, calc(100vw - 28px));
+  max-height: min(88dvh, 740px);
+  height: auto;
+  margin: auto;
+  padding: 0;
+  border-radius: 20px;
+  background: #fff;
+  color: var(--ink);
+  overflow: auto;
+}
+#admin-password-dialog .access-form { margin: 0; padding: 0; }
+#admin-password-dialog .access-heading {
+  padding: 20px 22px 14px;
+  border-bottom: 1px solid var(--line);
+  background: #f6faf9;
+}
+#admin-password-dialog .access-heading h2 {
+  font-size: clamp(1.3rem, 3vw, 1.65rem);
+  line-height: 1.2;
+}
+#admin-password-dialog .access-heading .muted { margin: 4px 0 0; font-size: .85rem; }
+#admin-password-dialog .access-content { display: grid; gap: 12px; padding: 16px 22px 19px; }
+#admin-password-dialog .access-state {
+  margin: 0; padding: 10px 12px; border-radius: 12px;
+  font-size: .8rem; font-weight: 750;
+  color: #21634c; background: #e9f6ef;
+}
+#admin-password-dialog .access-state[data-state="disabled"] {
+  color: #90491c; background: #fff3df;
+}
+#admin-password-dialog .access-state[data-state="locked"] {
+  color: #80501e; background: #fff4e5;
+}
+#admin-password-dialog .access-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px 12px;
+}
+#admin-password-dialog .field { min-width: 0; }
+#admin-password-dialog .field > span { font-size: .78rem; }
+#admin-password-dialog .field input {
+  width: 100%; min-width: 0; height: 46px; min-height: 46px;
+  border: 1px solid #cbdcde; border-radius: 11px;
+  background: #fff; padding: 10px 12px; font-size: .92rem;
+}
+#admin-password-dialog .field input:focus-visible {
+  outline: 2px solid #72b6bf; outline-offset: 1px;
+}
+#admin-password-dialog .access-hint {
+  margin: 0; color: #5d7176; line-height: 1.45; font-size: .75rem;
+}
+#admin-password-dialog #admin-profile-identifier-note {
+  padding: 10px 12px; border-radius: 10px;
+  background: #fff8e9; color: #80531d;
+}
+#admin-password-dialog .access-enable-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; background: #fff8e9; border-radius: 11px;
+  color: #6a4f23; font-size: .82rem; font-weight: 650;
+}
+#admin-password-dialog .access-enable-row input { width: 18px; min-height: 18px; accent-color: #178b79; }
+#admin-password-dialog .access-actions {
+  padding: 13px 22px; background: #fff;
+  border-top: 1px solid var(--line); gap: 10px;
+}
+#admin-password-dialog .access-actions .button { flex: 0 1 auto; min-height: 44px; }
+#admin-password-dialog .access-actions .primary { white-space: normal; }
+@media (max-width: 540px) {
+  #admin-password-dialog.admin-password-dialog {
+    width: calc(100vw - 20px); max-width: calc(100vw - 20px);
+    max-height: calc(100dvh - 24px); margin: auto; border-radius: 16px;
+  }
+  #admin-password-dialog .access-heading { padding: 17px 16px 12px; }
+  #admin-password-dialog .access-content { padding: 14px 16px 16px; }
+  #admin-password-dialog .access-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  #admin-password-dialog .access-actions { padding: 11px 16px; }
+  #admin-password-dialog .access-actions .button { flex: 1 1 0; font-size: .82rem; }
+}

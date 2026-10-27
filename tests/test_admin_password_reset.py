@@ -136,3 +136,109 @@ def test_resources_expose_linked_login_state_only_to_admin(client, app):
     assert next(item for item in pcs if item["id"] == pc_id)["login_user_id"] == pc_user_id
     assert next(item for item in das if item["id"] == da_id)["login_user_id"] == da_user_id
     assert all("password_hash" not in item for item in pcs + das)
+
+
+def test_admin_can_correct_login_identifiers_and_employee_signs_in(client, app):
+    _, pc_id, da_id, _, da_user_id, _ = _create_staff(app)
+    with app.app_context():
+        da = db.session.get(DA, da_id)
+        da.email = "staff-contact@example.org"
+        da.mobile = "9000000000"
+        db.session.commit()
+    _admin_login(client)
+    row = next(item for item in client.get("/api/v1/admin/das").json["items"] if item["id"] == da_id)
+    assert row["email"] == "staff-contact@example.org"
+    assert row["login_email"] is None
+    assert row["login_mobile"] == "9876543211"
+    assert row["login_enabled"] is True
+
+    response = client.post(
+        f"/api/v1/admin/das/{da_id}/reset-password",
+        json={
+            "password": "NewAccountPassword123",
+            "confirm_password": "NewAccountPassword123",
+            "login_email": " Staff-Contact@Example.org ",
+            "login_mobile": "90000 00000",
+        },
+    )
+    assert response.status_code == 200
+    assert response.json["login_email"] == "staff-contact@example.org"
+    assert response.json["login_mobile"] == "9000000000"
+    with app.app_context():
+        user = db.session.get(User, da_user_id)
+        assert user.check_password("NewAccountPassword123")
+        assert user.email == "staff-contact@example.org"
+        assert user.mobile == "9000000000"
+        assert db.session.get(DA, da_id).email == "staff-contact@example.org"
+        audit = db.session.scalar(db.select(AuditLog).where(AuditLog.action == AuditAction.UPDATE))
+        assert audit is not None
+        assert audit.after_json["email"] == "staff-contact@example.org"
+        assert "NewAccountPassword123" not in str(audit.after_json)
+    client.post("/logout")
+    assert client.post("/login", data={"identifier": "staff-contact@example.org", "password": "NewAccountPassword123"}).status_code in {302, 303}
+
+
+def test_admin_reset_rejects_duplicate_identity_and_can_reenable_account(client, app):
+    _, pc_id, _, pc_user_id, da_user_id, _ = _create_staff(app)
+    with app.app_context():
+        pc_user = db.session.get(User, pc_user_id)
+        pc_user.is_enabled = False
+        pc_user.failed_login_count = 5
+        pc_user.locked_until = utcnow() + timedelta(minutes=15)
+        db.session.commit()
+    _admin_login(client)
+    endpoint = f"/api/v1/admin/pcs/{pc_id}/reset-password"
+    duplicate = client.post(endpoint, json={
+        "password": "NewSecretPassword123", "confirm_password": "NewSecretPassword123",
+        "login_mobile": "+91 9876543211",
+    })
+    assert duplicate.status_code == 409
+    with app.app_context():
+        pc_user = db.session.get(User, pc_user_id)
+        assert not pc_user.is_enabled
+        assert pc_user.check_password("OriginalPassword123")
+    reset = client.post(endpoint, json={
+        "password": "NewSecretPassword123", "confirm_password": "NewSecretPassword123",
+        "enable_account": True,
+    })
+    assert reset.status_code == 200
+    assert reset.json["account_enabled"] is True
+    with app.app_context():
+        pc_user = db.session.get(User, pc_user_id)
+        assert pc_user.is_enabled and pc_user.locked_until is None
+        assert pc_user.failed_login_count == 0
+    client.post("/logout")
+    assert client.post("/login", data={"identifier": "9876543210", "password": "NewSecretPassword123"}).status_code in {302, 303}
+
+
+def test_account_access_validations_do_not_mutate_user(client, app):
+    _, pc_id, _, pc_user_id, _, _ = _create_staff(app)
+    _admin_login(client)
+    path = f"/api/v1/admin/pcs/{pc_id}/reset-password"
+    for extra in (
+        {"login_email": "invalid-email"},
+        {"login_mobile": "123"},
+        {"login_email": "", "login_mobile": ""},
+        {"enable_account": "true"},
+    ):
+        response = client.post(path, json={
+            "password": "DifferentPassword456", "confirm_password": "DifferentPassword456", **extra,
+        })
+        assert response.status_code == 422
+    with app.app_context():
+        assert db.session.get(User, pc_user_id).check_password("OriginalPassword123")
+
+
+def test_login_lockout_datetime_and_admin_reset(client, app):
+    _, pc_id, _, _, _, _ = _create_staff(app)
+    # SQLite returns a naive timestamp from a timezone-aware model column.
+    for _ in range(5):
+        assert client.post("/login", data={"identifier": "9876543210", "password": "wrong"}).status_code == 200
+    locked = client.post("/login", data={"identifier": "9876543210", "password": "OriginalPassword123"})
+    assert locked.status_code == 200
+    assert b"temporarily locked" in locked.data
+    _admin_login(client)
+    reset = _reset(client, f"/api/v1/admin/pcs/{pc_id}/reset-password")
+    assert reset.status_code == 200
+    client.post("/logout")
+    assert client.post("/login", data={"identifier": "9876543210", "password": "DifferentPassword456"}).status_code in {302, 303}

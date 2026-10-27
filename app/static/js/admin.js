@@ -35,6 +35,12 @@
   const passwordTarget = $("#admin-password-target");
   const passwordField = $("#admin-new-password");
   const passwordConfirm = $("#admin-confirm-password");
+  const loginEmail = $("#admin-login-email");
+  const loginMobile = $("#admin-login-mobile");
+  const loginState = $("#admin-login-state");
+  const loginProfileNote = $("#admin-profile-identifier-note");
+  const enableAccountRow = $("#admin-enable-account-row");
+  const enableAccount = $("#admin-enable-account");
   let passwordRecord = null;
   const moveAckRow = $("#move-ack-row");
   const moveAck = $("#move-ack");
@@ -391,9 +397,30 @@
     passwordError.textContent = "";
     passwordError.classList.add("hidden");
     const display = passwordRecord.full_name || passwordRecord.display_name || `Record #${id}`;
-    passwordTarget.textContent = `New login password for ${display}`;
+    passwordTarget.textContent = display;
+    const isUser = state.resource === "users";
+    const currentEmail = isUser ? passwordRecord.email : passwordRecord.login_email;
+    const currentMobile = isUser ? passwordRecord.mobile : passwordRecord.login_mobile;
+    const enabled = isUser ? passwordRecord.is_enabled : passwordRecord.login_enabled;
+    const locked = !isUser && passwordRecord.login_locked;
+    loginEmail.value = currentEmail || "";
+    loginMobile.value = currentMobile || "";
+    loginState.textContent = !enabled ? "Account disabled - enable below to allow sign-in"
+      : locked ? "Account temporarily locked - a successful reset will unlock it"
+        : "Account active - reset credentials below";
+    loginState.dataset.state = !enabled ? "disabled" : locked ? "locked" : "active";
+    enableAccountRow.classList.toggle("hidden", enabled !== false);
+    enableAccount.checked = false;
+    const differentEmail = !isUser && passwordRecord.email &&
+      String(passwordRecord.email).toLowerCase() !== String(currentEmail || "").toLowerCase();
+    const differentMobile = !isUser && passwordRecord.mobile &&
+      String(passwordRecord.mobile).replace(/\D/g, "").slice(-10) !== String(currentMobile || "").replace(/\D/g, "").slice(-10);
+    loginProfileNote.classList.toggle("hidden", !(differentEmail || differentMobile));
+    loginProfileNote.textContent = differentEmail || differentMobile
+      ? "Staff contact details differ from this login account. Update the login email/mobile below if needed."
+      : "";
     passwordDialog.showModal();
-    passwordField.focus();
+    loginEmail.focus();
   };
 
   const savePasswordReset = async () => {
@@ -402,6 +429,11 @@
     passwordError.classList.add("hidden");
     const password = passwordField.value;
     const confirmPassword = passwordConfirm.value;
+    if (!loginEmail.value.trim() && !loginMobile.value.trim()) {
+      passwordError.textContent = "Enter at least one login email or mobile number.";
+      passwordError.classList.remove("hidden");
+      return;
+    }
     if (password.length < 6 || password.length > 128) {
       passwordError.textContent = "Use a password between 6 and 128 characters.";
       passwordError.classList.remove("hidden");
@@ -418,13 +450,20 @@
       const result = await api(`/api/v1/admin/${encodeURIComponent(state.resource)}/${encodeURIComponent(passwordRecord.id)}/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password, confirm_password: confirmPassword }),
+        body: JSON.stringify({
+          password, confirm_password: confirmPassword,
+          login_email: loginEmail.value.trim(), login_mobile: loginMobile.value.trim(),
+          enable_account: enableAccount.checked,
+        }),
       });
       passwordForm.reset();
       passwordDialog.close();
       passwordRecord = null;
       await loadRecords();
-      const message = result.account_enabled ? "Password updated successfully" : "Password updated; enable this user in Users to allow login";
+      const loginIdentifier = result.login_email || result.login_mobile || "the registered account";
+      const message = result.account_enabled
+        ? `Login updated. Employee should sign in using ${loginIdentifier}.`
+        : `Credentials updated for ${loginIdentifier}; account is still disabled.`;
       setStatus(message, "success");
       window.MV.toast?.(message, "success");
     } catch (error) {

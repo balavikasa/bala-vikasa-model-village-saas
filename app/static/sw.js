@@ -2,7 +2,7 @@
 "use strict";
 importScripts("/static/js/idb-queue.js");
 
-const VERSION = "2026.27.21-admin-password-reset";
+const VERSION = "2026.27.22-admin-login-access";
 // Explicit DA location permission and Camera / Photo Album / Files choices
 const STATIC_CACHE = `mv-static-${VERSION}`;
 const DATA_PREFIX = "mv-data-";
