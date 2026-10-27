@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 import secrets
-from collections.abc import Iterable
 from calendar import monthrange
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path

@@ -6,7 +6,7 @@ from flask import Blueprint, current_app, jsonify, render_template, request, sen
 from flask_login import current_user, login_required
 
 from .extensions import db
-from .models import ActionPlan, Role, VillageAttendanceVisit, AttendanceEntry
+from .models import ActionPlan, Role, VillageAttendanceVisit
 from .scoping import ScopeError, require_scoped
 from .services.audit import soft_delete
 from .services.monthly_plans import PlanningError, month_key, month_label, month_start

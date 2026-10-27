@@ -18,7 +18,6 @@ from .models import (
     ActionPlan,
     ActionPlanType,
     AttendanceEntry,
-    VillageAttendanceVisit,
     AttendanceStatus,
     AttendanceVisitMember,
     AuditAction,
@@ -32,6 +31,7 @@ from .models import (
     SpecialsEntry,
     User,
     Village,
+    VillageAttendanceVisit,
 )
 from .services.audit import (
     display_name,

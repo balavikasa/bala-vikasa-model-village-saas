@@ -15,7 +15,6 @@ from ..models import (
     AttendanceEntry,
     AttendanceStatus,
     AttendanceVisitMember,
-    VillageAttendanceVisit,
     AuditAction,
     Committee,
     CommitteeMember,
@@ -24,6 +23,7 @@ from ..models import (
     SpecialsEntry,
     User,
     Village,
+    VillageAttendanceVisit,
 )
 from ..scoping import ScopeError, can_submit_for_village, require_scoped
 from ..timeutils import current_month

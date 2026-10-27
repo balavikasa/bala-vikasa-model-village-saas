@@ -14,7 +14,6 @@ from .models import (
     PC,
     ActionPlan,
     AttendanceEntry,
-    VillageAttendanceVisit,
     AuditLog,
     Committee,
     CommitteeMember,
@@ -23,6 +22,7 @@ from .models import (
     SpecialsEntry,
     User,
     Village,
+    VillageAttendanceVisit,
 )
 
 T = TypeVar("T")

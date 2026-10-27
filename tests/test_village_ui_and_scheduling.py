@@ -5,7 +5,7 @@ from datetime import date
 
 from app.admin_api import RESOURCES
 from app.extensions import db
-from app.models import ActionPlan, ActionPlanType, Cluster, Committee, DA, PC, Role, User, Village
+from app.models import DA, PC, ActionPlan, ActionPlanType, Cluster, Committee, Role, User, Village
 from app.services.monthly_plans import fill_blank_village_schedules
 from app.timeutils import current_month
 
@@ -64,7 +64,8 @@ def test_da_pc_can_sign_in_with_registered_mobile_and_access_own_pages(client, a
                        display_name="Login DA", role=Role.DA, da=da)
         pc_user.set_password("TestPassword123")
         da_user.set_password("TestPassword123")
-        db.session.add_all([pc, da, pc_user, da_user]); db.session.commit()
+        db.session.add_all([pc, da, pc_user, da_user])
+        db.session.commit()
     for mobile in ("98765 43201", "+91 98765-43202"):
         response = client.post("/login", data={"identifier": mobile, "password": "TestPassword123"})
         assert response.status_code in {302, 303}

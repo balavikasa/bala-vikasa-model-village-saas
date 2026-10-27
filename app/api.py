@@ -18,7 +18,6 @@ from .models import (
     ActionPlan,
     ActionPlanType,
     AttendanceEntry,
-    VillageAttendanceVisit,
     AuditAction,
     Committee,
     CommitteeMember,
@@ -36,7 +35,12 @@ from .scoping import (
     scoped_select,
 )
 from .services.audit import model_snapshot, record_audit
-from .services.entries import EntryValidationError, create_attendance, create_specials, create_village_attendance
+from .services.entries import (
+    EntryValidationError,
+    create_attendance,
+    create_specials,
+    create_village_attendance,
+)
 from .services.files import UploadProblem
 from .services.monitoring import (
     action_plan_status,
