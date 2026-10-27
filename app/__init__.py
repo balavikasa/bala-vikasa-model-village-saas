@@ -13,6 +13,8 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from .config import CONFIGS
 from .extensions import csrf, db, login_manager, migrate
 
+APP_RELEASE = "2026.27.19"
+
 
 def create_app(config: str | dict | None = None) -> Flask:
     app = Flask(__name__, instance_relative_config=True, static_folder="static", template_folder="templates")
@@ -105,7 +107,7 @@ def create_app(config: str | dict | None = None) -> Flask:
 
     @app.get("/healthz")
     def healthz():
-        return jsonify(status="ok"), 200
+        return jsonify(status="ok", release=APP_RELEASE), 200
 
     @app.get("/readyz")
     def readyz():
@@ -119,6 +121,7 @@ def create_app(config: str | dict | None = None) -> Flask:
 
     @app.after_request
     def security_headers(response):
+        response.headers.setdefault("X-MV-Release", APP_RELEASE)
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")

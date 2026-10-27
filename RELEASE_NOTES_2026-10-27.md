@@ -1,3 +1,5 @@
+> CI/deployment addendum: see `DEPLOYMENT_AND_CI_FIX_2026-10-27.md`. The release fingerprint is **2026.27.19**.
+
 # Release notes — 27 October 2026 — 5 requested changes
 
 ## Deliverables

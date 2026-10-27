@@ -12,6 +12,7 @@
   const error = $('#entry-error');
   const status = $('#draft-state');
   const send = $('#submit-village-attendance');
+  send.disabled = true;
   const locationLabel = $('#location-label');
   const locationDetail = $('#location-detail');
   const locationButton = $('#retry-location');
@@ -70,7 +71,13 @@
     const eligible = allCommittees.filter(item => item.plan && !item.plan.attendance_entry_id && !item.plan.has_recycled_attendance);
     const missing = allCommittees.filter(item => !item.plan || item.plan.has_recycled_attendance);
     const completed = allCommittees.filter(item => item.plan?.attendance_entry_id);
-    planNote.textContent = `${allCommittees.length} committees · ${eligible.length} pending · ${completed.length} completed · ${missing.length} need PC assignment`;
+    const hasUnscheduled = missing.length > 0;
+    send.disabled = hasUnscheduled || eligible.length === 0;
+    planNote.classList.toggle('form-alert', hasUnscheduled);
+    planNote.textContent = hasUnscheduled
+      ? `${missing.length} committee(s) have no executable Attendance plan. Your PC must assign their dates before this village can be submitted. ${eligible.length} scheduled, ${completed.length} completed.`
+      : `${allCommittees.length} committees · ${eligible.length} pending · ${completed.length} completed · one village submission`;
+    status.textContent = hasUnscheduled ? 'PC scheduling required' : eligible.length ? 'Ready for one village visit' : 'No pending attendance';
     cards.innerHTML = allCommittees.map((item, idx) => {
       const plan = item.plan;
       const done = Boolean(plan?.attendance_entry_id);
@@ -111,6 +118,7 @@
     const stamp = ++requestId;
     cards.innerHTML = '<div class="empty-state">Loading committees and action plans…</div>';
     allCommittees = [];
+    send.disabled = true;
     if (!id) { cards.innerHTML = '<div class="empty-state">Select village.</div>'; return; }
     try {
       const base = await get(`/api/v1/villages/${encodeURIComponent(id)}/committees`);
@@ -226,6 +234,8 @@
     form.reset(); date.value = root.dataset.today;
     village.value = '';
     allCommittees = [];
+    send.disabled = true;
+    planNote.classList.remove('form-alert');
     cards.innerHTML = '<div class="empty-state">Select a village to begin.</div>';
     planNote.textContent = 'Choose a village to load all its committees.';
     photo = null; preview.classList.add('hidden');
