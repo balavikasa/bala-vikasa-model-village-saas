@@ -421,3 +421,13 @@ body[data-role="da"]:has(.attendance-fresh-theme) {
 @media (prefers-reduced-motion: reduce) {
   .attendance-fresh-theme *, .attendance-fresh-theme *::before, .attendance-fresh-theme *::after { scroll-behavior: auto !important; transition-duration: 0s !important; }
 }
+
+/* DA-led village selection: compact search and immutable date field */
+.attendance-fresh-theme #visit-date[readonly] { background:#f1f8f9; color:#19566a; font-weight:700; cursor:default; }
+.attendance-fresh-theme .attendance-other-village { margin-top:10px; }
+.attendance-fresh-theme #other-village-toggle { width:100%; justify-content:center; border:1px dashed #93c8d0; background:#f1fafb; color:#136775; font-weight:650; }
+.attendance-fresh-theme #other-village-panel { margin-top:10px; padding:10px; border:1px solid #d9e9ee; border-radius:14px; background:#f9fcfc; }
+.attendance-fresh-theme .other-village-results { display:grid; gap:5px; max-height:215px; overflow-y:auto; margin-top:8px; }
+.attendance-fresh-theme .other-village-choice { display:flex; gap:6px; flex-direction:column; align-items:flex-start; min-height:45px; padding:9px 12px; background:white; color:#24566a; border:1px solid #d2e3e7; border-radius:10px; text-align:left; cursor:pointer; }
+.attendance-fresh-theme .other-village-choice small { font-size:11px; color:#6a7d85; }
+.attendance-fresh-theme .new-members-field input { max-width:180px; font-size:18px; font-weight:700; color:#136775; }

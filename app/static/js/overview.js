@@ -7,7 +7,7 @@
     if (!host) return;
     const entries = Object.entries(values || {});
     if (!entries.length) {
-      host.innerHTML = '<div class="empty-state"><p>No action plans in this scope.</p></div>';
+      host.innerHTML = '<div class="empty-state"><p>No village attendance yet.</p></div>';
       return;
     }
     const max = Math.max(...entries.map(([, value]) => Number(value)), 1);
@@ -33,8 +33,10 @@
       const values = {
         villages: counts.villages || 0,
         committees: counts.committees || 0,
-        action_plans: counts.action_plans || 0,
-        entries: counts.attendance_entries || 0,
+        villages_done: counts.villages_done || 0,
+        villages_pending: counts.villages_pending || 0,
+        people_attended: counts.people_attended || 0,
+        new_members: counts.new_members || 0,
       };
       Object.entries(values).forEach(([key, value]) => {
         const node = document.querySelector(`[data-kpi="${key}"]`);

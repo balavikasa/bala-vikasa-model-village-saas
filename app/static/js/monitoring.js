@@ -27,7 +27,7 @@
         <label>${window.MV.escapeHtml(status)}</label>
         <span class="status-track"><i class="status-fill" data-status="${window.MV.escapeHtml(status)}" style="width:${Math.max(4, Number(value) / max * 100)}%"></i></span>
         <strong>${Number(value).toLocaleString()}</strong>
-      </div>`).join("") : '<div class="empty-state"><p>No action plans in this scope.</p></div>';
+      </div>`).join("") : '<div class="empty-state"><p>No villages in scope.</p></div>';
     document.querySelector("#monitor-updated").textContent = `Updated ${new Intl.DateTimeFormat(undefined, { timeStyle: "short" }).format(new Date())}`;
   };
 

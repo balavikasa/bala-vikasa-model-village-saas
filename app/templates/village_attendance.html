@@ -9,15 +9,22 @@
   <div class="field-layout attendance-one-column">
     <form id="village-attendance-form" class="entry-form attendance-steps" enctype="multipart/form-data" novalidate>
       <section class="form-section visit-basics attendance-step-card" aria-labelledby="step-visit-heading">
-        <div class="form-section-heading"><span aria-hidden="true">1</span><div><h2 id="step-visit-heading">Your village visit</h2><p>All committees in one entry</p></div></div>
+        <div class="form-section-heading"><span aria-hidden="true">1</span><div><h2 id="step-visit-heading">Your village visit</h2><p>All committees · one visit · date is recorded automatically</p></div></div>
         <div class="form-grid attendance-visit-fields">
-          <label class="field"><span>Village <b>*</b></span><select id="village-select" required><option value="">Select village</option></select></label>
-          <label class="field"><span>Date <b>*</b></span><input id="visit-date" type="date" required value="{{ local_now.strftime('%Y-%m-%d') }}"></label>
+          <label class="field"><span>Village <b>*</b></span><select id="village-select" required><option value="">Select assigned village</option></select></label>
+          <label class="field"><span>Entry date · automatic</span><input id="visit-date" type="text" readonly aria-readonly="true" value="{{ local_now.strftime('%d-%m-%Y') }}"></label>
+        </div>
+        <div class="attendance-other-village">
+          <button id="other-village-toggle" type="button" class="button ghost" aria-expanded="false">Other village · Search any village</button>
+          <div id="other-village-panel" class="hidden">
+            <label class="field"><span>Search all villages</span><input id="other-village-query" type="search" autocomplete="off" placeholder="Type village name, mandal or district"></label>
+            <div id="other-village-results" class="other-village-results" role="listbox" aria-label="Other villages"></div>
+          </div>
         </div>
         <div id="village-summary" class="attendance-summary-pills" aria-live="polite">
           <span id="summary-committees">0 committees</span>
         </div>
-        <p id="village-plan-note" class="field-help attendance-plan-note" aria-live="polite">Select a village to begin.</p>
+        <p id="village-plan-note" class="field-help attendance-plan-note" aria-live="polite">Only your assigned villages appear above; use Other village when visiting elsewhere.</p>
       </section>
 
       <section class="form-section quick-attendance-section attendance-step-card" aria-labelledby="step-attendees-heading">
@@ -29,8 +36,7 @@
       <section class="form-section village-final-section attendance-step-card" aria-labelledby="step-finish-heading">
         <div class="form-section-heading"><span aria-hidden="true">3</span><div><h2 id="step-finish-heading">Finish village visit</h2><p>Shared information. Enter only once.</p></div></div>
         <div class="village-totals" aria-live="polite"><div><span>Male</span><strong id="village-male">0</strong></div><div><span>Female</span><strong id="village-female">0</strong></div><div><span>Total</span><strong id="village-total">0</strong></div></div>
-        <div class="shared-date-reason hidden" id="shared-date-reason-wrap"><label class="field"><span>Early / Postponed reason <b>*</b></span><textarea id="shared-date-reason" rows="2" placeholder="One reason for the village visit"></textarea><small>Saved for every committee whose date changed.</small></label></div>
-        <details class="new-member-panel"><summary><span><strong>New members</strong><small>Optional · add counts per committee</small></span><span aria-hidden="true">+</span></summary><div id="new-members-entries" class="new-member-rows"></div></details>
+        <label class="field new-members-field"><span>New members</span><input id="village-new-members" type="number" inputmode="numeric" min="0" max="9999" value="0" placeholder="0"></label>
         <label class="field attendance-remarks"><span>Visit remarks <em>(optional)</em></span><textarea id="village-notes" rows="2" placeholder="One remark for the whole village"></textarea></label>
         <div class="evidence-grid compact-evidence attendance-evidence">
           <div class="camera-card evidence-sources"><strong>One photo <b>*</b></strong><small>Shared by all committees (max 12 MB)</small>
@@ -49,5 +55,5 @@
   </div>
 </section>
 {% endblock %}
-{% block head %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/attendance-theme.css') }}?theme=2026-10-28">{% endblock %}
-{% block scripts %}{{ super() }}<script src="{{ url_for('static', filename='js/village-attendance.js') }}?theme=2026-10-28b" defer></script>{% endblock %}
+{% block head %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/attendance-theme.css') }}?theme=2026-10-28-da-led">{% endblock %}
+{% block scripts %}{{ super() }}<script src="{{ url_for('static', filename='js/village-attendance.js') }}?theme=2026-10-28-da-led-da-led" defer></script>{% endblock %}

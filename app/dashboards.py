@@ -124,10 +124,10 @@ def init_dash(app):
         cards = [
             ("Villages", counts["villages"]),
             ("Committees", counts["committees"]),
-            ("Action plans", counts["action_plans"]),
-            ("Attendance", counts["attendance_entries"]),
-            ("Special programs", counts["specials_entries"]),
-            ("Special participants", counts["participants"]),
+            ("Villages done", counts["villages_done"]),
+            ("Villages not done", counts["villages_pending"]),
+            ("People attended", counts["people_attended"]),
+            ("New members", counts["new_members"]),
         ]
         kpis = [
             html.Article(
@@ -145,6 +145,8 @@ def init_dash(app):
                     y=list(status.values()),
                     marker_color=[
                         {
+                            "Done": PALETTE["green"],
+                            "Not done": PALETTE["saffron"],
                             "On-time": PALETTE["green"],
                             "Early": PALETTE["saffron"],
                             "Postponed": PALETTE["clay"],
@@ -158,9 +160,9 @@ def init_dash(app):
                     hovertemplate="%{x}: %{y}<extra></extra>",
                 )
             )
-            status_fig.update_layout(title="Action-plan status", showlegend=False)
+            status_fig.update_layout(title="Village attendance completion", showlegend=False)
         else:
-            status_fig = empty_figure("Action-plan status")
+            status_fig = empty_figure("Village attendance completion")
 
         cluster = data["cluster_breakdown"]
         if cluster:
@@ -205,10 +207,10 @@ def init_dash(app):
                     hovertemplate="%{y}: %{x}<extra></extra>",
                 )
             )
-            committee_fig.update_layout(title="Action plans by committee type", showlegend=False)
+            committee_fig.update_layout(title="Attendance by committee type", showlegend=False)
             committee_fig.update_yaxes(autorange="reversed")
         else:
-            committee_fig = empty_figure("Action plans by committee type")
+            committee_fig = empty_figure("Attendance by committee type")
 
         for figure in (status_fig, cluster_fig, gender_fig, committee_fig):
             figure.update_layout(

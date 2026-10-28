@@ -10,7 +10,7 @@
         {% if current_user.role.value == 'da' %}
         Capture village visits even without a signal. Your queue will synchronize when the network returns.
         {% elif current_user.role.value == 'pc' %}
-        Track your cluster, assign committee action plans and resolve overdue visits.
+        Monitor completed and pending village visits in your cluster.
         {% else %}
         Monitor delivery across CSRB and PDTC from one role-scoped view.
         {% endif %}
@@ -41,17 +41,19 @@
   <section class="kpi-grid" aria-label="Program summary">
     <article class="metric-card"><span>Villages</span><strong data-kpi="villages">—</strong><small>Your visible scope</small></article>
     <article class="metric-card"><span>Committees</span><strong data-kpi="committees">—</strong><small>Active master records</small></article>
-    <article class="metric-card"><span>Action plans</span><strong data-kpi="action_plans">—</strong><small>Assigned committee work</small></article>
-    <article class="metric-card"><span>Entries</span><strong data-kpi="entries">—</strong><small>Committee attendance records</small></article>
+    <article class="metric-card"><span>Villages done</span><strong data-kpi="villages_done">—</strong><small>Recorded this month</small></article>
+    <article class="metric-card"><span>Villages not done</span><strong data-kpi="villages_pending">—</strong><small>Awaiting a visit</small></article>
+    <article class="metric-card"><span>People attended</span><strong data-kpi="people_attended">—</strong><small>Selected committee members</small></article>
+    <article class="metric-card"><span>New members</span><strong data-kpi="new_members">—</strong><small>Village totals</small></article>
   </section>
 
   <section class="overview-grid">
     <article class="panel-card quick-panel">
       <div class="panel-heading"><div><p class="eyebrow">Shortcuts</p><h2>Continue your work</h2></div></div>
       <div class="action-card-grid">
-        <a class="action-card" href="{{ url_for('planning.action_plans_page') }}"><span class="action-icon navy">▦</span><span><strong>Action Plans</strong><small>{{ 'Your assigned monthly work' if current_user.role.value == 'da' else 'Monthly planning & history' }}</small></span><b>›</b></a>
+        <a class="action-card" href="{{ url_for('planning.action_plans_page') }}"><span class="action-icon navy">▦</span><span><strong>Historical Action Plans</strong><small>Previous monthly planning records</small></span><b>›</b></a>
         {% if current_user.role.value == 'da' %}
-        <a class="action-card" href="{{ url_for('pages.attendance') }}"><span class="action-icon saffron">✓</span><span><strong>Attendance entry</strong><small>Action-plan visit and photo</small></span><b>›</b></a>
+        <a class="action-card" href="{{ url_for('pages.attendance') }}"><span class="action-icon saffron">✓</span><span><strong>Attendance entry</strong><small>DA-selected village and one photo</small></span><b>›</b></a>
         {% endif %}
         <a class="action-card" href="{{ url_for('reports.reports_page') }}"><span class="action-icon clay">▤</span><span><strong>Reports</strong><small>Open each report with evidence & map</small></span><b>›</b></a>
         <a class="action-card" href="{{ url_for('pages.directory') }}"><span class="action-icon navy">⌂</span><span><strong>{{ 'My villages' if current_user.role.value == 'da' else 'Directory' }}</strong><small>People, committees and scope</small></span><b>›</b></a>
@@ -62,7 +64,7 @@
     </article>
 
     <article class="panel-card status-panel">
-      <div class="panel-heading"><div><p class="eyebrow">Action-plan pulse</p><h2>Status distribution</h2></div></div>
+      <div class="panel-heading"><div><p class="eyebrow">Village visit pulse</p><h2>Done vs not done</h2></div></div>
       <div id="status-breakdown" class="status-breakdown">
         <div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div>
       </div>

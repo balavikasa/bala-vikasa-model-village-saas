@@ -92,7 +92,7 @@ def delete_village_report(visit_id: int):
         for entry in visit.entries:
             if not entry.is_deleted:
                 soft_delete(entry, actor, retention)
-                if not entry.action_plan.is_deleted:
+                if entry.action_plan is not None and not entry.action_plan.is_deleted:
                     soft_delete(entry.action_plan, actor, retention)
         soft_delete(visit, actor, retention)
         db.session.commit()

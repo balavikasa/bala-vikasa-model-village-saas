@@ -78,8 +78,8 @@
   <header class="da-field-appbar">
     <a
       class="da-field-brand"
-      href="{{ url_for('planning.action_plans_page') }}"
-      aria-label="Model Village action plans"
+      href="{{ url_for('pages.overview') }}"
+      aria-label="Model Village dashboard"
     >
       <span
         class="brand-mark"
@@ -249,6 +249,8 @@
 
       {% if current_user.role.value == 'da' %}
 
+      <a href="{{ url_for('pages.overview') }}" class="{% if request.endpoint == 'pages.overview' %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">▦</span><span class="nav-label">Dashboard</span></a>
+
       <a
         href="{{ url_for('pages.attendance') }}"
         class="{% if request.endpoint == 'pages.attendance' %}is-active{% endif %}"
@@ -274,7 +276,7 @@
           &#9638;
         </span>
 
-        <span class="nav-label">Action Plans</span>
+        <span class="nav-label">Past plans</span>
       </a>
 
       <a
