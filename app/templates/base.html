@@ -50,6 +50,7 @@
     rel="stylesheet"
     href="{{ url_for('static', filename='css/da-field.css') }}"
   >
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/workflow-review.css') }}">
 
   {% block head %}{% endblock %}
 </head>
@@ -265,19 +266,6 @@
         <span class="nav-label">Attendance</span>
       </a>
 
-      <a
-        href="{{ url_for('planning.action_plans_page') }}"
-        class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}"
-      >
-        <span
-          class="nav-glyph"
-          aria-hidden="true"
-        >
-          &#9638;
-        </span>
-
-        <span class="nav-label">Past plans</span>
-      </a>
 
       <a
         href="{{ url_for('reports.reports_page') }}"
@@ -334,22 +322,9 @@
           &#9635;
         </span>
 
-        <span class="nav-label">Overview</span>
+        <span class="nav-label">Dashboard</span>
       </a>
 
-      <a
-        href="{{ url_for('planning.action_plans_page') }}"
-        class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}"
-      >
-        <span
-          class="nav-glyph"
-          aria-hidden="true"
-        >
-          &#9638;
-        </span>
-
-        <span class="nav-label">Action Plans</span>
-      </a>
 
       <a
         href="{{ url_for('reports.reports_page') }}"
@@ -376,7 +351,7 @@
           &#8962;
         </span>
 
-        <span class="nav-label">{{ 'Team' if current_user.role.value == 'pc' else 'People' if current_user.role.value == 'pm' else 'Directory' }}</span>
+        <span class="nav-label">Villages &amp; teams</span>
       </a>
 
       <a
@@ -438,7 +413,7 @@
           &#9881;
         </span>
 
-        <span class="nav-label">Master Data</span>
+        <span class="nav-label">{{ "Master Data" if current_user.role.value == "admin" else "Data Transfers" }}</span>
       </a>
 
       {% endif %}
@@ -579,8 +554,8 @@
     </button>
 
     <a
-      href="{{ url_for('planning.action_plans_page') }}"
-      class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}"
+      href="{{ url_for('pages.directory') }}"
+      class="{% if request.endpoint == 'pages.directory' or (request.endpoint and 'profile_page' in request.endpoint) %}is-active{% endif %}"
     >
       <span
         class="nav-glyph"
@@ -589,7 +564,7 @@
         &#9638;
       </span>
 
-      <small>Plans</small>
+      <small>Villages</small>
     </a>
 
     <a
@@ -726,7 +701,7 @@
         &#9638;
       </span>
 
-      <small>Plans</small>
+      <small>History</small>
     </a>
 
     <a
@@ -812,7 +787,7 @@
         &#9638;
       </span>
 
-      <small>Plans</small>
+      <small>History</small>
     </a>
 
     <a
@@ -870,7 +845,7 @@
         &#9638;
       </span>
 
-      <small>Plans</small>
+      <small>History</small>
     </a>
 
     <a
@@ -967,6 +942,9 @@
 
         {% if current_user.role.value == 'da' %}
 
+        <a href="{{ url_for('pages.overview') }}" data-mobile-menu-link>
+          <span class="nav-glyph" aria-hidden="true">▦</span><strong>Dashboard</strong><small>This month</small>
+        </a>
         <a
           href="{{ url_for('pages.attendance') }}"
           data-mobile-menu-link
@@ -985,23 +963,7 @@
           </small>
         </a>
 
-        <a
-          href="{{ url_for('planning.action_plans_page') }}"
-          data-mobile-menu-link
-        >
-          <span
-            class="nav-glyph"
-            aria-hidden="true"
-          >
-            &#9638;
-          </span>
 
-          <strong>Action Plans</strong>
-
-          <small>
-            Assigned monthly work
-          </small>
-        </a>
 
         <a
           href="{{ url_for('reports.reports_page') }}"
@@ -1070,7 +1032,7 @@
             &#9635;
           </span>
 
-          <strong>Overview</strong>
+          <strong>Dashboard</strong>
 
           <small>
             Role-scoped home
@@ -1088,10 +1050,10 @@
             &#9638;
           </span>
 
-          <strong>Action Plans</strong>
+          <strong>Historical plans</strong>
 
           <small>
-            Monthly planning
+            Previous planning records
           </small>
         </a>
 
@@ -1125,7 +1087,7 @@
           </span>
 
           <strong>
-            {{ 'Team' if current_user.role.value == 'pc' else 'People' if current_user.role.value == 'pm' else 'Directory' }}
+            Villages &amp; teams
           </strong>
 
           <small>

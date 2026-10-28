@@ -87,6 +87,8 @@ def report_row(plan: ActionPlan) -> dict[str, Any]:
         "type": plan.plan_type.value if plan.plan_type else "Draft",
         "status": action_plan_status(plan),
         "has_entry": bool(entry and not entry.is_deleted),
+        "people_attended": entry.total_count if isinstance(entry, AttendanceEntry) and not entry.is_deleted else 0,
+        "new_members": entry.new_members_count if isinstance(entry, AttendanceEntry) and not entry.is_deleted else 0,
         "view_url": f"/reports/plan/{plan.id}",
     }
 
@@ -105,7 +107,21 @@ def report_rows(user: User, month: date, *, plan_type: str | None = None, status
             rows.append(report_row(plan))
     for visit_id, plans in grouped.items():
         representative = report_row(plans[0])
+        # A village visit appears once in the ledger: sum its underlying committee rows.
+        attendance = [
+            p.attendance_entry
+            for p in plans
+            if p.attendance_entry and not p.attendance_entry.is_deleted
+        ]
+        parent_visit = attendance[0].village_visit if attendance else None
+        group_new_members = (
+            parent_visit.new_members_count
+            if parent_visit and parent_visit.visit_month
+            else sum(e.new_members_count for e in attendance)
+        )
         representative.update(
+            people_attended=sum(e.total_count for e in attendance),
+            new_members=group_new_members,
             village_visit_id=visit_id,
             committee=f"{len(plans)} committees · Village attendance",
             type="Attendance",
@@ -119,7 +135,9 @@ def report_rows(user: User, month: date, *, plan_type: str | None = None, status
     visits = db.session.scalars(
         scoped_select(VillageAttendanceVisit, user)
         .where(VillageAttendanceVisit.visit_date >= start,
-               VillageAttendanceVisit.visit_date < end)
+               VillageAttendanceVisit.visit_date < end,
+               VillageAttendanceVisit.is_enabled.is_(True),
+               VillageAttendanceVisit.is_deleted.is_(False))
         .options(selectinload(VillageAttendanceVisit.village),
                  selectinload(VillageAttendanceVisit.entries))
     ).unique().all()
@@ -131,13 +149,16 @@ def report_rows(user: User, month: date, *, plan_type: str | None = None, status
             entries = [e for e in visit.entries if e.is_enabled and not e.is_deleted]
             if not entries:
                 continue
+            submitter = db.session.get(User, visit.submitted_by_user_id)
             rows.append({
                 "plan_id": None, "village_visit_id": visit.id,
                 "date": visit.visit_date.isoformat(), "assigned_date": None,
-                "da": visit.village.da.full_name,
+                "da": submitter.display_name if submitter else visit.village.da.full_name,
                 "village": visit.village.name,
                 "committee": f"{len(entries)} committees · Village attendance",
-                "type": "Attendance", "status": "On-time", "has_entry": True,
+                "type": "Attendance", "status": "Recorded", "has_entry": True,
+                "people_attended": sum(e.total_count for e in entries),
+                "new_members": visit.new_members_count if visit.visit_month else sum(e.new_members_count for e in entries),
                 "view_url": f"/reports/village/{visit.id}",
             })
     if status:
@@ -230,11 +251,56 @@ def report_detail(plan: ActionPlan) -> dict[str, Any]:
 
 
 def report_summary(rows: list[dict[str, Any]]) -> dict[str, int]:
-    statuses = {"Early": 0, "On-time": 0, "Postponed": 0, "Failure": 0, "Scheduled": 0, "Due today": 0}
+    statuses = {"Recorded": 0, "Early": 0, "On-time": 0, "Postponed": 0}
     for row in rows:
         if row["status"] in statuses:
             statuses[row["status"]] += 1
-    return {"total": len(rows), **statuses}
+    return {
+        "total": len(rows),
+        "people_attended": sum(int(row.get("people_attended") or 0) for row in rows),
+        "new_members": sum(int(row.get("new_members") or 0) for row in rows),
+        **statuses,
+    }
+
+
+def _village_visit_export_rows(visit: VillageAttendanceVisit, submitter_name: str) -> list[list[Any]]:
+    """Preserve each committee/member without multiplying village-level totals.
+
+    A row is emitted even for a committee with zero selected members. Attendance
+    figures appear once per committee, and New Members appears once per village
+    visit, so Excel SUM columns remain meaningful.
+    """
+    village = visit.village
+    entries = sorted(
+        (entry for entry in visit.entries
+         if entry.is_enabled and not entry.is_deleted and entry.action_plan_id is None),
+        key=lambda entry: (entry.committee.name.casefold(), entry.id),
+    )
+    rows: list[list[Any]] = []
+    for committee_index, entry in enumerate(entries):
+        members = [member for member in entry.visited_members
+                   if member.is_enabled and not member.is_deleted]
+        for member_index, member in enumerate(members or [None]):
+            first_committee_row = member_index == 0
+            first_village_row = committee_index == 0 and first_committee_row
+            rows.append([
+                month_key(visit.visit_date.replace(day=1)),
+                visit.visit_date.isoformat(), None,
+                village.da.pc.cluster.value, village.da.pc.full_name,
+                submitter_name, village.name, entry.committee.name,
+                "Attendance", "Recorded",
+                entry.male_count if first_committee_row else None,
+                entry.female_count if first_committee_row else None,
+                entry.total_count if first_committee_row else None,
+                visit.new_members_count if first_village_row else None,
+                member.member_name_snapshot if member else "",
+                member.designation_snapshot if member else "",
+                None, None, None,
+                visit.remarks if first_village_row else None,
+                visit.latitude, visit.longitude,
+                f"/api/v1/photos/attendance/{entry.id}" if first_village_row else None,
+            ])
+    return rows
 
 
 def export_report_workbook(user: User, month: date, *, plan_type: str | None = None, status: str | None = None) -> Workbook:
@@ -273,10 +339,10 @@ def export_report_workbook(user: User, month: date, *, plan_type: str | None = N
                     detail["committee"],
                     detail["type"],
                     detail["status"],
-                    entry.get("male"),
-                    entry.get("female"),
-                    entry.get("total"),
-                    entry.get("new_members"),
+                    entry.get("male") if index == 0 else None,
+                    entry.get("female") if index == 0 else None,
+                    entry.get("total") if index == 0 else None,
+                    entry.get("new_members") if index == 0 else None,
                     member_name,
                     designation,
                     entry.get("participants"),
@@ -293,28 +359,29 @@ def export_report_workbook(user: User, month: date, *, plan_type: str | None = N
     for cell in ws[1]:
         cell.fill = PatternFill("solid", fgColor=navy)
         cell.font = Font(color="FFFFFF", bold=True)
-    # DA-led village visits (no action plan) are exported as a village summary.
+    # DA-led visits: export committee-wise attendance and recorded member names.
+    # A village-wide New Members count is written exactly once per visit.
     start, end = _month_bounds(month)
-    if plan_type in (None, "Attendance") and status in (None, "On-time"):
+    if plan_type in (None, "Attendance") and status in (None, "Recorded"):
         visits = db.session.scalars(scoped_select(VillageAttendanceVisit, user).where(
             VillageAttendanceVisit.visit_date >= start,
-            VillageAttendanceVisit.visit_date < end
-        ).options(selectinload(VillageAttendanceVisit.entries))).unique().all()
+            VillageAttendanceVisit.visit_date < end,
+            VillageAttendanceVisit.is_enabled.is_(True),
+            VillageAttendanceVisit.is_deleted.is_(False),
+        ).options(
+            selectinload(VillageAttendanceVisit.village)
+            .selectinload(Village.da).selectinload(DA.pc),
+            selectinload(VillageAttendanceVisit.entries)
+            .selectinload(AttendanceEntry.committee),
+            selectinload(VillageAttendanceVisit.entries)
+            .selectinload(AttendanceEntry.visited_members),
+        )).unique().all()
         for visit in visits:
-            entries = [e for e in visit.entries if e.is_enabled and not e.is_deleted and e.action_plan_id is None]
-            if not entries:
-                continue
-            village = visit.village
-            ws.append([
-                month_key(month), visit.visit_date.isoformat(), None,
-                village.da.pc.cluster.value, village.da.pc.full_name,
-                visit.submitted_by_user_id, village.name, f"{len(entries)} committees",
-                "Attendance", "On-time", sum(e.male_count for e in entries),
-                sum(e.female_count for e in entries), sum(e.total_count for e in entries),
-                visit.new_members_count, "", "", None, None, None,
-                visit.remarks, visit.latitude, visit.longitude,
-                f"/api/v1/photos/attendance/{entries[0].id}" if entries else "",
-            ])
+            submitter = db.session.get(User, visit.submitted_by_user_id)
+            for row in _village_visit_export_rows(
+                visit, submitter.display_name if submitter else "DA",
+            ):
+                ws.append(row)
     ws.freeze_panes = "A2"
     ws.auto_filter.ref = ws.dimensions
     ws.sheet_view.showGridLines = False

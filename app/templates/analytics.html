@@ -1,27 +1,30 @@
 {% extends "base.html" %}
 {% block title %}Analytics · Model Village{% endblock %}
 {% block content %}
-<section class="page-shell analytics-page">
-  <header class="page-heading split-heading analytics-heading">
+<section class="page-shell analytics-page" id="visit-analytics">
+  <header class="page-heading split-heading">
     <div>
-      <p class="eyebrow">Program analytics</p>
-      <h1>Model village analytics</h1>
-      <p class="lede">
-        Role-scoped trends, participation, action-plan status and program distributions.
-      </p>
+      <p class="eyebrow">Current month · Field activity</p>
+      <h1>Village attendance analytics</h1>
+      <p class="lede">Actual village visits and recorded participation, filtered to your program scope.</p>
     </div>
-    <div class="analytics-heading-actions">
-      <a class="button ghost" href="{{ url_for('pages.monitoring') }}">Back to monitoring</a>
-    </div>
+    <a class="button ghost" href="{{ url_for('pages.monitoring') }}">View monitoring</a>
   </header>
-
-  <article class="panel-card analytics-frame-card">
-    <iframe
-      class="analytics-frame"
-      title="Role-scoped Model Village analytics"
-      src="/dash/"
-      loading="eager"
-    ></iframe>
-  </article>
+  <div class="kpi-grid analytics-kpis" aria-label="Attendance metrics">
+    <article class="metric-card"><span>Villages in scope</span><strong data-analytics-kpi="villages">—</strong></article>
+    <article class="metric-card"><span>Visited this month</span><strong data-analytics-kpi="villages_done">—</strong></article>
+    <article class="metric-card"><span>Not visited</span><strong data-analytics-kpi="villages_pending">—</strong></article>
+    <article class="metric-card"><span>People attended</span><strong data-analytics-kpi="people_attended">—</strong></article>
+    <article class="metric-card"><span>New members</span><strong data-analytics-kpi="new_members">—</strong></article>
+  </div>
+  <div id="analytics-alert" class="form-alert hidden" role="alert"></div>
+  <div class="analytics-panels">
+    <article class="panel-card analytics-panel"><p class="eyebrow">Completion</p><h2>Villages done vs pending</h2><div id="analytics-completion" class="analytics-visual"></div></article>
+    <article class="panel-card analytics-panel"><p class="eyebrow">Participation</p><h2>Attendance by gender</h2><div id="analytics-gender" class="analytics-visual"></div></article>
+    <article class="panel-card analytics-panel"><p class="eyebrow">Field coverage</p><h2>Villages by cluster</h2><div id="analytics-clusters" class="analytics-visual"></div></article>
+    <article class="panel-card analytics-panel"><p class="eyebrow">Committee participation</p><h2>Recorded committees</h2><div id="analytics-committees" class="analytics-visual"></div></article>
+  </div>
+  <p class="analytics-footnote">Based on submitted visits in the current month. No attendance? Values display zero instead of placeholder charts.</p>
 </section>
 {% endblock %}
+{% block scripts %}{{ super() }}<script src="{{ url_for('static', filename='js/visit-analytics.js') }}" defer></script>{% endblock %}

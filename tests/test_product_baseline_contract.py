@@ -39,7 +39,7 @@ def test_action_plan_transfer_has_preview_confirm_and_prepare_next_month():
 
 def test_mobile_role_navigation_is_explicit():
     base = read("app/templates/base.html")
-    for label in ("Home", "Plans", "Reports", "Map"):
+    for label in ("Home", "History", "Reports", "Map"):
         assert f"<small>{label}</small>" in base
     assert "<small>Entry</small>" in base
     assert "<small>Team</small>" in base

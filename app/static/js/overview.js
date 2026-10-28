@@ -11,7 +11,7 @@
       return;
     }
     const max = Math.max(...entries.map(([, value]) => Number(value)), 1);
-    const order = ["Due today", "Scheduled", "On-time", "Early", "Postponed", "Failure", "Draft"];
+    const order = ["Done", "Not done"];
     entries.sort((a, b) => {
       const ai = order.indexOf(a[0]), bi = order.indexOf(b[0]);
       return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
@@ -19,7 +19,7 @@
     host.innerHTML = entries.map(([status, value]) => `
       <div class="status-row">
         <label>${window.MV.escapeHtml(status)}</label>
-        <span class="status-track"><i class="status-fill" data-status="${window.MV.escapeHtml(status)}" style="width:${Math.max(3, Number(value) / max * 100)}%"></i></span>
+        <span class="status-track"><i class="status-fill" data-status="${window.MV.escapeHtml(status)}" style="width:${Math.max(0, Number(value) / max * 100)}%"></i></span>
         <strong>${Number(value).toLocaleString()}</strong>
       </div>`).join("");
   };

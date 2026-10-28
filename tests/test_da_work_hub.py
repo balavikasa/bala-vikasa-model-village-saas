@@ -320,7 +320,7 @@ def test_base_template_contains_da_field_shell_contract():
     assert "data-da-entry-menu" in source
     assert "data-da-more-menu" in source
 
-    for label in ("Entry", "Plans", "Reports", "More"):
+    for label in ("Entry", "Villages", "Reports", "More"):
         assert f">{label}<" in source
 
 def test_da_primary_action_uses_one_time_attention_effect():

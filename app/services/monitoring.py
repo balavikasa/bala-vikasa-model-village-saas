@@ -4,6 +4,7 @@ from collections import Counter, defaultdict
 from datetime import date
 from typing import Any
 
+from sqlalchemy import or_
 from sqlalchemy.orm import selectinload
 
 from ..extensions import db
@@ -11,6 +12,7 @@ from ..models import (
     DA,
     ActionPlan,
     Committee,
+    Role,
     User,
     Village,
     VillageAttendanceVisit,
@@ -64,14 +66,17 @@ def dashboard_summary(user: User) -> dict[str, Any]:
     visits = list(db.session.scalars(
         scoped_select(VillageAttendanceVisit, user)
         .where(VillageAttendanceVisit.visit_date >= month,
-               VillageAttendanceVisit.visit_date < end)
+               VillageAttendanceVisit.visit_date < end,
+               VillageAttendanceVisit.is_enabled.is_(True),
+               VillageAttendanceVisit.is_deleted.is_(False))
         .options(selectinload(VillageAttendanceVisit.entries))
     ).unique().all())
+    # The assigned-village denominator must not grow when a DA submits an
+    # authorised Other-village visit. Those visits are tracked separately.
     visible_ids = {v.id for v in villages}
-    # For DAs, their visits to another assigned village remain on their own KPI.
-    if user.role.value == "da":
-        visible_ids.update(visit.village_id for visit in visits)
-    done = len({v.village_id for v in visits if v.is_enabled and not v.is_deleted})
+    visited_ids = {v.village_id for v in visits if v.is_enabled and not v.is_deleted}
+    done = len(visible_ids & visited_ids)
+    other_visited = len(visited_ids - visible_ids) if user.role == Role.DA else 0
     gender = {"Male": 0, "Female": 0}
     entries_count = 0
     for visit in visits:
@@ -82,12 +87,16 @@ def dashboard_summary(user: User) -> dict[str, Any]:
                 gender["Female"] += entry.female_count
     clusters = Counter(inherited_cluster(village) for village in villages)
     pending = max(0, len(visible_ids) - done)
+    breakdown = {"Done": done, "Not done": pending}
+    if other_visited:
+        breakdown["Other village visits"] = other_visited
     return {
         "counts": {
             "villages": len(visible_ids),
             "committees": len(committees),
             "villages_done": done,
             "villages_pending": pending,
+            "other_villages_visited": other_visited,
             "attendance_entries": entries_count,
             "people_attended": sum(gender.values()),
             "new_members": sum(
@@ -98,7 +107,7 @@ def dashboard_summary(user: User) -> dict[str, Any]:
             "action_plans": len(scoped_action_plans(user)),  # retained for historical views
             "specials_entries": 0, "participants": 0,
         },
-        "status_breakdown": {"Done": done, "Not done": pending},
+        "status_breakdown": breakdown,
         "cluster_breakdown": {key: value for key, value in clusters.items() if key},
         "gender_distribution": gender,
     }
@@ -117,21 +126,28 @@ def map_markers(user: User) -> list[dict[str, Any]]:
             return False
         return not (abs(lat) < 0.000001 and abs(lon) < 0.000001)
 
-    def evidence_date(entry: Any) -> date:
-        return entry.visit_date if hasattr(entry, "visit_date") else entry.event_date
-
-    def evidence_type(entry: Any) -> str:
-        return "Attendance" if hasattr(entry, "visit_date") else "Specials"
-
     def evidence_photo_url(entry: Any) -> str | None:
         if not entry or not entry.photo_path:
             return None
-        kind = "attendance" if hasattr(entry, "visit_date") else "specials"
-        return f"/api/v1/photos/{kind}/{entry.id}"
+        return f"/api/v1/photos/attendance/{entry.id}"
 
+    village_query = scoped_select(Village, user)
+    if user.role == Role.DA and user.da_id is not None:
+        # An Other-village visit does not transfer ownership. It grants the
+        # submitting DA visibility of their own completed field evidence.
+        visited_elsewhere = db.select(VillageAttendanceVisit.village_id).where(
+            VillageAttendanceVisit.submitted_by_user_id == user.id,
+            VillageAttendanceVisit.is_enabled.is_(True),
+            VillageAttendanceVisit.is_deleted.is_(False),
+        )
+        village_query = db.select(Village).where(
+            Village.is_enabled.is_(True),
+            Village.is_deleted.is_(False),
+            or_(Village.da_id == user.da_id, Village.id.in_(visited_elsewhere)),
+        )
     villages = list(
         db.session.scalars(
-            scoped_select(Village, user)
+            village_query
             .options(
                 selectinload(Village.da).selectinload(DA.pc),
                 selectinload(Village.committees)
@@ -141,7 +157,7 @@ def map_markers(user: User) -> list[dict[str, Any]]:
                 .selectinload(Committee.action_plans)
                 .selectinload(ActionPlan.specials_entry),
                 selectinload(Village.attendance_entries),
-                selectinload(Village.specials_entries),
+                # Archived Specials are kept for historical reports, not live visit evidence.
             )
             .order_by(Village.name)
         ).unique()
@@ -156,26 +172,13 @@ def map_markers(user: User) -> list[dict[str, Any]]:
             for item in village.attendance_entries
             if item.is_enabled and not item.is_deleted
         ]
-        specials = [
-            item
-            for item in village.specials_entries
-            if item.is_enabled and not item.is_deleted
-        ]
-        evidence_rows = [*attendance, *specials]
-
-        latest_evidence = max(
-            evidence_rows,
-            key=lambda item: (evidence_date(item), item.id),
-            default=None,
-        )
-        located_evidence = [
-            item
-            for item in evidence_rows
-            if valid_coordinates(item.latitude, item.longitude)
-        ]
+        # The current program has one DA-led attendance visit, not Specials.
+        # Keep archived Specials in the DB/reports, but do not project them as
+        # current field GPS or photographic evidence.
+        latest_evidence = max(attendance, key=lambda item: (item.visit_date, item.id), default=None)
         latest_located = max(
-            located_evidence,
-            key=lambda item: (evidence_date(item), item.id),
+            (item for item in attendance if valid_coordinates(item.latitude, item.longitude)),
+            key=lambda item: (item.visit_date, item.id),
             default=None,
         )
 
@@ -192,11 +195,11 @@ def map_markers(user: User) -> list[dict[str, Any]]:
             longitude = None
             location_source = None
 
-        overall = "On-time" if any(
+        overall = "Visited" if any(
             e.is_enabled and not e.is_deleted and
             e.visit_date.year == today.year and e.visit_date.month == today.month
             for e in attendance
-        ) else "Draft"
+        ) else "Not visited"
 
         markers.append(
             {
@@ -204,18 +207,17 @@ def map_markers(user: User) -> list[dict[str, Any]]:
                 "name": village.name,
                 "cluster": village.da.pc.cluster.value,
                 "da_name": village.da.full_name,
+                "outside_assignment": bool(user.role == Role.DA and village.da_id != user.da_id),
                 "latitude": latitude,
                 "longitude": longitude,
                 "location_source": location_source,
                 "last_visit_date": (
-                    evidence_date(latest_evidence).isoformat()
+                    latest_evidence.visit_date.isoformat()
                     if latest_evidence
                     else None
                 ),
                 "evidence_type": (
-                    evidence_type(latest_evidence)
-                    if latest_evidence
-                    else None
+                    "Attendance" if latest_evidence else None
                 ),
                 "status": overall,
                 "photo_url": evidence_photo_url(latest_evidence),
@@ -239,6 +241,8 @@ def dashboard_series(user: User) -> dict[str, Any]:
     visits = db.session.scalars(scoped_select(VillageAttendanceVisit, user).where(
         VillageAttendanceVisit.visit_date >= month,
         VillageAttendanceVisit.visit_date < nxt,
+        VillageAttendanceVisit.is_enabled.is_(True),
+        VillageAttendanceVisit.is_deleted.is_(False),
     ).options(selectinload(VillageAttendanceVisit.entries))).unique().all()
     committee_totals: Counter[str] = Counter()
     status_by_cluster: dict[str, Counter[str]] = defaultdict(Counter)

@@ -42,18 +42,19 @@
       <div class="panel-heading">
         <div>
           <p class="eyebrow">Village evidence map</p>
-          <h2>Latest evidence &amp; monthly completion</h2>
+          <h2>Latest evidence &amp; village visits</h2>
         </div>
         <div class="map-legend">
           <span><i class="legend-dot success"></i>Done</span>
-          <span><i class="legend-dot warning"></i>Not done</span>
-          <span><i class="legend-dot danger"></i>No visit</span>
+          <span><i class="legend-dot warning"></i>Not visited</span>
+          <span class="monitor-legend-note">Villages without GPS listed below</span>
         </div>
       </div>
       <div id="village-map" class="village-map" aria-label="Map of visible villages"></div>
       <div class="map-no-coordinates hidden" id="map-no-coordinates">
         No village coordinates are available in this scope.
       </div>
+      <div id="monitor-unmapped" class="monitor-unmapped hidden" aria-live="polite"></div>
     </article>
 
     <article class="panel-card status-summary-panel">

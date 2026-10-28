@@ -3,14 +3,16 @@
 {% block content %}
 <section class="page-shell directory-page">
   <header class="page-heading split-heading">
-    <div><p class="eyebrow">Scoped master directory</p><h1>Villages & field teams</h1><p class="lede">Only records inside your role visibility are shown.</p></div>
+    <div><p class="eyebrow">{{ 'DA field coverage' if current_user.role.value == 'da' else 'Program directory' }}</p><h1>{{ 'My villages' if current_user.role.value == 'da' else 'Villages & field teams' }}</h1><p class="lede">{{ 'Your assigned villages. To record a visit outside this list, choose Other village in Attendance.' if current_user.role.value == 'da' else 'Search villages, people and committees within your role visibility.' }}</p></div>
     <label class="search-field"><span aria-hidden="true">⌕</span><input id="directory-search" type="search" placeholder="Search village, DA, PC or cluster"></label>
   </header>
   <nav class="segmented-control directory-tabs" aria-label="Directory view">
     <button type="button" class="is-active" data-directory-tab="villages" aria-pressed="true">Villages</button>
+    {% if current_user.role.value != 'da' %}
     <button type="button" data-directory-tab="das" aria-pressed="false">DAs</button>
     <button type="button" data-directory-tab="pcs" aria-pressed="false">PCs</button>
     <button type="button" data-directory-tab="pms" aria-pressed="false">PMs</button>
+    {% endif %}
   </nav>
   <div id="directory-grid" class="directory-grid" aria-live="polite">
     <div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>

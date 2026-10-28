@@ -2,7 +2,7 @@
 "use strict";
 importScripts("/static/js/idb-queue.js");
 
-const VERSION = "2026.27.25-da-led-attendance";
+const VERSION = "2026.27.28-visit-report-export";
 // Explicit DA location permission and Camera / Photo Album / Files choices
 const STATIC_CACHE = `mv-static-${VERSION}`;
 const DATA_PREFIX = "mv-data-";
@@ -35,12 +35,14 @@ const STATIC_ASSETS = [
   "/static/css/app.css",
   "/static/css/da-field.css",
   "/static/css/attendance-theme.css",
+  "/static/css/workflow-review.css",
   "/static/js/app.js",
   "/static/js/idb-queue.js",
   "/static/js/pwa.js",
   "/static/js/village-attendance.js",
   "/static/js/da-location.js",
   "/static/js/overview.js",
+  "/static/js/visit-analytics.js",
   "/static/js/directory.js",
   "/static/js/monitoring.js",
   "/static/js/map.js",

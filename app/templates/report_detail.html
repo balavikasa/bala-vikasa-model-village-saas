@@ -7,7 +7,7 @@
 <section class="page-shell report-detail-page" data-month="{{ detail.month or '' }}" data-lat="{{ detail.latitude if detail.latitude is not none else '' }}" data-lng="{{ detail.longitude if detail.longitude is not none else '' }}">
   <header class="page-heading split-heading">
     <div>
-      <p class="eyebrow">{{ detail.type }} report &middot; {{ detail.month_label or 'Unscheduled' }}</p>
+      <p class="eyebrow">Historical {{ detail.type|lower }} record &middot; {{ detail.month_label or 'Unscheduled' }}</p>
       <h1>{{ detail.village }} &middot; {{ detail.committee }}</h1>
       <div class="detail-meta">
         <span class="badge" data-status="{{ detail.status }}">{{ detail.status }}</span>
@@ -29,15 +29,15 @@
 
   <div class="report-bento">
     <article class="panel-card detail-overview">
-      <p class="eyebrow">Assignment</p>
-      <h2>Action plan</h2>
+      <p class="eyebrow">Legacy reference</p>
+      <h2>Previous plan details</h2>
       <dl class="detail-list">
         <div><dt>PC</dt><dd>{{ detail.pc }}</dd></div>
         <div><dt>Cluster</dt><dd>{{ detail.cluster }}</dd></div>
         <div><dt>DA</dt><dd>{{ detail.da }}</dd></div>
         <div><dt>Village</dt><dd>{{ detail.village }}</dd></div>
         <div><dt>Committee</dt><dd>{{ detail.committee }}</dd></div>
-        <div><dt>Assigned date</dt><dd>{{ detail.assigned_date or 'Not assigned' }}</dd></div>
+        <div><dt>Historical plan date</dt><dd>{{ detail.assigned_date or 'Not assigned' }}</dd></div>
         <div><dt>Status</dt><dd>{{ detail.status }}</dd></div>
       </dl>
     </article>
@@ -98,7 +98,7 @@
     <article class="panel-card span-two">
       <p class="eyebrow">No submission</p>
       <h2>{{ 'Action required' if detail.status == 'Failure' else 'Awaiting field activity' }}</h2>
-      <p class="muted">This plan has no submitted field entry yet.</p>
+      <p class="muted">This is an archived planning record; DA-led attendance is recorded through village visits.</p>
     </article>
     {% endif %}
 

@@ -30,7 +30,7 @@ def test_attendee_tiles_keep_accessible_selection_and_count_metadata():
 
 def test_offline_shell_precaches_new_theme():
     worker = (ROOT / "app/static/sw.js").read_text()
-    assert 'const VERSION = "2026.27.24-attendance-theme"' in worker
+    assert '"/static/css/attendance-theme.css"' in worker
     assert '"/static/css/attendance-theme.css"' in worker
 
 

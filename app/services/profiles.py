@@ -12,6 +12,7 @@ from ..models import (
     PC,
     PM,
     ActionPlan,
+    AttendanceEntry,
     Committee,
     User,
     Village,
@@ -23,6 +24,24 @@ from .monthly_plans import action_plan_status
 
 def _current_month() -> date:
     return current_month()
+
+
+def _active_entries(village: Village) -> list[AttendanceEntry]:
+    return [entry for entry in village.attendance_entries if entry.is_enabled and not entry.is_deleted]
+
+
+def _village_visit_summary(village: Village, month: date) -> dict[str, Any]:
+    entries = _active_entries(village)
+    current = [entry for entry in entries if entry.visit_date.year == month.year
+               and entry.visit_date.month == month.month]
+    latest = max(entries, key=lambda entry: (entry.visit_date, entry.id), default=None)
+    distinct_visits = {(entry.village_visit_id or ("legacy", entry.visit_date)) for entry in entries}
+    return {
+        "visited": bool(current),
+        "visits": len(distinct_visits),
+        "latest": latest.visit_date.isoformat() if latest else None,
+        "people": sum(entry.total_count for entry in current),
+    }
 
 
 def _status_counts(plans: list[ActionPlan]) -> dict[str, int]:
@@ -58,6 +77,7 @@ def da_profile(user: User, da_id: int) -> dict[str, Any] | None:
         .where(DA.id == da_id)
         .options(
             selectinload(DA.pc),
+            selectinload(DA.villages).selectinload(Village.attendance_entries),
             selectinload(DA.villages)
             .selectinload(Village.committees)
             .selectinload(Committee.members),
@@ -85,6 +105,8 @@ def da_profile(user: User, da_id: int) -> dict[str, Any] | None:
         if member.is_enabled and not member.is_deleted
     ]
     month = _current_month()
+    village_summaries = {v.id: _village_visit_summary(v, month) for v in villages}
+    visited_count = sum(1 for item in village_summaries.values() if item["visited"])
     plans = [
         plan
         for committee in committees
@@ -103,9 +125,10 @@ def da_profile(user: User, da_id: int) -> dict[str, Any] | None:
             "villages": len(villages),
             "committees": len(committees),
             "members": len(members),
-            "plans": len(plans),
+            "villages_visited": visited_count,
+            "villages_pending": len(villages) - visited_count,
         },
-        "status": _status_counts(plans),
+        "status": {"Visited": visited_count, "Not visited": len(villages) - visited_count},
         "villages": [
             {
                 "id": village.id,
@@ -124,6 +147,8 @@ def da_profile(user: User, da_id: int) -> dict[str, Any] | None:
                     if m.is_enabled and not m.is_deleted
                 ),
                 "url": f"/directory/village/{village.id}",
+                "visited": village_summaries[village.id]["visited"],
+                "last_visit": village_summaries[village.id]["latest"],
             }
             for village in sorted(villages, key=lambda item: item.name.casefold())
         ],
@@ -137,6 +162,7 @@ def village_profile(user: User, village_id: int) -> dict[str, Any] | None:
         .where(Village.id == village_id)
         .options(
             selectinload(Village.da).selectinload(DA.pc),
+            selectinload(Village.attendance_entries),
             selectinload(Village.committees).selectinload(Committee.members),
             selectinload(Village.committees)
             .selectinload(Committee.action_plans)
@@ -151,28 +177,32 @@ def village_profile(user: User, village_id: int) -> dict[str, Any] | None:
         return None
     committees = [c for c in village.committees if c.is_enabled and not c.is_deleted]
     month = _current_month()
-    plans = [
-        plan for committee in committees for plan in committee.action_plans
-        if plan.is_enabled and not plan.is_deleted and plan.plan_month == month
-    ]
+    visit_summary = _village_visit_summary(village, month)
+    entries = _active_entries(village)
     committee_rows = []
     total_members = 0
     for committee in sorted(committees, key=lambda c: c.name.casefold()):
         members = [m for m in committee.members if m.is_enabled and not m.is_deleted]
         total_members += len(members)
         designations = Counter(m.designation or "Not stated" for m in members)
-        plan = next((p for p in committee.action_plans if p.is_enabled and not p.is_deleted and p.plan_month == month), None)
+        latest = max((e for e in entries if e.committee_id == committee.id),
+                     key=lambda e: (e.visit_date, e.id), default=None)
+        current_attendance = [e for e in entries if e.committee_id == committee.id
+                              and e.visit_date.year == month.year and e.visit_date.month == month.month]
         committee_rows.append(
             {
                 "id": committee.id,
                 "name": committee.name,
                 "members": len(members),
                 "designations": dict(designations),
-                "plan_id": plan.id if plan else None,
-                "plan_type": plan.plan_type.value if plan and plan.plan_type else "Draft",
-                "assigned_date": plan.assigned_date.isoformat() if plan and plan.assigned_date else None,
-                "status": action_plan_status(plan) if plan else "Draft",
-                "report_url": f"/reports/plan/{plan.id}" if plan else None,
+                "last_visit": latest.visit_date.isoformat() if latest else None,
+                "attendance": sum(e.total_count for e in current_attendance),
+                "status": "Visited" if current_attendance else "Not visited",
+                "report_url": (
+                    f"/reports/village/{latest.village_visit_id}" if latest and latest.village_visit_id
+                    else f"/reports/plan/{latest.action_plan_id}" if latest and latest.action_plan_id
+                    else None
+                ),
             }
         )
     return {
@@ -188,8 +218,11 @@ def village_profile(user: User, village_id: int) -> dict[str, Any] | None:
         "cluster": village.da.pc.cluster.value,
         "da": {"id": village.da.id, "name": village.da.full_name},
         "pc": {"id": village.da.pc.id, "name": village.da.pc.full_name},
-        "counts": {"committees": len(committees), "members": total_members, "plans": len(plans)},
-        "status": _status_counts(plans),
+        "counts": {"committees": len(committees), "members": total_members,
+                   "visits": visit_summary["visits"], "attended_this_month": visit_summary["people"]},
+        "status": {"Visited": int(visit_summary["visited"]),
+                   "Not visited": int(not visit_summary["visited"])},
+        "latest_visit": visit_summary["latest"],
         "committees": committee_rows,
     }
 
@@ -199,6 +232,7 @@ def pc_profile(user: User, pc_id: int) -> dict[str, Any] | None:
         scoped_select(PC, user)
         .where(PC.id == pc_id)
         .options(
+            selectinload(PC.das).selectinload(DA.villages).selectinload(Village.attendance_entries),
             selectinload(PC.das)
             .selectinload(DA.villages)
             .selectinload(Village.committees)
@@ -223,19 +257,21 @@ def pc_profile(user: User, pc_id: int) -> dict[str, Any] | None:
     committees = [c for v in villages for c in v.committees if c.is_enabled and not c.is_deleted]
     members = [m for c in committees for m in c.members if m.is_enabled and not m.is_deleted]
     month = _current_month()
+    village_summaries = {v.id: _village_visit_summary(v, month) for v in villages}
+    visited_count = sum(int(row["visited"]) for row in village_summaries.values())
     plans = [p for c in committees for p in c.action_plans if p.is_enabled and not p.is_deleted and p.plan_month == month]
     da_rows = []
     for da in sorted(das, key=lambda d: d.full_name.casefold()):
         da_villages = [v for v in da.villages if v.is_enabled and not v.is_deleted]
         da_committees = [c for v in da_villages for c in v.committees if c.is_enabled and not c.is_deleted]
-        da_plans = [p for c in da_committees for p in c.action_plans if p.is_enabled and not p.is_deleted and p.plan_month == month]
+        da_done = sum(int(village_summaries[v.id]["visited"]) for v in da_villages)
         da_rows.append(
             {
                 "id": da.id,
                 "name": da.full_name,
                 "villages": len(da_villages),
-                "plans": len(da_plans),
-                "failure": sum(1 for p in da_plans if action_plan_status(p) == "Failure"),
+                "done": da_done,
+                "pending": len(da_villages) - da_done,
                 "url": f"/directory/da/{da.id}",
             }
         )
@@ -248,9 +284,10 @@ def pc_profile(user: User, pc_id: int) -> dict[str, Any] | None:
         "mobile": pc.mobile,
         "counts": {
             "das": len(das), "villages": len(villages), "committees": len(committees),
-            "members": len(members), "plans": len(plans)
+            "members": len(members), "villages_visited": visited_count,
+            "villages_pending": len(villages) - visited_count
         },
-        "status": _status_counts(plans),
+        "status": {"Visited": visited_count, "Not visited": len(villages) - visited_count},
         "das": da_rows,
         "plans": _plan_rows(plans),
     }

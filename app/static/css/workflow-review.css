@@ -1,0 +1,149 @@
+/* Village-visit workflow UI repairs, v2026.27.26.
+   Scoped to existing pages; keeps DA attendance-entry theme intact. */
+
+.app-main { min-width: 0; width: auto; max-width: 100%; }
+.app-main > .page-shell { min-width: 0; }
+.page-shell > * { min-width: 0; }
+.panel-card, .metric-card, .bento-panel { min-width: 0; }
+.ledger-table-wrap { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+.page-heading { min-width: 0; }
+.page-heading h1 { overflow-wrap: anywhere; }
+
+/* The primary navigation should describe visits, never suggest PCs still
+   schedule the DA's attendance. Old plans are linked as history. */
+.legacy-link-note {
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: .78rem;
+}
+.legacy-link-note a { color: var(--navy); font-weight: 750; text-underline-offset: 3px; }
+.status-fill[data-status="Done"], .status-fill[data-status="Visited"] { background: #27846e; }
+.status-fill[data-status="Not done"], .status-fill[data-status="Not visited"] { background: #e4a54a; }
+.badge[data-status="Visited"] { background: #e0f4ea; color: #236c52; }
+.badge[data-status="Not visited"] { background: #fff2df; color: #885b19; }
+
+/* Do not embed the whole Dash app inside the page. These same-source summaries
+   use actual /monitoring/series values, including explicit empty states. */
+.analytics-kpis { margin-bottom: 18px; }
+.analytics-kpis .metric-card { min-height: 108px; }
+.analytics-panels { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.analytics-panel { min-height: 290px; padding: clamp(16px,2vw,24px); }
+.analytics-panel h2 { margin-bottom: 18px; font-size: clamp(1.16rem,1.8vw,1.55rem); }
+.analytics-visual { min-height: 170px; }
+.analytics-empty {
+  min-height: 160px; display: grid; place-items: center; text-align: center;
+  border: 1px dashed var(--line); border-radius: 14px;
+  color: var(--muted); background: #f7faf9; padding: 16px; font-size: .86rem;
+}
+.analytics-bars { display: grid; gap: 15px; }
+.analytics-bar-row > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 7px; font-size: .8rem; }
+.analytics-bar-row > div span { overflow-wrap: anywhere; }
+.analytics-bar-row strong { color: var(--navy); font-variant-numeric: tabular-nums; }
+.analytics-bar-track { display: block; height: 11px; overflow: hidden; background: #ebf1f1; border-radius: 999px; }
+.analytics-bar-track > i { display: block; height: 100%; background: #17888b; border-radius: inherit; }
+.analytics-bar-row:nth-child(2n) .analytics-bar-track > i { background: #81b4a4; }
+.analytics-footnote { margin-top: 14px; color: var(--muted); font-size: .78rem; }
+
+/* Village visit report: explicit grid placement prevents the previously
+   collapsed, 1-column-wide GPS / note cards at desktop widths. */
+.village-visit-detail .village-report-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.village-visit-detail .village-report-layout > .panel-card { min-width: 0; grid-column: auto; }
+.village-report-summary { padding: clamp(17px,2vw,26px); }
+.village-summary-numbers { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.village-report-photo .report-photo {
+  display: block; height: auto; max-height: 310px;
+  width: 100%; object-fit: contain; background: #f2f4f3;
+}
+.village-report-photo h2, .village-report-ledger h2 { font-size: clamp(1.25rem,2vw,1.8rem); }
+.village-committee-table { width: 100%; min-width: 570px; table-layout: auto; }
+.village-committee-table th, .village-committee-table td { white-space: normal; overflow-wrap: anywhere; vertical-align: top; }
+.village-committee-table td:last-child { min-width: 148px; }
+.member-details summary { color: var(--navy); font-size: .8rem; font-weight: 750; cursor: pointer; }
+.member-details ul { list-style: none; padding: 8px 0 0; margin: 0; display: grid; gap: 6px; }
+.member-details li { font-size: .78rem; line-height: 1.35; }
+.member-details li small { color: var(--muted); }
+.village-report-notes > p { overflow-wrap: anywhere; }
+.village-report-gps .mono { overflow-wrap: anywhere; }
+.village-report-gps, .village-report-notes { min-height: 178px; }
+/* For historical, per-committee reports, retain a balanced grid with
+   readable photo and GPS cards instead of legacy 12-column auto-placement. */
+.report-detail-page:not(.village-visit-detail) .report-bento { align-items: start; }
+.report-detail-page:not(.village-visit-detail) .report-bento > .panel-card { min-width: 0; }
+.report-detail-page:not(.village-visit-detail) .report-photo { height: auto; max-height: 360px; object-fit: contain; background: #eff3f2; }
+
+/* Village and DA profiles now show visit status rather than draft plans. */
+.profile-visit-status { margin: 14px 0; }
+.profile-status-pills { display: flex; flex-wrap: wrap; gap: 10px; }
+.profile-status-pill {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 13px 18px; min-width: 140px; flex: 1 1 160px;
+  background: #f1f7f6; border: 1px solid var(--line); border-radius: 14px;
+  color: var(--muted); font-size: .75rem;
+}
+.profile-status-pill strong { color: var(--navy); font-size: 1.25rem; line-height: 1.2; }
+.profile-section .modern-ledger { width: 100%; }
+.profile-section .modern-ledger td { max-width: 290px; }
+.legacy-profile-plans { margin-top: 20px; }
+.legacy-profile-plans > summary { color: var(--navy); font-weight: 750; cursor: pointer; padding: 6px 0; }
+.legacy-profile-plans .panel-heading { margin-top: 18px; }
+
+/* Reports list and monitoring stay centered and readable. */
+.reports-page .reports-metrics { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.monitoring-page .monitor-grid { min-width: 0; align-items: start; }
+.monitoring-page .status-summary-panel { min-width: 0; }
+.monitoring-page .map-panel { min-width: 0; }
+.map-page .map-workspace { min-width: 0; }
+
+@media (min-width: 760px) {
+  .app-main > .page-shell { width: min(100%, 1480px); margin: 0 auto; }
+  .village-visit-detail .village-report-layout { grid-template-columns: repeat(12,minmax(0,1fr)); }
+  .village-visit-detail .village-report-summary { grid-column: 1 / -1 !important; }
+  .village-visit-detail .village-report-photo { grid-column: span 4 !important; }
+  .village-visit-detail .village-report-ledger { grid-column: span 8 !important; }
+  .village-visit-detail .village-report-gps,
+  .village-visit-detail .village-report-notes { grid-column: span 6 !important; }
+  .report-detail-page:not(.village-visit-detail) .report-bento { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .report-detail-page:not(.village-visit-detail) .report-bento > .panel-card { grid-column: auto; }
+  .report-detail-page:not(.village-visit-detail) .report-bento > .map-detail-card { grid-column: 1 / -1; }
+}
+@media (max-width: 1000px) {
+  .analytics-panels { grid-template-columns: 1fr; }
+  .analytics-panel { min-height: 0; }
+}
+@media (max-width: 759px) {
+  .analytics-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .village-summary-numbers { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .reports-page .reports-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .village-committee-table { min-width: 520px; }
+  .village-report-photo .report-photo { max-height: 260px; }
+  .profile-status-pill { min-width: 120px; flex-basis: 130px; }
+  .profile-page .profile-hero { grid-template-columns: auto minmax(0,1fr); }
+  .profile-page .profile-contact { grid-column: 1 / -1; }
+}
+
+/* Second-pass monitoring & report density cleanup, v2026.27.27. */
+.monitor-unmapped {
+  margin-top: 14px; padding: 14px 16px; border: 1px solid #d5e3e4;
+  border-radius: 14px; background: #f7faf9; font-size: .82rem; color: var(--muted);
+}
+.monitor-unmapped strong { display: block; color: var(--navy); font-size: .9rem; }
+.monitor-unmapped p { margin: 5px 0 10px; }
+.monitor-unmapped ul { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 9px; padding: 0; list-style: none; }
+.monitor-unmapped li a {
+  display: inline-flex; padding: 7px 10px; border-radius: 10px;
+  color: var(--navy); background: white; border: 1px solid var(--line);
+  text-decoration: none; font-weight: 650; overflow-wrap: anywhere;
+}
+.monitor-unmapped > a, .monitor-unmapped small a { color: var(--navy); font-weight: 750; }
+.monitor-legend-note { color: var(--muted); font-size: .75rem; }
+.reports-page .reports-metrics .metric-card { min-width: 0; }
+@media (max-width: 759px) {
+  .monitor-unmapped ul { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .monitor-unmapped li a { width: 100%; }
+  .monitoring-page .map-legend { flex-wrap: wrap; }
+}

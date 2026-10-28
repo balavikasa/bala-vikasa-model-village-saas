@@ -7,7 +7,7 @@
 {% endblock %}
 {% block content %}
 <section class="page-shell profile-page" data-profile-kind="{{ profile.kind }}">
-  <a class="profile-back" href="{{ url_for('pages.directory') }}">← Back to Directory</a>
+  <a class="profile-back" href="{{ url_for('pages.directory') }}">← Back to villages &amp; teams</a>
 
   <header class="profile-hero bento-panel">
     <div class="profile-avatar">{{ profile.kind }}</div>
@@ -30,36 +30,25 @@
 
   <section class="metric-bento profile-metrics">
     {% for key, value in profile.counts.items() %}
-    <article class="metric-card"><small>{{ key|replace('_',' ')|title }}</small><strong>{{ value }}</strong></article>
+    {% if key != 'plans' %}<article class="metric-card"><small>{{ key|replace('_',' ')|title }}</small><strong>{{ value }}</strong></article>{% endif %}
     {% endfor %}
   </section>
 
-  <section class="profile-grid">
-    <article class="panel-card">
-      <div class="panel-heading"><div><p class="eyebrow">Current month</p><h2>Action-plan pulse</h2></div></div>
-      <div class="status-breakdown">
-        {% for status, count in profile.status.items() %}
-        <div class="status-row">
-          <label>{{ status }}</label>
-          <div class="status-track"><span class="status-fill" data-status="{{ status }}" style="width: {{ ([count * 12, 100]|min) }}%"></span></div>
-          <strong>{{ count }}</strong>
-        </div>
-        {% endfor %}
-      </div>
-    </article>
-
-    {% if profile.kind == 'Village' and profile.latitude and profile.longitude %}
-    <article class="panel-card profile-map-panel">
-      <div class="panel-heading"><div><p class="eyebrow">Location</p><h2>{{ profile.name }}</h2></div></div>
-      <div id="profile-map" class="profile-map" data-lat="{{ profile.latitude }}" data-lng="{{ profile.longitude }}" data-label="{{ profile.name }}"></div>
-    </article>
-    {% elif profile.kind == 'DA' and profile.villages %}
-    <article class="panel-card profile-map-panel">
-      <div class="panel-heading"><div><p class="eyebrow">Field geography</p><h2>Assigned villages</h2></div></div>
-      <div id="profile-map" class="profile-map" data-villages='{{ profile.villages|tojson }}'></div>
-    </article>
+  {% if profile.kind in ['DA', 'PC', 'Village'] %}
+  <section class="profile-visit-status panel-card">
+    <div class="panel-heading"><div><p class="eyebrow">This month</p><h2>Village visit status</h2></div>
+    {% if profile.kind == 'Village' and current_user.role.value == 'da' %}
+    <a class="button primary" href="{{ url_for('pages.attendance') }}?village={{ profile.id }}">Record attendance</a>
     {% endif %}
+    </div>
+    <div class="profile-status-pills">
+      {% for status, count in profile.status.items() %}
+      <span class="profile-status-pill"><strong>{{ count }}</strong>{{ status }}</span>
+      {% endfor %}
+      {% if profile.latest_visit %}<span class="profile-status-pill"><strong>{{ profile.latest_visit }}</strong>Last visit</span>{% endif %}
+    </div>
   </section>
+  {% endif %}
 
   {% if profile.kind == 'DA' %}
   <section class="panel-card profile-section">
@@ -67,7 +56,7 @@
     <div class="profile-card-grid">
       {% for item in profile.villages %}
       <a class="profile-link-card" href="{{ item.url }}">
-        <div><strong>{{ item.name }}</strong><small>{{ item.mandal or 'Mandal not recorded' }} · {{ item.district or 'District not recorded' }}</small></div>
+        <div><strong>{{ item.name }}</strong><small>{{ 'Visited this month' if item.visited else 'Not visited this month' }} · {{ item.last_visit or 'No previous visit' }}</small></div>
         <div class="profile-card-stats"><span>{{ item.committee_count }}<small>Committees</small></span><span>{{ item.member_count }}<small>Members</small></span></div>
       </a>
       {% endfor %}
@@ -79,10 +68,10 @@
     <div class="responsive-ledger">
       <div class="desktop-ledger ledger-table-wrap">
         <table class="ledger modern-ledger">
-          <thead><tr><th>Committee</th><th>Members</th><th>Type</th><th>Assigned</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Committee</th><th>Members</th><th>Last visit</th><th>Attended this month</th><th>Status</th><th>Report</th></tr></thead>
           <tbody>
             {% for item in profile.committees %}
-            <tr><td>{{ item.name }}</td><td>{{ item.members }}</td><td>{{ item.plan_type }}</td><td>{{ item.assigned_date or '—' }}</td><td><span class="badge" data-status="{{ item.status }}">{{ item.status }}</span></td><td>{% if item.report_url %}<a class="text-button" href="{{ item.report_url }}">View</a>{% endif %}</td></tr>
+            <tr><td>{{ item.name }}</td><td>{{ item.members }}</td><td>{{ item.last_visit or '—' }}</td><td>{{ item.attendance }}</td><td><span class="badge" data-status="{{ item.status }}">{{ item.status }}</span></td><td>{% if item.report_url %}<a class="text-button" href="{{ item.report_url }}">View</a>{% endif %}</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -90,8 +79,8 @@
       <div class="mobile-ledger">
         {% for item in profile.committees %}
         <article class="ledger-card">
-          <div class="ledger-card-top"><div><strong>{{ item.name }}</strong><small>{{ item.members }} members · {{ item.plan_type }}</small></div><span class="badge" data-status="{{ item.status }}">{{ item.status }}</span></div>
-          <div class="ledger-card-meta"><span>{{ item.assigned_date or 'Not assigned' }}</span></div>
+          <div class="ledger-card-top"><div><strong>{{ item.name }}</strong><small>{{ item.members }} committee members</small></div><span class="badge" data-status="{{ item.status }}">{{ item.status }}</span></div>
+          <div class="ledger-card-meta"><span>Last visit: {{ item.last_visit or 'No visit' }} · {{ item.attendance }} attended this month</span></div>
           {% if item.report_url %}<a class="button ghost wide" href="{{ item.report_url }}">View</a>{% endif %}
         </article>
         {% endfor %}
@@ -104,8 +93,8 @@
     <div class="profile-card-grid">
       {% for item in profile.das %}
       <a class="profile-link-card" href="{{ item.url }}">
-        <div><strong>{{ item.name }}</strong><small>{{ item.villages }} villages · {{ item.plans }} current plans</small></div>
-        <span class="badge {% if item.failure %}danger{% endif %}">{{ item.failure }} failures</span>
+        <div><strong>{{ item.name }}</strong><small>{{ item.villages }} villages · {{ item.done }} visited</small></div>
+        <span class="badge">{{ item.pending }} not visited</span>
       </a>
       {% endfor %}
     </div>
@@ -123,9 +112,9 @@
   </section>
   {% endif %}
 
-  {% if profile.plans %}
-  <section class="panel-card profile-section">
-    <div class="panel-heading"><div><p class="eyebrow">Current month</p><h2>Action plans</h2></div><a class="text-button" href="{{ url_for('reports.reports_page') }}">All reports</a></div>
+  {% if profile.plans and current_user.role.value == 'admin' %}
+  <details class="panel-card profile-section legacy-profile-plans"><summary>Historical plan records (archive)</summary>
+    <div class="panel-heading"><div><p class="eyebrow">Current month</p><h2>Historical action plans</h2></div><a class="text-button" href="{{ url_for('reports.reports_page') }}">All reports</a></div>
     <div class="mobile-ledger profile-plan-list">
       {% for plan in profile.plans %}
       <article class="ledger-card">
@@ -135,7 +124,7 @@
       </article>
       {% endfor %}
     </div>
-  </section>
+  </details>
   {% endif %}
 </section>
 {% endblock %}

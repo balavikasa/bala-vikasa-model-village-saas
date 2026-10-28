@@ -32,7 +32,7 @@
     {% else %}
     <div class="hero-role-bento">
       <span class="role-orb">{{ current_user.role.value|upper }}</span>
-      <strong>{{ 'Field execution' if current_user.role.value == 'da' else 'Cluster operations' if current_user.role.value == 'pc' else 'Program monitoring' }}</strong>
+      <strong>{{ 'Village attendance' if current_user.role.value == 'da' else 'Village monitoring' }}</strong>
       <small>{{ 'Mobile-first · Offline-ready' if current_user.role.value == 'da' else 'Role-scoped · Current month' }}</small>
     </div>
     {% endif %}
@@ -45,13 +45,14 @@
     <article class="metric-card"><span>Villages not done</span><strong data-kpi="villages_pending">—</strong><small>Awaiting a visit</small></article>
     <article class="metric-card"><span>People attended</span><strong data-kpi="people_attended">—</strong><small>Selected committee members</small></article>
     <article class="metric-card"><span>New members</span><strong data-kpi="new_members">—</strong><small>Village totals</small></article>
+    {% if current_user.role.value == 'da' %}<article class="metric-card"><span>Other villages visited</span><strong data-kpi="other_villages_visited">—</strong><small>Visits outside your assigned villages</small></article>{% endif %}
   </section>
 
   <section class="overview-grid">
     <article class="panel-card quick-panel">
       <div class="panel-heading"><div><p class="eyebrow">Shortcuts</p><h2>Continue your work</h2></div></div>
       <div class="action-card-grid">
-        <a class="action-card" href="{{ url_for('planning.action_plans_page') }}"><span class="action-icon navy">▦</span><span><strong>Historical Action Plans</strong><small>Previous monthly planning records</small></span><b>›</b></a>
+
         {% if current_user.role.value == 'da' %}
         <a class="action-card" href="{{ url_for('pages.attendance') }}"><span class="action-icon saffron">✓</span><span><strong>Attendance entry</strong><small>DA-selected village and one photo</small></span><b>›</b></a>
         {% endif %}
@@ -61,6 +62,9 @@
         <a class="action-card" href="{{ url_for('pages.monitoring') }}"><span class="action-icon clay">⌁</span><span><strong>Monitoring</strong><small>Map and Plotly analytics</small></span><b>›</b></a>
         {% endif %}
       </div>
+      {% if current_user.role.value in ['admin', 'pm', 'pc'] %}
+      <p class="legacy-link-note">Previous workflow? <a href="{{ url_for('planning.action_plans_page') }}">View historical Action Plans</a></p>
+      {% endif %}
     </article>
 
     <article class="panel-card status-panel">

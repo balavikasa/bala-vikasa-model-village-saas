@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import io
 import json
+from datetime import date
+from types import SimpleNamespace
 
 from PIL import Image
 
@@ -11,7 +13,8 @@ from app.models import (
     DA, PC, Cluster, Committee, CommitteeMember, Role, User, Village,
     VillageAttendanceVisit,
 )
-from app.services.monitoring import dashboard_summary
+from app.services.monitoring import dashboard_summary, map_markers
+from app.services.reports import _village_visit_export_rows, export_report_workbook
 from app.timeutils import local_today
 
 
@@ -83,6 +86,13 @@ def test_da_records_all_committees_without_pc_action_plan(client, app):
         assert summary["counts"]["villages_done"] == 1
         assert summary["counts"]["people_attended"] == 2
         assert summary["counts"]["new_members"] == 4
+        workbook = export_report_workbook(user, local_today().replace(day=1))
+        exported = list(workbook.active.values)
+        assert len(exported) == 3  # header + one selected member per committee
+        assert {row[7] for row in exported[1:]} == {"Environment", "Water"}
+        assert sum(row[12] or 0 for row in exported[1:]) == 2
+        assert sum(row[13] or 0 for row in exported[1:]) == 4
+        assert {row[14] for row in exported[1:]} == {"Male Member", "Female Member"}
     duplicate = _post(client, ids, ids["assigned"], rows, "da-led-visit-2")
     assert duplicate.status_code == 422
 
@@ -102,4 +112,44 @@ def test_unassigned_requires_explicit_other_and_date_is_not_editable(client, app
         visit = db.session.get(VillageAttendanceVisit, allowed.json["id"])
         assert visit.outside_assignment is True
         assert visit.new_members_count == 4
+        summary = dashboard_summary(db.session.get(User, ids["user"]))
+        assert summary["counts"]["villages"] == 1  # assigned-village denominator
+        assert summary["counts"]["villages_done"] == 0
+        assert summary["counts"]["villages_pending"] == 1
+        assert summary["counts"]["other_villages_visited"] == 1
+        assert summary["counts"]["people_attended"] == 1
+        markers = map_markers(db.session.get(User, ids["user"]))
+        assert {marker["id"] for marker in markers} == {ids["assigned"], ids["other"]}
+        extra = next(marker for marker in markers if marker["id"] == ids["other"])
+        assert extra["outside_assignment"] is True
+        assert extra["status"] == "Visited"
     assert client.get(f"/reports/village/{allowed.json['id']}").status_code == 200
+
+
+def test_village_export_preserves_members_without_repeating_totals():
+    """One village-level new-member value, accurate committee totals in Excel."""
+    def member(name, role):
+        return SimpleNamespace(member_name_snapshot=name, designation_snapshot=role,
+                               is_enabled=True, is_deleted=False)
+
+    entries = [
+        SimpleNamespace(id=11, committee=SimpleNamespace(name="Environment"),
+                        action_plan_id=None, is_enabled=True, is_deleted=False,
+                        male_count=1, female_count=1, total_count=2,
+                        visited_members=[member("A", "President"), member("B", "Secretary")]),
+        SimpleNamespace(id=12, committee=SimpleNamespace(name="Water"),
+                        action_plan_id=None, is_enabled=True, is_deleted=False,
+                        male_count=0, female_count=0, total_count=0, visited_members=[]),
+    ]
+    village = SimpleNamespace(name="Demo", da=SimpleNamespace(
+        pc=SimpleNamespace(cluster=SimpleNamespace(value="CSRB"), full_name="Coordinator")))
+    visit = SimpleNamespace(village=village, visit_date=date(2026, 10, 28),
+                            entries=entries, new_members_count=3,
+                            remarks="One shared remark", latitude=17.98, longitude=79.53)
+    rows = _village_visit_export_rows(visit, "DA")
+    assert [row[7] for row in rows] == ["Environment", "Environment", "Water"]
+    assert [row[14] for row in rows] == ["A", "B", ""]
+    assert sum(row[12] or 0 for row in rows) == 2
+    assert sum(row[13] or 0 for row in rows) == 3
+    assert sum(bool(row[22]) for row in rows) == 1
+    assert all(len(row) == 23 for row in rows)
