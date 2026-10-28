@@ -15,7 +15,7 @@
           <label class="field"><span>Date <b>*</b></span><input id="visit-date" type="date" required value="{{ local_now.strftime('%Y-%m-%d') }}"></label>
         </div>
         <div id="village-summary" class="attendance-summary-pills" aria-live="polite">
-          <span id="summary-committees">0 committees</span><span id="summary-pending">0 to record</span><span id="summary-submitted">0 submitted</span>
+          <span id="summary-committees">0 committees</span>
         </div>
         <p id="village-plan-note" class="field-help attendance-plan-note" aria-live="polite">Select a village to begin.</p>
       </section>
@@ -50,4 +50,4 @@
 </section>
 {% endblock %}
 {% block head %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/attendance-theme.css') }}?theme=2026-10-28">{% endblock %}
-{% block scripts %}{{ super() }}<script src="{{ url_for('static', filename='js/village-attendance.js') }}?theme=2026-10-28" defer></script>{% endblock %}
+{% block scripts %}{{ super() }}<script src="{{ url_for('static', filename='js/village-attendance.js') }}?theme=2026-10-28b" defer></script>{% endblock %}

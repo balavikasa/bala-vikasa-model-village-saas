@@ -121,8 +121,6 @@
     const completed = allCommittees.filter(item => item.plan?.attendance_entry_id);
     const needsScheduling = unavailable.length > 0;
     $('#summary-committees').textContent = `${allCommittees.length} committees`;
-    $('#summary-pending').textContent = `${eligible.length} to record`;
-    $('#summary-submitted').textContent = `${completed.length} submitted`;
     planNote.classList.toggle('form-alert', needsScheduling);
     planNote.classList.toggle('hidden', !needsScheduling);
     planNote.textContent = needsScheduling
@@ -278,8 +276,6 @@
     village.value = ''; allCommittees = []; busy = false; setSubmitState();
     planNote.classList.remove('form-alert'); planNote.classList.remove('hidden');
     $('#summary-committees').textContent = '0 committees';
-    $('#summary-pending').textContent = '0 to record';
-    $('#summary-submitted').textContent = '0 submitted';
     cards.innerHTML = '<div class="empty-state">Select a village to begin.</div>';
     planNote.textContent = 'Select a village to begin.';
     $('#new-members-entries').innerHTML = ''; $('#shared-date-reason-wrap').classList.add('hidden');
