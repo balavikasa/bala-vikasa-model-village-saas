@@ -274,3 +274,55 @@ p.lede, .lede { line-height:1.55; color:#637780; }
  .village-visit-detail .village-summary-numbers { grid-template-columns:repeat(2,minmax(0,1fr)); }
  .village-visit-detail .village-report-photo,.village-visit-detail .village-report-ledger,.village-visit-detail .village-report-gps,.village-visit-detail .village-report-notes { grid-column:1/-1; }
 }
+
+/* 2026.27.30 · Full visual fidelity pass (teal, ivory, illustrated civic-tech UI) */
+:root { --rail-width:244px; --mv-primary:#00696c; --mv-primary-2:#088b82; --mv-page:#f9f8f3; --mv-text:#123f4c; --mv-muted:#667b83; --mv-line:#e4ebe8; }
+body { background:#f8f8f4; color:#244350; }
+body::before { content:none!important; }
+.page-shell { width:100%; max-width:1700px; padding:25px clamp(18px,2.2vw,40px) 80px; }
+.page-heading { margin-bottom:22px; }
+.page-heading h1,.hero-overview h1,.profile-hero h1 { font-family:'Fraunces',Georgia,serif; letter-spacing:-.035em; color:#073f4a; line-height:1.12; }
+.page-heading h1 { font-size:clamp(2rem,2.5vw,2.8rem); }
+.panel-card,.metric-card,.admin-panel,.bento-panel,.ledger-card,.directory-card,.profile-link-card { border:1px solid #e6edeb; box-shadow:0 4px 20px rgba(19,67,73,.045); border-radius:16px; background:#fff; }
+.kpi-grid,.metric-bento { gap:14px; }
+.metric-card { min-height:137px; padding:21px; }
+.metric-card::before { background:#e6f3f0; border-radius:50%; width:40px; height:40px; opacity:1; content:'✦'; display:grid; place-items:center; color:#007976; font-size:20px; }
+.metric-card:nth-child(4n+2)::before { color:#d87760; background:#fff0ec; }
+.metric-card:nth-child(4n+3)::before { color:#23779a; background:#edf5fa; }
+.metric-card:nth-child(4n+4)::before { color:#977739; background:#faf3df; }
+.side-rail { background:#fffdf9; border-right:1px solid #e8e9e5; box-shadow:none; }
+.side-rail>.brand-lockup { min-height:78px; padding:14px 19px; display:flex!important; align-items:center!important; flex-direction:row!important; gap:12px!important; }
+.brand-official-full,.brand-official-login { display:none!important; }
+.brand-symbol,.side-rail>.brand-lockup .brand-mark,.login-brand .brand-mark { display:grid!important; }
+.brand-bv-concept { position:relative; width:49px!important; height:49px!important; min-width:49px!important; border-radius:13px!important; display:grid!important; place-items:center; color:#fff!important; font:800 24px/1 Georgia,serif; letter-spacing:-.07em; background:linear-gradient(145deg,#078e86,#00525d)!important; box-shadow:0 8px 20px rgba(0,97,98,.16)!important; }
+.brand-bv-concept .bv-leaf { position:absolute; top:3px; right:7px; color:#c1ebd7; font:700 10px/1 system-ui; }
+.side-rail>.brand-lockup .brand-copy strong { display:block!important; font:700 1.08rem/1.2 Georgia,serif; color:#075460; }
+.side-rail>.brand-lockup .brand-copy small { display:block!important; font-size:.65rem; padding:0!important; color:#6d8187; }
+.side-rail .rail-nav a { min-height:45px; margin:3px 12px; padding:10px 14px; border-radius:10px; font-size:.84rem; font-weight:600; }
+.side-rail .rail-nav a.is-active { background:linear-gradient(100deg,#00676e,#008478); box-shadow:0 5px 15px rgba(1,105,105,.12); color:#fff; }
+.side-rail .nav-glyph { opacity:.9; font-size:1.1rem; }
+.rail-footer { background:linear-gradient(180deg,transparent,#e9f2e8 65%,#dceee3); }
+.renewal-topbar { border-color:#e6edea; background:rgba(255,255,253,.97); }
+.renewal-global-search { max-width:600px; background:#f5f7f6; }
+.hero-overview,.profile-hero { background:#fff url('/static/brand/village-landscape.svg') right bottom / min(56%,650px) auto no-repeat!important; border:0; border-radius:17px; min-height:210px; box-shadow:none; }
+.hero-overview .hero-copy { max-width:68%; }
+.analytics-page .page-heading { background-size:min(48%,650px) auto; }
+.analytics-filterbar { padding:16px; }
+.analytics-panel { min-height:280px; }
+.village-visit-detail .village-report-layout { gap:17px; }
+.village-visit-detail .village-report-photo .report-photo { max-height:330px; object-fit:cover; }
+@media(max-width:959px){
+ .page-shell { padding:17px 14px 100px; }
+ .hero-overview { background-size:75% auto!important; }
+ .hero-overview .hero-copy { max-width:100%; }
+ .side-rail>.brand-lockup .brand-copy strong { display:block!important; }
+ .metric-card { min-height:110px; padding:16px; }
+}
+@media(max-width:640px){
+ .hero-overview { background-image:none!important; min-height:unset; }
+ .page-heading h1 { font-size:clamp(1.85rem,7vw,2.35rem); }
+ .analytics-filterbar { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+ .analytics-filterbar .field { min-width:0; }
+ .analytics-filterbar .button { grid-column:1/-1; }
+ .metric-card::before { width:34px; height:34px; margin-bottom:7px; }
+}

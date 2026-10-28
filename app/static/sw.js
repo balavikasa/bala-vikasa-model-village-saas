@@ -2,7 +2,7 @@
 "use strict";
 importScripts("/static/js/idb-queue.js");
 
-const VERSION = "2026.27.29-premium-redesign";
+const VERSION = "2026.27.30-visual-fidelity";
 // Explicit DA location permission and Camera / Photo Album / Files choices
 const STATIC_CACHE = `mv-static-${VERSION}`;
 const DATA_PREFIX = "mv-data-";

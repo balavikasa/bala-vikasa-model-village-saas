@@ -21,12 +21,14 @@ bp = Blueprint("pages", __name__)
 @bp.get("/")
 @login_required
 def home():
-    return redirect(url_for("pages.overview"))
+    return redirect(url_for("pages.attendance" if current_user.role == Role.DA else "pages.overview"))
 
 
 @bp.get("/overview")
 @login_required
 def overview():
+    if current_user.role == Role.DA:
+        return redirect(url_for("pages.attendance"))
     return render_template("overview.html")
 
 

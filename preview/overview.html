@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#00666B">
+  <meta name="color-scheme" content="light">
+  <meta name="csrf-token" content="test">
+
+  
+  <meta name="mv-user-id" content="6">
+  <meta name="mv-user-role" content="da">
+  
+
+  <title>Overview · Model Village</title>
+
+  <link rel="manifest" href="/pages/manifest">
+
+  <link
+    rel="apple-touch-icon"
+    href="/static/icons/apple-touch-icon.png"
+  >
+
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="32x32"
+    href="/static/icons/favicon-32.png"
+  >
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="/static/css/app.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="/static/css/da-field.css"
+  >
+  <link rel="stylesheet" href="/static/css/workflow-review.css">
+
+  <link rel="stylesheet" href="/static/css/village-renewal.css">
+  
+</head>
+
+<body
+  class="app-authenticated"
+  
+  data-user-id="6"
+  data-role="da"
+  
+>
+  <a class="skip-link" href="#main-content">
+    Skip to content
+  </a>
+
+  
+
+  
+
+  
+
+  <header class="da-field-appbar">
+    <a
+      class="da-field-brand"
+      href="/pages/overview"
+      aria-label="Model Village dashboard"
+    >
+      <span class="brand-mark brand-symbol" aria-hidden="true"><img src="/static/brand/bala-vikasa-symbol.png" alt=""></span>
+
+      <span>
+        <strong>Bala Vikasa</strong>
+        <small>Model Village · Field App</small>
+      </span>
+    </a>
+
+    <div class="da-field-appbar-actions">
+      <button
+        class="da-sync-button"
+        type="button"
+        data-sync-trigger
+        aria-label="Open sync queue"
+      >
+        <span
+          class="network-dot"
+          aria-hidden="true"
+        ></span>
+
+        <span data-network-label>
+          Online
+        </span>
+
+        <strong data-queue-count>
+          0
+        </strong>
+      </button>
+
+      <button
+        class="da-field-menu-button"
+        type="button"
+        data-mobile-menu-open
+        aria-controls="mobile-menu"
+        aria-label="Open more navigation"
+      >
+        <span aria-hidden="true">
+          &#9776;
+        </span>
+      </button>
+    </div>
+  </header>
+
+  
+
+
+  
+
+  <aside
+    class="side-rail"
+    aria-label="Primary navigation"
+  >
+    <a
+      class="brand-lockup"
+      href="/pages/home"
+    >
+      <img class="brand-official-full" src="/static/brand/bala-vikasa-official.png" alt="Bala Vikasa official logo">
+      <span class="brand-mark brand-symbol" aria-hidden="true"><img src="/static/brand/bala-vikasa-symbol.png" alt=""></span>
+
+      <span class="brand-copy">
+        <strong>Bala Vikasa</strong>
+        <small>Model Village · 2026–27</small>
+      </span>
+    </a>
+
+    <nav class="rail-nav">
+
+      
+
+      <a href="/pages/overview" class="is-active"><span class="nav-glyph" aria-hidden="true">▦</span><span class="nav-label">Dashboard</span></a>
+
+      <a
+        href="/pages/attendance"
+        class=""
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#10003;
+        </span>
+
+        <span class="nav-label">Attendance</span>
+      </a>
+
+
+      <a
+        href="/reports/reports_page"
+        class=""
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#9636;
+        </span>
+
+        <span class="nav-label">Reports</span>
+      </a>
+
+      <a
+        href="/pages/directory"
+        class=""
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#8962;
+        </span>
+
+        <span class="nav-label">My Villages</span>
+      </a>
+
+      <a
+        href="/pages/map_page"
+        class=""
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#8982;
+        </span>
+
+        <span class="nav-label">Map</span>
+      </a>
+
+      
+
+    </nav>
+
+    <div class="rail-footer">
+      <div class="brand-landscape"><span>Stronger Villages<br>Brighter Futures</span></div>
+      <div
+        class="rail-account-strip"
+        aria-label="Signed-in account"
+      >
+        <strong
+          class="rail-account-name"
+          title="D.Ramesh"
+        >
+          D.Ramesh
+        </strong>
+
+        <button
+          class="rail-status-button"
+          type="button"
+          data-sync-trigger
+          aria-label="Open sync queue"
+          title="Sync status and offline queue"
+        >
+          <span
+            class="network-dot"
+            aria-hidden="true"
+          ></span>
+
+          <span
+            class="rail-queue-count"
+            data-queue-count
+          >
+            0
+          </span>
+
+          <span
+            class="sr-only"
+            data-network-label
+          >
+            Online
+          </span>
+        </button>
+
+        <form
+          class="rail-account-logout"
+          action="/auth/logout"
+          method="post"
+        >
+          <input
+            type="hidden"
+            name="csrf_token"
+            value="test"
+          >
+
+          <button
+            class="rail-account-logout-button"
+            type="submit"
+            aria-label="Sign out"
+            title="Sign out"
+          >
+            <span
+              class="nav-glyph"
+              aria-hidden="true"
+            >
+              &#8617;
+            </span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  
+
+
+  
+  <header class="renewal-topbar" aria-label="Application toolbar">
+    <form class="renewal-global-search" action="/pages/directory" method="get" role="search">
+      <span aria-hidden="true">⌕</span>
+      <input type="search" name="q" aria-label="Find a village or field team" placeholder="Search villages, coordinators or field teams…" autocomplete="off">
+      <button type="submit">Search</button>
+    </form>
+    <div class="renewal-topbar-tools">
+      <span class="renewal-today" id="renewal-today" aria-label="Today"></span>
+      <span class="renewal-user-avatar" aria-hidden="true">D</span>
+      <span class="renewal-user-label"><strong>D.Ramesh</strong><small>Development Associate</small></span>
+    </div>
+  </header>
+  
+
+  
+
+  <main
+    id="main-content"
+    class="app-main"
+  >
+    
+      
+    
+
+    
+<section class="page-shell overview-page">
+  <header class="hero-overview">
+    <div class="hero-copy">
+      <p class="eyebrow">Bala Vikasa · Model Village Program</p>
+      <h1>Good day, D.Ramesh.</h1>
+      <p>
+        
+        Capture village visits even without a signal. Your queue will synchronize when the network returns.
+        
+      </p>
+      <div class="renewal-hero-detail"><span>◉ Live village visits</span><span>● Current month</span><span>◌ Role-scoped data</span></div>
+      <div class="hero-actions">
+        
+        <a class="button primary" href="/pages/attendance">Record attendance</a>
+        
+      </div>
+    </div>
+    
+    <div class="hero-role-bento">
+      <span class="role-orb">DA</span>
+      <strong>Village attendance</strong>
+      <small>Mobile-first · Offline-ready</small>
+    </div>
+    
+  </header>
+
+  <section class="kpi-grid" aria-label="Program summary">
+    <article class="metric-card"><span>Villages</span><strong data-kpi="villages">—</strong><small>Your visible scope</small></article>
+    <article class="metric-card"><span>Committees</span><strong data-kpi="committees">—</strong><small>Active master records</small></article>
+    <article class="metric-card"><span>Villages done</span><strong data-kpi="villages_done">—</strong><small>Recorded this month</small></article>
+    <article class="metric-card"><span>Villages not done</span><strong data-kpi="villages_pending">—</strong><small>Awaiting a visit</small></article>
+    <article class="metric-card"><span>People attended</span><strong data-kpi="people_attended">—</strong><small>Selected committee members</small></article>
+    <article class="metric-card"><span>New members</span><strong data-kpi="new_members">—</strong><small>Village totals</small></article>
+    <article class="metric-card"><span>Other villages visited</span><strong data-kpi="other_villages_visited">—</strong><small>Visits outside your assigned villages</small></article>
+  </section>
+
+  <section class="overview-grid">
+    <article class="panel-card quick-panel">
+      <div class="panel-heading"><div><p class="eyebrow">Quick actions</p><h2>What would you like to do?</h2></div></div>
+      <div class="action-card-grid">
+
+        
+        <a class="action-card" href="/pages/attendance"><span class="action-icon saffron">✓</span><span><strong>Attendance entry</strong><small>DA-selected village and one photo</small></span><b>›</b></a>
+        
+        <a class="action-card" href="/reports/reports_page"><span class="action-icon clay">▤</span><span><strong>Reports</strong><small>Open each report with evidence & map</small></span><b>›</b></a>
+        <a class="action-card" href="/pages/directory"><span class="action-icon navy">⌂</span><span><strong>My villages</strong><small>People, committees and scope</small></span><b>›</b></a>
+        
+      </div>
+      
+    </article>
+
+    <article class="panel-card status-panel">
+      <div class="panel-heading"><div><p class="eyebrow">Monthly progress</p><h2>Village coverage at a glance</h2></div></div>
+      <div id="status-breakdown" class="status-breakdown">
+        <div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div>
+      </div>
+    </article>
+  </section>
+  <section class="renewal-dashboard-lists" aria-label="Recent activity and villages pending a visit">
+    <article class="panel-card">
+      <div class="panel-heading"><div><p class="eyebrow">Village records</p><h2>Recent attendance submissions</h2></div><a class="text-button" href="/reports/reports_page">All reports ↗</a></div>
+      <div class="renewal-activity-list" id="renewal-recent-visits" aria-live="polite"><p class="muted">Loading recent submissions…</p></div>
+    </article>
+    <article class="panel-card">
+      <div class="panel-heading"><div><p class="eyebrow">This month</p><h2>Villages awaiting a visit</h2></div><a class="text-button" href="/pages/directory">All villages ↗</a></div>
+      <div class="renewal-pending-list" id="renewal-pending-villages" aria-live="polite"><p class="muted">Loading village coverage…</p></div>
+    </article>
+  </section>
+</section>
+
+  </main>
+
+
+  
+
+  
+
+  
+
+  <nav
+    class="da-field-bottom-nav"
+    aria-label="DA primary navigation"
+  >
+    <button
+      type="button"
+      class=""
+      data-da-entry-menu
+      aria-expanded="false"
+      aria-haspopup="dialog"
+      aria-controls="da-entry-menu"
+      aria-label="Open field entry options"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        ＋
+      </span>
+
+      <small>Entry</small>
+    </button>
+
+    <a
+      href="/pages/directory"
+      class=""
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#9638;
+      </span>
+
+      <small>Villages</small>
+    </a>
+
+    <a
+      href="/reports/reports_page"
+      class=""
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#9636;
+      </span>
+
+      <small>Reports</small>
+    </a>
+
+    <button
+      type="button"
+      data-da-more-menu
+      data-mobile-menu-open
+      aria-controls="mobile-menu"
+      aria-label="Open more navigation"
+    >
+      <span
+        class="nav-glyph"
+        aria-hidden="true"
+      >
+        &#9776;
+      </span>
+
+      <small>More</small>
+    </button>
+  </nav>
+
+
+  
+
+  <dialog
+    class="da-entry-dialog"
+    id="da-entry-menu"
+    aria-labelledby="da-entry-menu-title"
+  >
+    <div class="da-entry-sheet">
+
+      <div
+        class="da-entry-handle"
+        aria-hidden="true"
+      ></div>
+
+      <header class="da-entry-heading">
+        <div>
+          <p class="eyebrow">
+            Field entry
+          </p>
+
+          <h2 id="da-entry-menu-title">
+            What are you recording?
+          </h2>
+        </div>
+
+        <button
+          type="button"
+          class="icon-button"
+          data-da-entry-close
+          aria-label="Close field entry menu"
+        >
+          &times;
+        </button>
+      </header>
+
+      <div class="da-entry-actions">
+
+        <a
+          class="da-entry-option"
+          href="/pages/attendance"
+        >
+          <span
+            class="da-entry-icon"
+            aria-hidden="true"
+          >
+            ✓
+          </span>
+
+          <span>
+            <strong>Attendance</strong>
+
+            <small>
+              One visit for every village committee
+            </small>
+          </span>
+
+          <span
+            class="da-entry-arrow"
+            aria-hidden="true"
+          >
+            →
+          </span>
+        </a>
+
+      </div>
+    </div>
+  </dialog>
+
+  
+
+
+  
+
+  <dialog
+    class="mobile-menu-dialog"
+    id="mobile-menu"
+    aria-labelledby="mobile-menu-title"
+  >
+    <div class="mobile-menu-sheet">
+
+      <header class="mobile-menu-heading">
+        <div class="mobile-menu-user">
+          <span
+            class="avatar"
+            aria-hidden="true"
+          >
+            D
+          </span>
+
+          <span>
+            <strong id="mobile-menu-title">
+              D.Ramesh
+            </strong>
+
+            <small>
+              DA
+            </small>
+          </span>
+        </div>
+
+        <button
+          class="icon-button"
+          type="button"
+          data-mobile-menu-close
+          aria-label="Close navigation menu"
+        >
+          &times;
+        </button>
+      </header>
+
+      <nav class="mobile-menu-nav" aria-label="All navigation">
+
+        
+
+        <a href="/pages/overview" data-mobile-menu-link>
+          <span class="nav-glyph" aria-hidden="true">▦</span><strong>Dashboard</strong><small>This month</small>
+        </a>
+        <a
+          href="/pages/attendance"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#10003;
+          </span>
+
+          <strong>Attendance</strong>
+
+          <small>
+            Field entry home
+          </small>
+        </a>
+
+
+
+        <a
+          href="/reports/reports_page"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#9636;
+          </span>
+
+          <strong>Reports</strong>
+
+          <small>
+            Submitted evidence
+          </small>
+        </a>
+
+        <a
+          href="/pages/directory"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#8962;
+          </span>
+
+          <strong>My Villages</strong>
+
+          <small>
+            People and committees
+          </small>
+        </a>
+
+        <a
+          href="/pages/map_page"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#8982;
+          </span>
+
+          <strong>Map</strong>
+
+          <small>
+            Assigned locations
+          </small>
+        </a>
+
+        
+
+      </nav>
+
+      <footer class="mobile-menu-footer">
+        <form
+          action="/auth/logout"
+          method="post"
+        >
+          <input
+            type="hidden"
+            name="csrf_token"
+            value="test"
+          >
+
+          <button
+            class="button danger wide"
+            type="submit"
+          >
+            Sign out
+          </button>
+        </form>
+      </footer>
+
+    </div>
+  </dialog>
+
+  
+
+
+  
+
+  <div
+    class="toast-region"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+
+
+  
+
+  
+
+  <dialog
+    class="sync-dialog"
+    id="sync-dialog"
+  >
+    <div class="dialog-heading">
+      <div>
+        <p class="eyebrow">
+          Offline field work
+        </p>
+
+        <h2>
+          Sync queue
+        </h2>
+      </div>
+
+      <button
+        type="button"
+        class="icon-button"
+        data-close-sync
+        aria-label="Close"
+      >
+        ×
+      </button>
+    </div>
+
+    <p class="muted">
+      Entries are kept per signed-in profile and submitted
+      automatically when connectivity returns.
+    </p>
+
+    <div
+      id="sync-queue-list"
+      class="sync-list"
+    ></div>
+
+    <div class="dialog-actions">
+      <button
+        class="button ghost"
+        type="button"
+        data-close-sync
+      >
+        Close
+      </button>
+
+      <button
+        class="button primary"
+        type="button"
+        data-sync-now
+      >
+        Sync now
+      </button>
+    </div>
+  </dialog>
+
+  
+
+
+  
+
+  <script
+    src="/static/js/app.js"
+    defer
+  ></script>
+
+  <script
+    src="/static/js/da-field-shell.js"
+    defer
+  ></script>
+
+  <script
+    src="/static/js/idb-queue.js"
+    defer
+  ></script>
+
+  <script
+    src="/static/js/pwa.js"
+    defer
+  ></script>
+
+  
+  <dialog class="da-location-dialog" id="da-location-dialog" aria-labelledby="da-location-title">
+    <h2 id="da-location-title">Enable current location</h2>
+    <p id="da-location-help">This app needs your current GPS location for field attendance.</p>
+    <div class="dialog-actions"><button type="button" class="button ghost" data-location-dismiss>Close</button><button type="button" class="button primary" data-location-retry>Try again</button></div>
+  </dialog>
+  <script src="/static/js/da-location.js" defer></script>
+  
+  <script src="/static/js/village-renewal.js" defer></script>
+  
+
+<script src="/static/js/overview.js" defer></script>
+
+
+
+</body>
+</html>

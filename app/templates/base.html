@@ -80,10 +80,10 @@
   <header class="da-field-appbar">
     <a
       class="da-field-brand"
-      href="{{ url_for('pages.overview') }}"
-      aria-label="Model Village dashboard"
+      href="{{ url_for('pages.attendance') }}"
+      aria-label="Open attendance entry"
     >
-      <span class="brand-mark brand-symbol" aria-hidden="true"><img src="{{ url_for('static', filename='brand/bala-vikasa-symbol.png') }}" alt=""></span>
+      <span class="brand-mark brand-symbol brand-bv-concept" aria-hidden="true"><span class="bv-leaf">✦</span>BV</span>
 
       <span>
         <strong>Bala Vikasa</strong>
@@ -134,7 +134,7 @@
       href="{{ url_for('pages.home') }}"
       aria-label="Model Village home"
     >
-      <span class="brand-mark brand-symbol" aria-hidden="true"><img src="{{ url_for('static', filename='brand/bala-vikasa-symbol.png') }}" alt=""></span>
+      <span class="brand-mark brand-symbol brand-bv-concept" aria-hidden="true"><span class="bv-leaf">✦</span>BV</span>
 
       <span>
         <strong>Bala Vikasa</strong>
@@ -222,8 +222,8 @@
       class="brand-lockup"
       href="{{ url_for('pages.home') }}"
     >
-      <img class="brand-official-full" src="{{ url_for('static', filename='brand/bala-vikasa-official.png') }}" alt="Bala Vikasa official logo">
-      <span class="brand-mark brand-symbol" aria-hidden="true"><img src="{{ url_for('static', filename='brand/bala-vikasa-symbol.png') }}" alt=""></span>
+      
+      <span class="brand-mark brand-symbol brand-bv-concept" aria-hidden="true"><span class="bv-leaf">✦</span>BV</span>
 
       <span class="brand-copy">
         <strong>Bala Vikasa</strong>
@@ -234,8 +234,6 @@
     <nav class="rail-nav">
 
       {% if current_user.role.value == 'da' %}
-
-      <a href="{{ url_for('pages.overview') }}" class="{% if request.endpoint == 'pages.overview' %}is-active{% endif %}"><span class="nav-glyph" aria-hidden="true">▦</span><span class="nav-label">Dashboard</span></a>
 
       <a
         href="{{ url_for('pages.attendance') }}"

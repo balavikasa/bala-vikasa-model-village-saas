@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#00666B">
+  <meta name="color-scheme" content="light">
+  <meta name="csrf-token" content="test">
+
+  
+
+  <title>Sign in · Model Village</title>
+
+  <link rel="manifest" href="/pages/manifest">
+
+  <link
+    rel="apple-touch-icon"
+    href="/static/icons/apple-touch-icon.png"
+  >
+
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="32x32"
+    href="/static/icons/favicon-32.png"
+  >
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="/static/css/app.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="/static/css/da-field.css"
+  >
+  <link rel="stylesheet" href="/static/css/workflow-review.css">
+
+  <link rel="stylesheet" href="/static/css/village-renewal.css">
+  
+</head>
+
+<body
+  class="app-anonymous"
+  
+>
+  <a class="skip-link" href="#main-content">
+    Skip to content
+  </a>
+
+  
+
+
+  
+
+  
+
+  <main
+    id="main-content"
+    class="anonymous-main"
+  >
+    
+      
+    
+
+    
+<section class="login-shell">
+  <article class="login-story" aria-label="Program introduction">
+    <div class="login-story-content">
+      <span class="program-chip">Bala Vikasa · Model Village</span>
+      <h1>Stronger villages.<br>Brighter futures.</h1>
+      <p>One secure workspace for village visits, participation and community development.</p>
+      <div class="story-stats">
+        <span><strong>42</strong> villages</span>
+        <span><strong>2</strong> clusters</span>
+        <span><strong>Offline</strong> field mode</span>
+      </div>
+    </div>
+    <div class="village-illustration" aria-hidden="true">
+      <span class="sun"></span><span class="hill hill-one"></span><span class="hill hill-two"></span>
+      <span class="home home-one"></span><span class="home home-two"></span><span class="tree"></span>
+    </div>
+  </article>
+  <article class="login-card">
+    <a class="brand-lockup login-brand" href="/auth/login">
+      <img class="brand-official-login" src="/static/brand/bala-vikasa-official.png" alt="Bala Vikasa official logo">
+      <span class="brand-mark brand-symbol" aria-hidden="true"><img src="/static/brand/bala-vikasa-symbol.png" alt=""></span>
+      <span><strong>Bala Vikasa</strong><small>Model Village Program</small></span>
+    </a>
+    <p class="eyebrow">Secure program access</p>
+    <h2>Welcome back</h2>
+    <p class="muted">Use your registered email address or mobile number.</p>
+    <form method="post" class="stack-form">
+      <input type="hidden" name="csrf_token" value="test">
+      <input type="hidden" name="next" value="">
+      <label class="field">
+        <span>Email or mobile</span>
+        <input name="identifier" autocomplete="username" inputmode="email" required autofocus>
+      </label>
+      <label class="field">
+        <span>Password</span>
+        <span class="password-field">
+          <input name="password" type="password" autocomplete="current-password" minlength="4" required>
+          <button type="button" class="text-button" data-toggle-password>Show</button>
+        </span>
+      </label>
+      <p class="muted">You will stay signed in on this device until you sign out.</p>
+      <button class="button primary wide" type="submit">Sign in</button>
+    </form>
+    <p class="login-help">Lost access? Contact the program administrator. Never share field credentials.</p>
+  </article>
+</section>
+
+  </main>
+
+
+  
+
+
+  
+
+  <div
+    class="toast-region"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+
+
+  
+
+  
+
+
+  
+
+  <script
+    src="/static/js/app.js"
+    defer
+  ></script>
+
+  <script
+    src="/static/js/da-field-shell.js"
+    defer
+  ></script>
+
+  <script
+    src="/static/js/idb-queue.js"
+    defer
+  ></script>
+
+  <script
+    src="/static/js/pwa.js"
+    defer
+  ></script>
+
+  
+  <script src="/static/js/village-renewal.js" defer></script>
+  
+
+</body>
+</html>
