@@ -65,22 +65,21 @@
     const key = String(role || '').trim().toLowerCase().replace(/[^a-z]+/g, '-');
     return ['president', 'vice-president', 'secretary'].includes(key) ? key : 'member';
   };
+  // Individual name tiles retain member IDs and gender metadata for validated counts.
+  // Gender is never printed on the card. All roles share the same simple grid.
   function roleGroups(members) {
-    const byRole = new Map();
     const order = ['President', 'Vice President', 'Secretary', 'Member'];
-    for (const member of members || []) {
+    const names = (members || []).map(member => {
       const raw = String(member.designation || 'Member').trim();
       const role = order.find(value => value.toLowerCase() === raw.toLowerCase()) || 'Member';
-      if (!byRole.has(role)) byRole.set(role, []);
-      byRole.get(role).push(member);
-    }
-    return order.filter(role => byRole.has(role)).map(role => `
-      <section class="attendee-role-group attendee-role-${roleClass(role)}">
-        <p class="attendee-role-title">${esc(role)}</p>
-        <div class="attendee-chip-grid">${byRole.get(role).map(member => `
-          <button type="button" class="attendee-chip" data-visit-member="${Number(member.id)}" data-gender="${esc(normalizedGender(member.gender))}" aria-pressed="false" aria-label="${esc(member.name)}, not selected"><span class="attendee-chip-name">${esc(member.name)}</span><span class="attendee-chip-check" aria-hidden="true">✓</span></button>
-        `).join('')}</div>
-      </section>`).join('') || '<p class="field-help">No active members in Master Data. Ask your PC/Admin to check the member list.</p>';
+      return { ...member, role };
+    });
+    names.sort((a, b) => order.indexOf(a.role) - order.indexOf(b.role));
+    if (!names.length) return '<p class="field-help">No active members in Master Data. Ask PC/Admin to check the member list.</p>';
+    return `<div class="attendance-name-grid">${names.map(member => `
+      <button type="button" class="attendee-chip attendee-role-${roleClass(member.role)}" data-visit-member="${Number(member.id)}" data-gender="${esc(normalizedGender(member.gender))}" aria-pressed="false" aria-label="${esc(member.name)}, ${esc(member.role)}, not selected">
+        <span class="attendee-chip-name">${esc(member.name)}</span><span class="attendee-chip-role">${esc(member.role)}</span><span class="attendee-chip-check" aria-hidden="true">✓</span>
+      </button>`).join('')}</div>`;
   }
   function selectedCounts(row) {
     const selected = [...row.querySelectorAll('[data-visit-member][aria-pressed="true"]')];
@@ -100,8 +99,9 @@
       const count = selectedCounts(row);
       male += count.male; female += count.female;
       if (count.ids.length) active += 1;
-      row.querySelector('[data-committee-total]').textContent = `${count.ids.length} present`;
-      row.querySelector('[data-committee-counts]').textContent = `Male ${count.male} · Female ${count.female} · Total ${count.ids.length}`;
+      row.querySelector('[data-committee-total]').textContent = count.ids.length ? `${count.ids.length} present` : '';
+      const rowCounts = row.querySelector('[data-committee-counts]');
+      if (rowCounts) rowCounts.textContent = `Male ${count.male} · Female ${count.female} · Total ${count.ids.length}`;
       row.classList.toggle('has-selection', count.ids.length > 0);
       row.querySelector('[data-gender-alert]').classList.toggle('hidden', count.unknown === 0);
     }
@@ -120,7 +120,11 @@
     const eligible = pending(), unavailable = missing();
     const completed = allCommittees.filter(item => item.plan?.attendance_entry_id);
     const needsScheduling = unavailable.length > 0;
+    $('#summary-committees').textContent = `${allCommittees.length} committees`;
+    $('#summary-pending').textContent = `${eligible.length} to record`;
+    $('#summary-submitted').textContent = `${completed.length} submitted`;
     planNote.classList.toggle('form-alert', needsScheduling);
+    planNote.classList.toggle('hidden', !needsScheduling);
     planNote.textContent = needsScheduling
       ? `${unavailable.length} committee(s) need PC scheduling or Admin restoration. ${eligible.length} scheduled · ${completed.length} completed.`
       : `${allCommittees.length} committees · ${eligible.length} to record · ${completed.length} already submitted`;
@@ -140,7 +144,7 @@
       const label = ready ? `Scheduled ${esc(plan.assigned_date)}` : done ? 'Attendance already submitted' : recycled ? 'Restore from Recycle Bin' : 'PC scheduling required';
       return `<details class="mv-committee-card" data-committee-id="${item.id}" data-ready="${ready}" ${ready && item.id === firstReady ? 'open' : ''}>
         <summary><span class="mv-committee-number">${idx + 1}</span><span class="mv-committee-name"><strong>${esc(item.name)}</strong><small>${label}</small></span><span class="committee-selected-count" data-committee-total>${ready ? '0 present' : done ? 'Done' : 'Waiting'}</span><span class="committee-chevron" aria-hidden="true">⌄</span></summary>
-        ${ready ? `<div class="mv-committee-details"><div class="attendee-help">Tap a name to mark attendance. Tap again to remove.</div><div class="mv-member-list">${roleGroups(item.members)}</div><div data-gender-alert class="form-alert hidden">One or more selected members have missing gender in Master Data. Ask Admin/PC to correct it before submission.</div><div class="committee-count-footer"><span>Automatically calculated</span><strong data-committee-counts>Male 0 · Female 0 · Total 0</strong></div><button type="button" class="button ghost next-committee" data-next-committee>Next committee ↓</button></div>` : ''}
+        ${ready ? `<div class="mv-committee-details"><div class="attendee-help">Tap a name to mark present. Tap again to undo.</div><div class="mv-member-list">${roleGroups(item.members)}</div><div data-gender-alert class="form-alert hidden">One or more selected members have missing gender in Master Data. Ask Admin/PC to correct it before submission.</div><button type="button" class="button ghost next-committee" data-next-committee>Next committee ↓</button></div>` : ''}
       </details>`;
     }).join('');
     $('#new-members-entries').innerHTML = eligible.map(item => `<label class="new-member-row"><span>${esc(item.name)}</span><input type="number" inputmode="numeric" min="0" max="9999" value="0" data-new-count="${item.id}" aria-label="New member count for ${esc(item.name)}"></label>`).join('') || '<small>No pending committees.</small>';
@@ -157,7 +161,7 @@
     if (chip && cards.contains(chip)) {
       const checked = chip.getAttribute('aria-pressed') !== 'true';
       chip.setAttribute('aria-pressed', String(checked));
-      chip.setAttribute('aria-label', `${chip.querySelector('.attendee-chip-name').textContent}, ${checked ? 'selected' : 'not selected'}`);
+      chip.setAttribute('aria-label', `${chip.querySelector('.attendee-chip-name').textContent}, ${chip.querySelector('.attendee-chip-role').textContent}, ${checked ? 'selected' : 'not selected'}`);
       updateCounts(); return;
     }
     const next = event.target.closest('[data-next-committee]');
@@ -272,7 +276,11 @@
   function reset() {
     submissionId = crypto.randomUUID(); form.reset(); date.value = root.dataset.today;
     village.value = ''; allCommittees = []; busy = false; setSubmitState();
-    planNote.classList.remove('form-alert'); cards.innerHTML = '<div class="empty-state">Select a village to begin.</div>';
+    planNote.classList.remove('form-alert'); planNote.classList.remove('hidden');
+    $('#summary-committees').textContent = '0 committees';
+    $('#summary-pending').textContent = '0 to record';
+    $('#summary-submitted').textContent = '0 submitted';
+    cards.innerHTML = '<div class="empty-state">Select a village to begin.</div>';
     planNote.textContent = 'Select a village to begin.';
     $('#new-members-entries').innerHTML = ''; $('#shared-date-reason-wrap').classList.add('hidden');
     $('#village-male').textContent = '0'; $('#village-female').textContent = '0'; $('#village-total').textContent = '0';

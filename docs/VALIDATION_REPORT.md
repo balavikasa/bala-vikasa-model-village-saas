@@ -1,6 +1,6 @@
 # Validation report
 
-Generated: `2026-10-27T12:32:27+00:00`
+Generated: `2026-10-28T05:21:03+00:00`
 
 This report distinguishes executed checks from checks skipped because the build environment lacks runtime dependencies. A skip is not represented as a pass.
 
