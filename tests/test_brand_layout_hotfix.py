@@ -17,4 +17,4 @@ def test_login_brand_uses_original_emblem_without_year(client):
     assert b'brand/bala-vikasa-symbol.png' in response.data
     assert b'Bala Vikasa emblem' in response.data
     assert b'Model Village 2026-27' not in response.data
-    assert b'icons/favicon-32.png?v=2026.27.32' in response.data
+    assert b'icons/favicon-32.png?v=2026.27.33' in response.data

@@ -366,3 +366,14 @@ body.mv-reference{margin:0;color:var(--ref-ink);background:var(--ref-paper);back
   .ref-report-ledger .ref-print-members{display:none}
   .mv-reference .ref-main.app-main:has(.ref-analytics){padding-bottom:20px}
 }
+
+/* v33: searchable Other Villages picker inside the village selection section. */
+.ref-other-results{border:1px solid var(--ref-line);border-radius:12px;padding:12px;background:#f7faf8}
+.ref-other-results-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.ref-other-results-heading h3{font-size:18px}
+.mv-reference #other-village-cancel,.mv-reference #other-village-query,.mv-reference .other-village-choice{min-height:44px}
+.ref-other-results .field-help{font-size:12px;margin:8px 0 0;color:var(--ref-muted)}
+.other-village-choice{min-width:0;overflow-wrap:anywhere}
+.other-village-choice:hover,.other-village-choice:focus-visible{background:#e7f2ed;border-color:#75aba3}
+
+.mv-reference #village-select{appearance:auto}

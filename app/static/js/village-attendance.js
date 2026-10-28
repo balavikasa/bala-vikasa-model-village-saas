@@ -16,7 +16,10 @@
   const locationDetail = $('#location-detail');
   const locationButton = $('#retry-location');
   const preview = $('#photo-preview');
-  const otherToggle = $('#other-village-toggle');
+  const otherCancel = $('#other-village-cancel');
+  const otherStatus = $('#other-village-status');
+  const OTHER_VILLAGES = '__other_villages__';
+  let selectedVillageId = '';
   const otherPanel = $('#other-village-panel');
   const otherQuery = $('#other-village-query');
   const otherResults = $('#other-village-results');
@@ -106,7 +109,9 @@
       ids: selected.map(node => Number(node.dataset.visitMember)),
     };
   }
-  function setSubmitState() { send.disabled = busy || !village.value || pending().length === 0 || visitSubmitted; }
+  function setSubmitState() {
+    send.disabled = busy || !selectedVillageId || village.value !== selectedVillageId || pending().length === 0 || visitSubmitted;
+  }
   function updateCounts() {
     let male = 0, female = 0, active = 0;
     for (const item of pending()) {
@@ -172,59 +177,112 @@
   });
   async function loadVillage(id) {
     const stamp = ++requestId;
-    cards.innerHTML = '<div class="empty-state">Loading committees and members…</div>';
-    allCommittees = []; visitSubmitted = false; setSubmitState();
-    if (!id) { cards.innerHTML = '<div class="empty-state">Select a village.</div>'; return; }
+    allCommittees = []; visitSubmitted = false;
+    setSubmitState(); updateCounts();
+    planNote.classList.add('hidden');
+    $('#summary-committees').textContent = id ? 'Loading committees...' : 'Select a village to start';
+    status.textContent = id ? 'Loading village...' : 'Select a village';
+    cards.innerHTML = id ? '<div class="empty-state">Loading committees and members...</div>' : '<div class="empty-state">Choose a village to begin.</div>';
+    if (!id) return;
     try {
       const data = await get(`/api/v1/attendance/villages/${encodeURIComponent(id)}/details`);
       if (stamp !== requestId) return;
       allCommittees = data.items || []; visitSubmitted = Boolean(data.submitted);
       render();
-    } catch (e) { if (stamp === requestId) showError(e.message); }
-  }
-  const assignedOptions = () => {
-    const assigned = availableVillages.filter(v => v.assigned);
-    village.innerHTML = '<option value="">Select assigned village</option>' + assigned.map(v => `<option value="${v.id}">${esc(v.name)}</option>`).join('');
-    if (selectedOutside) {
-      const other = availableVillages.find(v => v.id === Number(village.dataset.otherId));
-      if (other) village.insertAdjacentHTML('beforeend', `<option value="${other.id}">${esc(other.name)} (Other)</option>`);
+    } catch (e) {
+      if (stamp !== requestId) return;
+      cards.innerHTML = '<div class="empty-state">Unable to load committees. Choose the village again to retry.</div>';
+      $('#summary-committees').textContent = 'Village details unavailable';
+      status.textContent = 'Unable to load village';
+      showError(e.message);
     }
+  }
+  // The sentinel opens the picker. It is never sent as a village ID.
+  const assignedOptions = () => {
+    const options = [new Option('Select assigned village', '')];
+    for (const item of availableVillages.filter(v => v.assigned)) {
+      options.push(new Option(item.name, String(item.id)));
+    }
+    if (selectedOutside) {
+      const other = availableVillages.find(v => String(v.id) === selectedVillageId);
+      if (other) options.push(new Option(`${other.name} (Other)`, String(other.id)));
+    }
+    options.push(new Option('Other Villages', OTHER_VILLAGES));
+    village.replaceChildren(...options);
+    village.value = selectedVillageId;
   };
   function renderOtherResults() {
     const query = otherQuery.value.trim().toLowerCase();
-    const matched = availableVillages.filter(v => !v.assigned && (!query || `${v.name} ${v.mandal} ${v.district}`.toLowerCase().includes(query))).slice(0, 30);
-    otherResults.innerHTML = matched.length ? matched.map(v => `<button type="button" role="option" class="other-village-choice" data-other-id="${v.id}">${esc(v.name)} <small>${esc([v.mandal, v.district].filter(Boolean).join(' · '))}</small></button>`).join('') : '<p class="field-help">No matching village.</p>';
+    const matched = availableVillages.filter(v => !v.assigned &&
+      (!query || [v.name, v.mandal, v.district].filter(Boolean).join(' ').toLowerCase().includes(query)));
+    otherStatus.textContent = `${matched.length} ${matched.length === 1 ? 'village' : 'villages'} found`;
+    otherResults.innerHTML = matched.length ? matched.map(v =>
+      `<button type="button" class="other-village-choice" data-other-id="${Number(v.id)}">${esc(v.name)} <small>${esc([v.mandal, v.district].filter(Boolean).join(' / '))}</small></button>`
+    ).join('') : '<p class="field-help">No matching village. Try another name, mandal or district.</p>';
   }
-  otherToggle.addEventListener('click', () => {
-    const open = otherPanel.classList.toggle('hidden') === false;
-    otherToggle.setAttribute('aria-expanded', String(open));
-    if (open) { renderOtherResults(); otherQuery.focus(); }
+  function openOtherPicker() {
+    otherQuery.value = '';
+    renderOtherResults();
+    otherPanel.classList.remove('hidden');
+    setSubmitState();
+    otherQuery.focus();
+  }
+  function closeOtherPicker({ restoreSelection = true, focus = false } = {}) {
+    otherPanel.classList.add('hidden');
+    if (restoreSelection) village.value = selectedVillageId;
+    setSubmitState();
+    if (focus) village.focus();
+  }
+  function chooseVillage(id, focus = false) {
+    const target = availableVillages.find(v => String(v.id) === String(id));
+    if (id && !target) return;
+    const nextId = target ? String(target.id) : '';
+    const changed = nextId !== selectedVillageId;
+    selectedVillageId = nextId;
+    selectedOutside = Boolean(target && !target.assigned);
+    assignedOptions();
+    closeOtherPicker({ restoreSelection: false, focus });
+    clearError();
+    // Re-selecting the same village preserves entered attendance. A failed
+    // details request can still be retried by choosing that village again.
+    if (changed || (nextId && allCommittees.length === 0)) loadVillage(nextId);
+  }
+  otherCancel.addEventListener('click', () => closeOtherPicker({ focus: true }));
+  otherPanel.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      closeOtherPicker({ focus: true });
+    }
   });
   otherQuery.addEventListener('input', renderOtherResults);
+  otherQuery.addEventListener('keydown', event => {
+    if (event.key === 'Enter') event.preventDefault();
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      otherResults.querySelector('[data-other-id]')?.focus();
+    }
+  });
   otherResults.addEventListener('click', event => {
     const option = event.target.closest('[data-other-id]');
-    if (!option) return;
-    const id = Number(option.dataset.otherId);
-    selectedOutside = true; village.dataset.otherId = String(id); assignedOptions();
-    village.value = String(id); otherPanel.classList.add('hidden');
-    otherToggle.setAttribute('aria-expanded','false'); otherToggle.textContent = 'Other village selected';
-    clearError(); loadVillage(id);
+    if (!option || !otherResults.contains(option)) return;
+    chooseVillage(option.dataset.otherId, true);
   });
   village.addEventListener('change', () => {
-    selectedOutside = availableVillages.find(v => v.id === Number(village.value))?.assigned === false;
-    otherToggle.textContent = 'Other village';
-    clearError(); loadVillage(village.value);
+    if (village.value === OTHER_VILLAGES) {
+      openOtherPicker();
+      return;
+    }
+    chooseVillage(village.value);
   });
   (async () => {
     try {
       const data = await get('/api/v1/attendance/villages');
-      availableVillages = data.items || []; assignedOptions();
+      availableVillages = data.items || [];
+      assignedOptions(); village.disabled = false;
       const selectedVillage = params.get('village');
       if (selectedVillage && availableVillages.some(v => String(v.id) === selectedVillage)) {
-        const target = availableVillages.find(v => String(v.id) === selectedVillage);
-        selectedOutside = !target.assigned;
-        if (selectedOutside) village.dataset.otherId = selectedVillage;
-        assignedOptions(); village.value = selectedVillage; loadVillage(village.value);
+        chooseVillage(selectedVillage);
       }
     } catch (e) { showError(e.message); }
   })();
@@ -295,10 +353,9 @@
     submissionId = crypto.randomUUID(); form.reset();
     $('#village-notes').dispatchEvent(new Event('input'));
     otherPanel.classList.add('hidden');
-    otherToggle.setAttribute('aria-expanded', 'false');
-    otherToggle.textContent = 'Other village';
     refreshToday();
-    village.value = ''; selectedOutside = false; delete village.dataset.otherId; assignedOptions();
+    ++requestId;
+    selectedVillageId = ''; selectedOutside = false; assignedOptions();
     allCommittees = []; visitSubmitted = false; busy = false; setSubmitState();
     planNote.classList.remove('form-alert'); planNote.classList.add('hidden');
     $('#summary-committees').textContent = '0 committees';
@@ -312,7 +369,7 @@
   }
   form.addEventListener('submit', async event => {
     event.preventDefault(); clearError(); refreshToday();
-    if (!village.value) return showError('Choose a village.');
+    if (!selectedVillageId || village.value !== selectedVillageId) return showError('Choose a village from the list before submitting.');
     let data; try { data = body(); } catch (e) { return showError(e.message); }
     busy = true; setSubmitState(); status.textContent = navigator.onLine ? 'Submitting village visit…' : 'Saving visit offline…';
     try {

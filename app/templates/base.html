@@ -5,12 +5,12 @@
 <meta name="theme-color" content="#005b63"><meta name="color-scheme" content="light"><meta name="csrf-token" content="{{ csrf_token() }}">
 {% if current_user.is_authenticated %}<meta name="mv-user-id" content="{{ current_user.id }}"><meta name="mv-user-role" content="{{ current_user.role.value }}">{% endif %}
 <title>{% block title %}Model Village{% endblock %}</title>
-<link rel="manifest" href="{{ url_for('pages.manifest') }}"><link rel="apple-touch-icon" href="{{ url_for('static',filename='icons/apple-touch-icon.png') }}?v=2026.27.32"><link rel="icon" href="{{ url_for('static',filename='icons/favicon-32.png') }}?v=2026.27.32">
+<link rel="manifest" href="{{ url_for('pages.manifest') }}"><link rel="apple-touch-icon" href="{{ url_for('static',filename='icons/apple-touch-icon.png') }}?v=2026.27.33"><link rel="icon" href="{{ url_for('static',filename='icons/favicon-32.png') }}?v=2026.27.33">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static',filename='css/app.css') }}">
 {% block head %}{% endblock %}
-<link rel="stylesheet" href="{{ url_for('static',filename='css/reference-ui.css') }}?v=2026.27.32">
+<link rel="stylesheet" href="{{ url_for('static',filename='css/reference-ui.css') }}?v=2026.27.33">
 </head><body class="mv-reference {% if current_user.is_authenticated %}app-authenticated{% else %}app-anonymous{% endif %}" {% if current_user.is_authenticated %}data-user-id="{{ current_user.id }}" data-role="{{ current_user.role.value }}"{% endif %}>
 <a class="skip-link" href="#main-content">Skip to content</a>
 {% if current_user.is_authenticated %}
@@ -50,5 +50,5 @@
 <div class="toast-region" aria-live="polite" aria-atomic="true"></div>
 <script src="{{ url_for('static',filename='js/app.js') }}" defer></script><script src="{{ url_for('static',filename='js/idb-queue.js') }}" defer></script><script src="{{ url_for('static',filename='js/pwa.js') }}" defer></script>
 {% if current_user.is_authenticated and current_user.role.value=='da' %}<dialog class="da-location-dialog" id="da-location-dialog" aria-labelledby="da-location-title"><h2 id="da-location-title">Enable current location</h2><p id="da-location-help">Allow GPS location to record village attendance.</p><div class="dialog-actions"><button type="button" class="button ghost" data-location-dismiss>Close</button><button type="button" class="button primary" data-location-retry>Try again</button></div></dialog><script src="{{ url_for('static',filename='js/da-location.js') }}" defer></script>{% endif %}
-<script src="{{ url_for('static',filename='js/reference-ui.js') }}?v=2026.27.32" defer></script>
+<script src="{{ url_for('static',filename='js/reference-ui.js') }}?v=2026.27.33" defer></script>
 {% block scripts %}{% endblock %}</body></html>

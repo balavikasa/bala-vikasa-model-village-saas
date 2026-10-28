@@ -2,7 +2,7 @@
 "use strict";
 importScripts("/static/js/idb-queue.js");
 
-const VERSION = "2026.27.32-brand-layout-fix";
+const VERSION = "2026.27.33-village-picker-transparent-favicon";
 // Explicit DA location permission and Camera / Photo Album / Files choices
 const STATIC_CACHE = `mv-static-${VERSION}`;
 const DATA_PREFIX = "mv-data-";
@@ -30,12 +30,12 @@ const networkFirstStatic = async (request) => {
 };
 
 const STATIC_ASSETS = [
-  "/static/css/reference-ui.css?v=2026.27.32",
-  "/static/js/reference-ui.js?v=2026.27.32",
-  "/static/js/overview.js?v=2026.27.32",
-  "/static/js/visit-analytics.js?v=2026.27.32",
-  "/static/js/village-attendance.js?v=2026.27.32",
-  "/static/js/admin.js?v=2026.27.32",
+  "/static/css/reference-ui.css?v=2026.27.33",
+  "/static/js/reference-ui.js?v=2026.27.33",
+  "/static/js/overview.js?v=2026.27.33",
+  "/static/js/visit-analytics.js?v=2026.27.33",
+  "/static/js/village-attendance.js?v=2026.27.33",
+  "/static/js/admin.js?v=2026.27.33",
   "/static/reference/sidebar-village.png",
   "/static/reference/hero-village.png",
   "/static/reference/hero-dashboard.png",

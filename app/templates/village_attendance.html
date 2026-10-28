@@ -4,9 +4,14 @@
 <section class="page-shell ref-page ref-attendance village-attendance-page" data-current-month="{{ local_now.strftime('%Y-%m') }}" data-today="{{ local_now.strftime('%Y-%m-%d') }}">
 <header class="ref-hero"><div class="ref-hero-copy"><span class="eyebrow">DA FIELD VISIT</span><h1>Village Attendance</h1><p class="lede">Record committee attendance, new<br>members and visit details.</p></div></header>
 <form id="village-attendance-form" class="ref-attendance-form" enctype="multipart/form-data" novalidate>
-<section class="ref-step"><div class="ref-step-head"><span class="ref-step-number">1</span><div><h2>Select Village</h2><p>Choose an assigned village or search<br>for another village.</p></div><button id="other-village-toggle" type="button" class="ref-other-button" aria-expanded="false" aria-controls="other-village-panel">{{ icon('pin') }}Other village {{ icon('chevron') }}</button></div>
-<div class="ref-visit-fields"><label class="field"><span>Village <b>*</b></span><select id="village-select" required><option value="">Select assigned village</option></select></label><label class="field"><span class="ref-field-label">Visit Date <small class="ref-today">Today</small></span><input id="visit-date" type="text" readonly aria-readonly="true" value="{{ local_now.strftime('%d %b %Y') }}"></label></div>
-<div id="other-village-panel" class="hidden ref-other-results"><label class="field"><span>Search all villages</span><input id="other-village-query" type="search" autocomplete="off" placeholder="Village name, mandal or district"></label><div id="other-village-results" class="other-village-results" role="listbox" aria-label="Other villages"></div></div>
+<section class="ref-step"><div class="ref-step-head"><span class="ref-step-number">1</span><div><h2>Select Village</h2><p>Choose an assigned village or search<br>for another village.</p></div></div>
+<div class="ref-visit-fields"><label class="field"><span>Village <b>*</b></span><select id="village-select" required disabled><option value="">Loading villages...</option></select></label><label class="field"><span class="ref-field-label">Visit Date <small class="ref-today">Today</small></span><input id="visit-date" type="text" readonly aria-readonly="true" value="{{ local_now.strftime('%d %b %Y') }}"></label></div>
+<section id="other-village-panel" class="hidden ref-other-results" aria-labelledby="other-village-title">
+  <div class="ref-other-results-heading"><h3 id="other-village-title">Other Villages</h3><button id="other-village-cancel" type="button" class="button ghost" aria-label="Close other villages search">Close</button></div>
+  <label class="field"><span>Search villages</span><input id="other-village-query" type="search" autocomplete="off" placeholder="Village name, mandal or district" aria-controls="other-village-results"></label>
+  <p id="other-village-status" class="field-help" role="status" aria-live="polite"></p>
+  <div id="other-village-results" class="other-village-results" role="group" aria-label="Other villages"></div>
+</section>
 <div id="village-summary" class="ref-committee-meta" aria-live="polite"><span id="summary-committees">Select a village to start</span></div><p id="village-plan-note" class="attendance-plan-note hidden" aria-live="polite"></p>
 </section>
 <section class="ref-step"><div class="ref-step-head"><span class="ref-step-number">2</span><div><h2>Committee Attendance</h2><p>Tap each committee to mark who attended.</p></div><div class="ref-progress" hidden aria-live="polite"><strong id="committee-progress">0 of 0 recorded</strong><span class="attendance-progress-track"><span id="committee-progress-bar" style="width:0%"></span></span></div></div>
@@ -20,4 +25,4 @@
 <figure class="photo-preview hidden" id="photo-preview"><img alt="Selected evidence photo preview"><button type="button" class="text-button" id="remove-photo">Remove photo</button></figure></div>
 <div id="entry-error" class="form-alert hidden" role="alert"></div><footer class="attendance-submit-bar"><span class="draft-state" id="draft-state" role="status">Select a village</span><button type="submit" id="submit-village-attendance" class="button primary">{{ icon('check') }}Submit Village Attendance {{ icon('chevron') }}</button></footer>
 </section></form></section>
-{% endblock %}{% block scripts %}{{ super() }}<script src="{{ url_for('static',filename='js/village-attendance.js') }}?v=2026.27.32" defer></script>{% endblock %}
+{% endblock %}{% block scripts %}{{ super() }}<script src="{{ url_for('static',filename='js/village-attendance.js') }}?v=2026.27.33" defer></script>{% endblock %}

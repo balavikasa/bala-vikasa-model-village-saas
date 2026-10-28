@@ -20,7 +20,7 @@ class ReferenceContract(unittest.TestCase):
 
     def test_entry_preserves_business_hooks(self):
         text = (ROOT / 'app/templates/village_attendance.html').read_text()
-        for id_ in ['village-select', 'visit-date', 'other-village-toggle', 'committee-attendance-cards', 'village-new-members', 'submit-village-attendance']:
+        for id_ in ['village-select', 'visit-date', 'other-village-panel', 'other-village-query', 'committee-attendance-cards', 'village-new-members', 'submit-village-attendance']:
             self.assertIn(f'id="{id_}"', text)
         self.assertIn('readonly', text)
         self.assertNotIn('counts per committee', text)
