@@ -64,14 +64,16 @@ def test_admin_role_and_enabled_filters(client, app):
     assert client.get("/api/v1/admin/users?role=unknown").status_code == 422
 
 
-def test_new_shell_uses_reference_assets_and_not_prior_logo(client, app):
+def test_new_shell_keeps_reference_theme_with_official_brand(client, app):
     _accounts(app)
     _login(client, "admin")
     for path in ("/overview", "/analytics", "/admin", "/directory", "/reports", "/map"):
         response = client.get(path)
         assert response.status_code == 200
         assert b"reference-ui.css" in response.data
-        assert b"reference/brand-lockup.png" in response.data
+        assert b"brand/bala-vikasa-symbol.png" in response.data
+        assert b"Bala Vikasa emblem" in response.data
+        assert b"Model Village 2026-27" not in response.data
         assert b"bala-vikasa-official.png" not in response.data
 
 

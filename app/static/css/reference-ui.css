@@ -219,3 +219,150 @@ body.mv-reference{margin:0;color:var(--ref-ink);background:var(--ref-paper);back
 .ref-report-stat .ref-metric-icon.pink{background:#ffe6e3;color:#c6544b}
 .ref-report-stat .ref-metric-icon.mint{background:#dceee3;color:#006354}
 .ref-report-stat .ref-metric-icon.gold{background:#fff0d1;color:#89712f}
+
+/* v2026.27.32: branding and reproduced layout defects only. */
+.bv-brand{display:inline-flex;align-items:center;gap:9px;width:204px;max-width:100%;height:52px;text-align:left;line-height:1.15}
+.ref-brand .bv-brand img,.ref-mobile-brand .bv-brand img,.login-brand .bv-brand img{width:41px;height:48px;max-width:41px;object-fit:contain;mix-blend-mode:normal;flex:none}
+.bv-brand-copy{display:flex;flex-direction:column;min-width:0;gap:4px}
+.bv-brand-copy strong{font:700 22px/1 Georgia,serif;color:#005b63;white-space:nowrap;letter-spacing:-.45px}
+.bv-brand-copy small{font:14px/1.15 Georgia,serif;color:#005b63;white-space:nowrap}
+.ref-brand{justify-content:flex-start}
+.ref-mobile-brand .bv-brand{width:185px;height:47px;gap:8px}
+.ref-mobile-brand .bv-brand-copy strong{font-size:20px}
+.ref-mobile-brand .bv-brand-copy small{font-size:13px}
+.ref-mobile-brand .bv-brand img{height:42px;width:35px;max-width:35px}
+.mv-reference .skip-link{top:0;left:12px;transform:translateY(-150%)}
+.mv-reference .skip-link:focus{top:8px;transform:translateY(0)}
+
+/* Reserve actual grid tracks for the shell. Fixed chrome previously shifted
+   the content paint origin in full-page captures. Scrolling remains native. */
+@media screen and (min-width:861px){
+  body.mv-reference.app-authenticated{display:grid;grid-template-columns:var(--ref-rail) minmax(0,1fr);grid-template-rows:var(--ref-top) 1fr;align-items:start}
+  .ref-sidebar.side-rail{position:sticky;inset:auto;top:0;grid-column:1;grid-row:1 / span 2;height:100dvh;align-self:start}
+  .ref-topbar{position:sticky;top:0;left:auto;right:auto;grid-column:2;grid-row:1;width:100%}
+  .mv-reference .ref-main.app-main{grid-column:2;grid-row:2;margin:0;width:100%;padding:24px 25px 28px;min-height:calc(100dvh - var(--ref-top))}
+  .ref-nav{flex:1 1 auto;scrollbar-width:none}
+  .ref-nav::-webkit-scrollbar{display:none}
+  .ref-sidebar-footer{flex:0 0 220px}
+  .ref-sidebar-footer>img{height:170px}
+  .ref-hero:before{width:43%;opacity:.7;mask-image:linear-gradient(to right,transparent,#000 75%)}
+  .ref-dashboard-hero h1{font-size:clamp(28px,2.35vw,34px);max-width:700px}
+}
+@media screen and (min-width:861px) and (max-height:800px){
+  .ref-sidebar-footer{flex-basis:175px}
+  .ref-sidebar-footer>img{height:125px}
+  .ref-tagline{font-size:16px}
+  .ref-tagline i{margin-bottom:12px}
+  .ref-nav{padding-top:14px;padding-bottom:14px;gap:2px}
+}
+@media screen and (max-width:860px){
+  .ref-topbar{position:sticky;top:0}
+  .mv-reference .ref-main.app-main{padding-top:20px}
+  .bv-brand{height:47px}
+}
+@media screen and (max-width:560px){
+  .mv-reference .ref-main.app-main{padding-top:16px}
+  .ref-attendance .ref-hero{padding-top:5px}
+  .ref-attendance .ref-hero:before{opacity:.55;mask-image:linear-gradient(to right,transparent,#000 85%)}
+  .ref-step:first-child .ref-step-head{display:grid;grid-template-columns:32px minmax(0,1fr);align-items:start;gap:8px 10px}
+  .ref-attendance .ref-other-button{position:static;grid-column:2;justify-self:start;margin:0;padding:7px 12px;font-size:11px!important}
+  .ref-attendance .ref-step:first-child .ref-step-head p{padding:0;min-height:0;max-width:none}
+}
+
+/* A medium screen has two real columns, never a partial 12-column row. */
+@media(min-width:861px) and (max-width:1250px){
+  .ref-dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ref-dashboard-grid>article{grid-column:auto}
+  .ref-dash-actions .ref-quick-actions{display:flex;flex-direction:column}
+}
+.ref-quick-action{min-width:0}
+.ref-quick-action>span:nth-child(2){min-width:0;flex:1;overflow-wrap:anywhere}
+
+/* Recycle cards must retain both actions at every viewport. */
+.ref-admin #recycle-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px}
+.ref-admin .recycle-card{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:14px;min-width:0;padding:16px}
+.ref-admin .recycle-card>div:first-child{min-width:0;overflow-wrap:anywhere}
+.ref-admin .recycle-card h3{font-size:18px;line-height:1.3;overflow-wrap:anywhere}
+.ref-admin .recycle-card p{font-size:12px;line-height:1.5}
+.ref-admin .recycle-card .badge{font-size:11px;max-width:100%;white-space:normal}
+.ref-admin .recycle-card .row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;width:100%;min-width:0}
+.ref-admin .recycle-card .row-actions .button{flex:1 1 105px;max-width:100%;min-height:44px;padding:10px;white-space:normal;font-size:12px}
+
+/* Not the legacy phone-only ledger: this list is available on desktop too. */
+.map-list-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px;min-width:0}
+.map-list-grid .ledger-card{min-width:0;padding:18px;border:1px solid var(--ref-line);background:white;border-radius:14px;display:flex;flex-direction:column;gap:12px}
+.map-list-grid .ledger-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.map-list-grid .ledger-card-top small{display:block;margin-top:5px;color:var(--ref-muted)}
+.map-list-grid .ledger-card-meta{display:flex;flex-wrap:wrap;gap:7px 14px;font-size:12px;color:var(--ref-muted)}
+.map-list-grid .ledger-card>.button{margin-top:auto}
+.map-list-grid>.form-alert,.map-list-grid>.empty-state{grid-column:1/-1}
+#role-village-map{height:440px;min-height:260px}
+.map-list #map-list-summary{margin:12px 0}
+@media(max-width:560px){#role-village-map{height:350px}.ref-admin .recycle-card{padding:14px}}
+
+/* Never manufacture visible progress before a village has been loaded. */
+.ref-progress[hidden]{display:none!important}
+#committee-progress-bar{display:block;max-width:100%;min-width:0}
+.ref-print-members,.ref-print-location{display:none}
+
+/* A printable report is data, not a screenshot of the interactive screen. */
+@media print{
+  @page{size:A4 portrait;margin:12mm}
+  html,body.mv-reference{display:block!important;width:auto!important;min-height:0!important;height:auto!important;background:white!important;font-size:10pt;overflow:visible!important}
+  .ref-sidebar,.ref-topbar,.ref-bottom-nav,.skip-link,.toast-region,dialog,.ref-report-buttons,.ref-hero-actions,.ref-breadcrumb{display:none!important}
+  .mv-reference .ref-main.app-main{display:block!important;margin:0!important;padding:0!important;width:100%!important;min-height:0!important}
+  .mv-reference .ref-report{width:100%;margin:0;padding:0}
+  .ref-report-head{display:block;margin-bottom:8px}
+  .ref-report-head h1{font-size:21pt;line-height:1.2}
+  .ref-report-head p{font-size:9pt;margin:4px 0 8px}
+  .ref-report-meta{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;padding:9px;gap:10px;margin-bottom:8px}
+  .ref-report-meta .ref-icon{display:none}
+  .ref-report-meta>div{padding:0;border:0}
+  .ref-report-meta small{font-size:8pt}
+  .ref-report-meta strong{font-size:9pt}
+  .ref-report-kpis{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px;margin-bottom:10px}
+  .ref-report-stat{padding:0}
+  .ref-report-stat-inner{padding:8px;gap:8px}
+  .ref-report-stat strong{font-size:20pt}
+  .ref-report-stat small{font-size:9pt}
+  .ref-report-stat .ref-metric-icon{width:28px;height:28px}
+  .ref-report-grid{display:block!important}
+  .ref-report-grid .ref-card{margin-bottom:10px;box-shadow:none;padding:10px}
+  .ref-report-photo{break-inside:avoid}
+  .ref-report-photo a{display:block}
+  .ref-report-photo img{height:125px!important;width:100%!important;max-height:125px!important;object-fit:contain!important}
+  .ref-report-photo .ref-card-title{margin-bottom:6px}
+  .ref-report-ledger{break-inside:auto!important}
+  .ref-report-ledger .table-shell{overflow:visible!important;width:100%}
+  .ref-report-ledger table{min-width:0!important;width:100%!important;table-layout:fixed;border-collapse:collapse;font-size:8pt}
+  .ref-report-ledger thead{display:table-header-group}
+  .ref-report-ledger tr{break-inside:avoid}
+  .ref-report-ledger th,.ref-report-ledger td{padding:6px 4px!important;white-space:normal;overflow-wrap:anywhere;vertical-align:top}
+  .ref-report-ledger th:nth-child(1){width:4%}
+  .ref-report-ledger th:nth-child(2){width:20%}
+  .ref-report-ledger th:nth-child(3),.ref-report-ledger th:nth-child(4),.ref-report-ledger th:nth-child(5){width:7%}
+  .ref-report-ledger th:nth-child(6){width:13%}
+  .ref-report-ledger th:last-child{width:42%}
+  .ref-report-ledger .ref-screen-members,.ref-report-ledger .ref-more-members{display:none!important}
+  .ref-report-ledger .ref-print-members{display:block!important;list-style:none;padding:0;margin:0}
+  .ref-report-ledger .ref-print-members li{font-size:8pt;line-height:1.35;margin:0}
+  .ref-report-ledger .ref-print-members small{font-size:7.5pt}
+  .ref-report-bottom{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:9px;break-inside:avoid}
+  .ref-report-bottom>.ref-card{grid-column:auto!important;min-width:0;padding:10px!important;box-shadow:none;break-inside:avoid}
+  .ref-report-bottom h2{font-size:9pt;letter-spacing:0;margin-bottom:6px}
+  .ref-report-bottom .ref-map{display:none!important}
+  .ref-report-bottom .ref-map-caption,.ref-report-bottom p{font-size:8pt;line-height:1.4;overflow-wrap:anywhere}
+  .ref-report-bottom .ref-remarks{display:block;font-size:8pt;padding:0}
+  .ref-report-bottom .ref-remarks .ref-icon{display:none}
+  .ref-print-location{display:block!important;font-size:8pt;text-decoration:underline!important;overflow-wrap:anywhere}
+  .ref-visit-metadata{margin:0;font-size:8pt}
+  .ref-visit-metadata>div{display:block;padding:3px 0}
+  .ref-visit-metadata dt,.ref-visit-metadata dd{font-size:8pt;text-align:left;margin:0;line-height:1.4}
+  .ref-visit-metadata dt{color:#536877}
+  .ref-report .ref-card-title h2{font-size:13pt}
+}
+/* The full print-only list must not compete with the screen disclosure. */
+@media screen{
+  .ref-report-ledger .ref-print-members{display:none}
+  .mv-reference .ref-main.app-main:has(.ref-analytics){padding-bottom:20px}
+}

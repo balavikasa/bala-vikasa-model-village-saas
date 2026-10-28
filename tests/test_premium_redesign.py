@@ -12,14 +12,17 @@ from app.timeutils import local_today
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_reference_logo_and_pwa_icons_installed():
-    with Image.open(ROOT / "app/static/reference/brand-lockup.png") as image:
-        assert image.size == (204, 52)
+def test_original_emblem_and_pwa_icons_installed():
+    with Image.open(ROOT / "app/static/brand/bala-vikasa-symbol.png") as image:
+        assert image.width > 0 and image.height > 0
     for name, size in (("icon-192.png", 192), ("icon-512.png", 512), ("icon-maskable-192.png", 192)):
         with Image.open(ROOT / "app/static/icons" / name) as image:
             assert image.size == (size, size)
     base = (ROOT / "app/templates/base.html").read_text()
-    assert 'reference/brand-lockup.png' in base
+    assert 'components/brand.html' in base
+    brand = (ROOT / 'app/templates/components/brand.html').read_text()
+    assert 'brand/bala-vikasa-symbol.png' in brand
+    assert '2026' not in brand
     assert 'reference-ui.css' in base
     assert 'bala-vikasa-official.png' not in base
 

@@ -13,7 +13,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from .config import CONFIGS
 from .extensions import csrf, db, login_manager, migrate
 
-APP_RELEASE = "2026.27.31"
+APP_RELEASE = "2026.27.32"
 
 
 def create_app(config: str | dict | None = None) -> Flask:
@@ -138,8 +138,8 @@ def create_app(config: str | dict | None = None) -> Flask:
             f"script-src 'self'{dash_inline} https://cdn.plot.ly https://unpkg.com https://cdn.jsdelivr.net; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; "
             "font-src 'self' https://fonts.gstatic.com data:; "
-            "img-src 'self' data: blob: https://*.tile.openstreetmap.org; "
-            "connect-src 'self' https://*.tile.openstreetmap.org; "
+            "img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org; "
+            "connect-src 'self' https://tile.openstreetmap.org https://*.tile.openstreetmap.org; "
             "worker-src 'self' blob:; "
             "frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';",
         )

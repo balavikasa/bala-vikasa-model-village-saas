@@ -30,9 +30,9 @@ def test_attendee_tiles_keep_accessible_selection_and_count_metadata():
 
 def test_offline_shell_precaches_reference_theme():
     worker = (ROOT / "app/static/sw.js").read_text()
-    assert '"/static/css/reference-ui.css?v=2026.27.31"' in worker
-    assert '"/static/js/reference-ui.js?v=2026.27.31"' in worker
-    assert '"/static/reference/brand-lockup.png"' in worker
+    assert '"/static/css/reference-ui.css?v=2026.27.32"' in worker
+    assert '"/static/js/reference-ui.js?v=2026.27.32"' in worker
+    assert '"/static/brand/bala-vikasa-symbol.png"' in worker
 
 
 def test_village_summary_only_shows_committee_count():

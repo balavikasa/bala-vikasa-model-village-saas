@@ -72,7 +72,7 @@
       let tiles='';
       for(let tx=Math.floor(left/256);tx<=Math.floor((left+width)/256);tx++)for(let ty=Math.floor(top/256);ty<=Math.floor((top+height)/256);ty++){
         const n=2**zoom;if(ty<0||ty>=n)continue;
-        tiles+=`<img class="ref-map-tile" alt="" aria-hidden="true" src="https://tile.openstreetmap.org/${zoom}/${((tx%n)+n)%n}/${ty}.png" style="left:${tx*256-left}px;top:${ty*256-top}px" loading="lazy" referrerpolicy="no-referrer">`;
+        tiles+=`<img class="ref-map-tile" alt="" aria-hidden="true" src="https://tile.openstreetmap.org/${zoom}/${((tx%n)+n)%n}/${ty}.png" style="left:${tx*256-left}px;top:${ty*256-top}px" loading="lazy" referrerpolicy="strict-origin-when-cross-origin">`;
       }
       const markers=valid.map(row=>{const p=project(row.point.lat,row.point.lng,zoom),x=p.x-left,y=p.y-top;
         if(x < -15||x>width+15||y< -15||y>height+15)return '';

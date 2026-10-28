@@ -2,7 +2,7 @@
 "use strict";
 importScripts("/static/js/idb-queue.js");
 
-const VERSION = "2026.27.31-reference-layout";
+const VERSION = "2026.27.32-brand-layout-fix";
 // Explicit DA location permission and Camera / Photo Album / Files choices
 const STATIC_CACHE = `mv-static-${VERSION}`;
 const DATA_PREFIX = "mv-data-";
@@ -30,13 +30,12 @@ const networkFirstStatic = async (request) => {
 };
 
 const STATIC_ASSETS = [
-  "/static/css/reference-ui.css?v=2026.27.31",
-  "/static/js/reference-ui.js?v=2026.27.31",
-  "/static/js/overview.js?v=2026.27.31",
-  "/static/js/visit-analytics.js?v=2026.27.31",
-  "/static/js/village-attendance.js?v=2026.27.31",
-  "/static/js/admin.js?v=2026.27.31",
-  "/static/reference/brand-lockup.png",
+  "/static/css/reference-ui.css?v=2026.27.32",
+  "/static/js/reference-ui.js?v=2026.27.32",
+  "/static/js/overview.js?v=2026.27.32",
+  "/static/js/visit-analytics.js?v=2026.27.32",
+  "/static/js/village-attendance.js?v=2026.27.32",
+  "/static/js/admin.js?v=2026.27.32",
   "/static/reference/sidebar-village.png",
   "/static/reference/hero-village.png",
   "/static/reference/hero-dashboard.png",
@@ -71,6 +70,8 @@ const STATIC_ASSETS = [
   "/static/icons/icon-maskable-192.png",
   "/static/icons/icon-maskable-512.png",
   "/static/icons/apple-touch-icon.png",
+  "/static/icons/favicon-32.png",
+  "/static/icons/favicon-16.png",
 ];
 
 self.addEventListener("install", (event) => {

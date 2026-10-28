@@ -8,7 +8,10 @@ class ReferenceContract(unittest.TestCase):
         base = (ROOT / 'app/templates/base.html').read_text()
         self.assertIn('css/reference-ui.css', base)
         self.assertIn('ref-topbar', base)
-        self.assertIn('reference/brand-lockup.png', base)
+        self.assertIn('components/brand.html', base)
+        brand = (ROOT / 'app/templates/components/brand.html').read_text()
+        self.assertIn('brand/bala-vikasa-symbol.png', brand)
+        self.assertNotIn('2026', brand)
 
     def test_six_pages_have_reference_compositions(self):
         for name in ['admin', 'overview', 'analytics', 'profile', 'village_attendance_report', 'village_attendance']:

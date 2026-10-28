@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "components/brand.html" import brand_logo with context %}
 {% block title %}Sign in · Model Village{% endblock %}
 {% block content %}
 <section class="login-shell">
@@ -21,7 +22,7 @@
   <article class="login-card">
     <a class="brand-lockup login-brand" href="{{ url_for('auth.login') }}">
       
-      <img src="{{ url_for('static',filename='reference/brand-lockup.png') }}" alt="Bala Vikasa - Model Village" width="204" height="52">
+      {{ brand_logo() }}
     </a>
     <p class="eyebrow">Secure program access</p>
     <h2>Welcome back</h2>

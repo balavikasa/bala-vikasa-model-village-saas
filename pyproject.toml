@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bala-vikasa-model-village"
-version = "2026.27.31"
+version = "2026.27.32"
 description = "Field operations PWA and monitoring platform for the Bala Vikasa Model Village Program 2026-27."
 readme = "README.md"
 requires-python = ">=3.11"

@@ -98,10 +98,10 @@
     if (Array.isArray(value)) return value.join(", ");
     if (value && typeof value === "object") return JSON.stringify(value);
     if (value === null || value === undefined || value === "") return "—";
-    if (key.endsWith("_at") || key.endsWith("_date") || key === "assigned_date" || key === "visit_date") {
+    if (key.endsWith("_at") || key.endsWith("_date") || key === "assigned_date" || key === "visit_date" || key === "expires") {
       const date = new Date(value);
       if (!Number.isNaN(date.valueOf())) {
-        return key.endsWith("_at")
+        return (key.endsWith("_at") || key === "expires")
           ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date)
           : new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(date);
       }
@@ -563,9 +563,9 @@
       const items = payload.items || [];
       host.innerHTML = items.map((item) => {
         const expires = item.purge_after || item.expires_at;
-        return `<article class="admin-card">
+        return `<article class="admin-card recycle-card">
           <div>
-            <span class="badge clay">${escapeHtml(labelize(item.entity_type || item.resource || "record"))}</span>
+            <span class="badge clay">${escapeHtml(({ VillageAttendanceVisit: "Village visit", AttendanceEntry: "Committee attendance", ActionPlan: "Historical action plan" }[item.entity_type] || labelize(item.entity_type || item.resource || "record")))}</span>
             <h3>${escapeHtml(item.display_name || item.entity_label || `Record #${item.entity_id}`)}</h3>
             <p>Deleted ${escapeHtml(displayValue(item, "deleted_at"))}</p>
             <p class="muted">Purge due ${escapeHtml(displayValue({ expires }, "expires"))}</p>

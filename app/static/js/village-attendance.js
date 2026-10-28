@@ -124,6 +124,7 @@
     $('#village-male').textContent = String(male);
     $('#village-female').textContent = String(female);
     $('#village-total').textContent = String(male + female);
+    root.querySelector('.ref-progress').hidden = !pending().length;
     $('#committee-progress').textContent = `${active} of ${pending().length} recorded`;
     $('#committee-progress-bar').style.width = `${pending().length ? Math.round(100 * active / pending().length) : 0}%`;
   }
@@ -303,6 +304,7 @@
     $('#summary-committees').textContent = '0 committees';
     cards.innerHTML = '<div class="empty-state">Select a village to begin.</div>';
     $('#village-male').textContent = '0'; $('#village-female').textContent = '0'; $('#village-total').textContent = '0';
+    root.querySelector('.ref-progress').hidden = true;
     $('#committee-progress').textContent = '0 of 0 committees'; $('#committee-progress-bar').style.width = '0%';
     photo = null; preview.classList.add('hidden');
     if (previewUrl) URL.revokeObjectURL(previewUrl);

@@ -11,6 +11,8 @@
   const empty = document.getElementById("role-map-empty");
   let rows = [];
   let map = null;
+  let loadError = "";
+  let loading = true;
   const esc = window.MV.escapeHtml;
 
   const kind = (status) => {
@@ -53,8 +55,6 @@
     </div>`;
 
   const renderMap = () => {
-    if (!window.L) return;
-
     const located = rows.filter(hasCoordinates);
 
     if (map) {
@@ -67,9 +67,15 @@
 
     if (!located.length) return;
 
+    if (!window.L) {
+      if (window.BVUI) window.BVUI.map(mapHost, located);
+      else mapHost.innerHTML = '<div class="form-alert" role="status">Map display unavailable. Use List to view your villages.</div>';
+      return;
+    }
     map = window.L.map(mapHost, { zoomControl: true });
-    window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    window.L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
+      referrerPolicy: "strict-origin-when-cross-origin",
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
 
@@ -99,12 +105,24 @@
   };
 
   const renderList = () => {
+    const summary = document.getElementById("map-list-summary");
+    if (loading) {
+      listHost.innerHTML = '<div class="empty-state" role="status">Loading villages...</div>';
+      return;
+    }
+    if (loadError) {
+      if (summary) summary.textContent = "";
+      listHost.innerHTML = `<div class="form-alert" role="alert">${esc(loadError)} <button type="button" class="button ghost" data-map-retry>Try again</button></div>`;
+      listHost.querySelector('[data-map-retry]')?.addEventListener('click', loadData);
+      return;
+    }
     const q = (search?.value || "").trim().toLowerCase();
     const visible = rows.filter(
       (item) => !q
         || `${item.name} ${item.da_name} ${item.cluster}`.toLowerCase().includes(q)
     );
 
+    if (summary) summary.textContent = `${visible.length} ${visible.length === 1 ? "village" : "villages"}`;
     listHost.innerHTML = visible.length
       ? visible.map((item) => `
         <article class="ledger-card">
@@ -139,6 +157,7 @@
       if (list) {
         renderList();
       } else {
+        if (!loading && !loadError && !map) renderMap();
         setTimeout(() => map?.invalidateSize(), 100);
       }
     });
@@ -150,7 +169,8 @@
     document.querySelector('[data-map-mode="list"]')?.click();
   }
 
-  (async () => {
+  async function loadData() {
+    loading = true; loadError = ""; renderList();
     try {
       const response = await window.MV.api("/api/v1/monitoring/map");
       const payload = await response.json();
@@ -158,13 +178,18 @@
         throw new Error(payload.error || "Could not load the village map.");
       }
       rows = payload.items || [];
+      loading = false;
       const requestedVillage = new URLSearchParams(location.search).get('village');
       if (requestedVillage) rows = rows.filter(row => String(row.id) === requestedVillage);
       renderMap();
       renderList();
     } catch (error) {
-      mapHost.classList.remove("hidden");
-      mapHost.innerHTML = `<div class="form-alert">${esc(error.message)}</div>`;
+      loading = false; loadError = error.message || "Could not load villages.";
+      mapHost.classList.remove("hidden"); empty.classList.add("hidden");
+      mapHost.innerHTML = `<div class="form-alert" role="alert">${esc(loadError)} <button type="button" class="button ghost" data-map-retry>Try again</button></div>`;
+      mapHost.querySelector('[data-map-retry]')?.addEventListener('click', loadData);
+      renderList();
     }
-  })();
+  }
+  loadData();
 })();

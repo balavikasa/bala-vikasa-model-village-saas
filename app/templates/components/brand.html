@@ -1,0 +1,6 @@
+{% macro brand_logo() -%}
+<span class="bv-brand" aria-label="Bala Vikasa - Model Village">
+  <img class="bv-brand-emblem" src="{{ url_for('static', filename='brand/bala-vikasa-symbol.png') }}" alt="Bala Vikasa emblem" width="44" height="50">
+  <span class="bv-brand-copy"><strong>Bala Vikasa</strong><small>Model Village</small></span>
+</span>
+{%- endmacro %}

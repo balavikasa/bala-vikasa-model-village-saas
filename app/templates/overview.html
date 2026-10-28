@@ -26,4 +26,4 @@
 </div>
 {% if current_user.role.value!='da' %}<details class="ref-legacy"><summary>Historical data</summary><a href="{{ url_for('planning.action_plans_page') }}">Open archived Action Plans</a></details>{% endif %}
 </section>{% endblock %}
-{% block scripts %}{{ super() }}<script src="{{ url_for('static',filename='js/overview.js') }}?v=2026.27.31" defer></script>{% endblock %}
+{% block scripts %}{{ super() }}<script src="{{ url_for('static',filename='js/overview.js') }}?v=2026.27.32" defer></script>{% endblock %}

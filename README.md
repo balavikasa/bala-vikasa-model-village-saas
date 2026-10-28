@@ -1,3 +1,5 @@
+> **Brand and layout fixes 2026.27.32:** Original Bala Vikasa emblem restored, year removed from branding, and the reported shell, recycle, map-list, entry-progress and print defects corrected. See [fix and verification notes](docs/BRAND_LAYOUT_FIX_2026_27_32.md). Full backend CI and staging acceptance are still required.
+
 > **Reference rebuild 2026.27.31:** See [implementation and validation notes](docs/REFERENCE_REBUILD_2026_27_31.md). This release replaces the six main UI compositions and preserves the DA-led workflow. Local browser/component checks passed; full backend CI and staging acceptance remain required.
 
 # Bala Vikasa Model Village SaaS — 2026–27
