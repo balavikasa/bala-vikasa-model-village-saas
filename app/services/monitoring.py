@@ -256,3 +256,37 @@ def dashboard_series(user: User) -> dict[str, Any]:
         "committee_aggregates": dict(committee_totals),
         "status_by_cluster": {cluster: dict(values) for cluster, values in status_by_cluster.items()},
     }
+
+
+def recent_village_activity(user: User) -> dict[str, Any]:
+    """Six recent role-scoped DA visits and pending assigned villages."""
+    month = current_month()
+    nxt = date(month.year + (month.month == 12), month.month % 12 + 1, 1)
+    assigned = list(db.session.scalars(scoped_select(Village, user).order_by(Village.name)))
+    assigned = [v for v in assigned if v.is_enabled and not v.is_deleted]
+    visits = list(db.session.scalars(
+        scoped_select(VillageAttendanceVisit, user)
+        .where(VillageAttendanceVisit.is_enabled.is_(True),
+               VillageAttendanceVisit.is_deleted.is_(False))
+        .options(selectinload(VillageAttendanceVisit.village),
+                 selectinload(VillageAttendanceVisit.entries))
+        .order_by(VillageAttendanceVisit.submitted_at.desc())
+        .limit(120)
+    ).unique().all())
+    visited = {v.village_id for v in visits if month <= v.visit_date < nxt}
+    recent = []
+    for visit in visits[:6]:
+        count = sum(e.male_count + e.female_count for e in visit.entries
+                    if e.is_enabled and not e.is_deleted)
+        recent.append({
+            'id': visit.id, 'village': visit.village.name,
+            'date': visit.visit_date.isoformat(), 'people': count,
+            'outside_assignment': bool(user.role == Role.DA and user.da_id is not None
+                                       and visit.village.da_id != user.da_id),
+            'report_url': f'/reports/village/{visit.id}',
+        })
+    pending = [
+        {'id': village.id, 'name': village.name, 'url': f'/directory/village/{village.id}'}
+        for village in assigned if village.id not in visited
+    ]
+    return {'recent': recent, 'pending': pending[:8], 'pending_total': len(pending)}

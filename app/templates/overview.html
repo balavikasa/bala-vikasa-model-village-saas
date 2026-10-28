@@ -5,7 +5,7 @@
   <header class="hero-overview">
     <div class="hero-copy">
       <p class="eyebrow">Bala Vikasa · Model Village Program</p>
-      <h1>Good {{ 'morning' if now_hour|default(12) < 12 else 'day' }}, {{ current_user.display_name.split()[0] }}.</h1>
+      <h1>{{ 'Welcome back' if current_user.role.value != 'da' else 'Good day' }}, {{ current_user.display_name.split()[0] }}.</h1>
       <p>
         {% if current_user.role.value == 'da' %}
         Capture village visits even without a signal. Your queue will synchronize when the network returns.
@@ -15,6 +15,7 @@
         Monitor delivery across CSRB and PDTC from one role-scoped view.
         {% endif %}
       </p>
+      <div class="renewal-hero-detail"><span>◉ Live village visits</span><span>● Current month</span><span>◌ Role-scoped data</span></div>
       <div class="hero-actions">
         {% if current_user.role.value == 'da' %}
         <a class="button primary" href="{{ url_for('pages.attendance') }}">Record attendance</a>
@@ -50,7 +51,7 @@
 
   <section class="overview-grid">
     <article class="panel-card quick-panel">
-      <div class="panel-heading"><div><p class="eyebrow">Shortcuts</p><h2>Continue your work</h2></div></div>
+      <div class="panel-heading"><div><p class="eyebrow">Quick actions</p><h2>What would you like to do?</h2></div></div>
       <div class="action-card-grid">
 
         {% if current_user.role.value == 'da' %}
@@ -68,10 +69,20 @@
     </article>
 
     <article class="panel-card status-panel">
-      <div class="panel-heading"><div><p class="eyebrow">Village visit pulse</p><h2>Done vs not done</h2></div></div>
+      <div class="panel-heading"><div><p class="eyebrow">Monthly progress</p><h2>Village coverage at a glance</h2></div></div>
       <div id="status-breakdown" class="status-breakdown">
         <div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div>
       </div>
+    </article>
+  </section>
+  <section class="renewal-dashboard-lists" aria-label="Recent activity and villages pending a visit">
+    <article class="panel-card">
+      <div class="panel-heading"><div><p class="eyebrow">Village records</p><h2>Recent attendance submissions</h2></div><a class="text-button" href="{{ url_for('reports.reports_page') }}">All reports ↗</a></div>
+      <div class="renewal-activity-list" id="renewal-recent-visits" aria-live="polite"><p class="muted">Loading recent submissions…</p></div>
+    </article>
+    <article class="panel-card">
+      <div class="panel-heading"><div><p class="eyebrow">This month</p><h2>Villages awaiting a visit</h2></div><a class="text-button" href="{{ url_for('pages.directory') }}">All villages ↗</a></div>
+      <div class="renewal-pending-list" id="renewal-pending-villages" aria-live="polite"><p class="muted">Loading village coverage…</p></div>
     </article>
   </section>
 </section>

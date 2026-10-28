@@ -30,14 +30,7 @@
       if (!response.ok) throw new Error("Summary unavailable");
       const data = await response.json();
       const counts = data.counts || {};
-      const values = {
-        villages: counts.villages || 0,
-        committees: counts.committees || 0,
-        villages_done: counts.villages_done || 0,
-        villages_pending: counts.villages_pending || 0,
-        people_attended: counts.people_attended || 0,
-        new_members: counts.new_members || 0,
-      };
+      const values = counts;
       Object.entries(values).forEach(([key, value]) => {
         const node = document.querySelector(`[data-kpi="${key}"]`);
         if (node) node.textContent = Number(value).toLocaleString();
@@ -46,6 +39,33 @@
     } catch (_) {
       document.querySelectorAll("[data-kpi]").forEach((node) => { node.textContent = "—"; });
       renderStatus({});
+    }
+  })();
+  (async () => {
+    const recentNode = document.getElementById('renewal-recent-visits');
+    const pendingNode = document.getElementById('renewal-pending-villages');
+    if (!recentNode || !pendingNode) return;
+    try {
+      const response = await window.MV.api('/api/v1/monitoring/recent');
+      if (!response.ok) throw new Error('Recent visits unavailable.');
+      const data = await response.json();
+      const esc = window.MV.escapeHtml;
+      recentNode.innerHTML = data.recent.length ? data.recent.map((visit) => `
+        <a class="renewal-activity-row" href="${visit.report_url}">
+          <span class="renewal-row-icon">✓</span>
+          <span><strong>${esc(visit.village)}</strong><small>${esc(visit.date)} · ${Number(visit.people).toLocaleString()} people${visit.outside_assignment ? ' · Other village' : ''}</small></span>
+          <b aria-hidden="true">›</b>
+        </a>`).join('') : '<p class="analytics-empty">No attendance submissions yet.</p>';
+      pendingNode.innerHTML = data.pending.length ? data.pending.map((village) => `
+        <a class="renewal-activity-row" href="${village.url}">
+          <span class="renewal-row-icon pending">⌂</span><span><strong>${esc(village.name)}</strong><small>Not visited this month</small></span>
+          <b aria-hidden="true">›</b>
+        </a>`).join('') : '<p class="analytics-empty">All assigned villages have a recorded visit this month.</p>';
+      if (data.pending_total > data.pending.length) pendingNode.insertAdjacentHTML('beforeend',
+        `<p class="muted">${Number(data.pending_total-data.pending.length).toLocaleString()} more pending villages. View My Villages for the full list.</p>`);
+    } catch(error) {
+      recentNode.textContent = error.message;
+      pendingNode.textContent = 'Village coverage list is unavailable.';
     }
   })();
 })();

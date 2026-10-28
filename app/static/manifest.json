@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Bala Vikasa Model Village",
   "short_name": "Model Village",
-  "description": "Offline-first field operations and monitoring for the Bala Vikasa Model Village Program 2026\u201327.",
+  "description": "Offline-first field operations and monitoring for the Bala Vikasa Model Village Program 2026–27.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -12,8 +12,8 @@
     "minimal-ui"
   ],
   "orientation": "any",
-  "background_color": "#F3F1EA",
-  "theme_color": "#1F4E5F",
+  "background_color": "#F7F8F4",
+  "theme_color": "#00666B",
   "lang": "en-IN",
   "dir": "ltr",
   "categories": [

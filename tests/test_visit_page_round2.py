@@ -48,8 +48,8 @@ def test_current_map_evidence_is_attendance_only():
 
 def test_analytics_shows_empty_message_if_all_bars_are_zero():
     script = code("app/static/js/visit-analytics.js")
-    assert 'rows.every(([, value]) => Number(value) <= 0)' in script
-    assert 'No attendance submitted this month' in script
+    assert 'items.every((item) => num(item.value) === 0)' in script
+    assert 'No attendance recorded for this selection' in script
 
 
 def test_unmapped_village_list_link_is_available():

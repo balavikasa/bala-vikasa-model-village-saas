@@ -2,7 +2,7 @@
 "use strict";
 importScripts("/static/js/idb-queue.js");
 
-const VERSION = "2026.27.28-visit-report-export";
+const VERSION = "2026.27.29-premium-redesign";
 // Explicit DA location permission and Camera / Photo Album / Files choices
 const STATIC_CACHE = `mv-static-${VERSION}`;
 const DATA_PREFIX = "mv-data-";
@@ -33,10 +33,15 @@ const STATIC_ASSETS = [
   "/offline",
   "/manifest.json",
   "/static/css/app.css",
+  "/static/css/village-renewal.css",
+  "/static/brand/bala-vikasa-official.png",
+  "/static/brand/bala-vikasa-symbol.png",
+  "/static/brand/village-landscape.svg",
   "/static/css/da-field.css",
   "/static/css/attendance-theme.css",
   "/static/css/workflow-review.css",
   "/static/js/app.js",
+  "/static/js/village-renewal.js",
   "/static/js/idb-queue.js",
   "/static/js/pwa.js",
   "/static/js/village-attendance.js",

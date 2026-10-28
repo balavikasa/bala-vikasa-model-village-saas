@@ -48,7 +48,9 @@ from .services.monitoring import (
     dashboard_series,
     dashboard_summary,
     map_markers,
+    recent_village_activity,
 )
+from .services.visit_analytics import visit_analytics
 from .timeutils import current_month, local_today
 
 bp = Blueprint("api", __name__, url_prefix="/api/v1")
@@ -644,6 +646,34 @@ def monitoring_summary():
 @json_role_required(Role.ADMIN, Role.PM, Role.PC)
 def monitoring_series_route():
     return jsonify(dashboard_series(current_user._get_current_object()))
+
+
+@bp.get("/monitoring/recent")
+@login_required
+def monitoring_recent_visits():
+    return jsonify(recent_village_activity(current_user._get_current_object()))
+
+
+@bp.get("/monitoring/visit-analytics")
+@login_required
+@json_role_required(Role.ADMIN, Role.PM, Role.PC)
+def monitoring_visit_analytics():
+    """Live role-scoped analysis of DA-led visits, with optional filters."""
+    try:
+        def optional_int(key):
+            raw = request.args.get(key, '').strip()
+            return int(raw) if raw else None
+        payload = visit_analytics(
+            current_user._get_current_object(),
+            month=request.args.get('month') or None,
+            cluster=request.args.get('cluster', '').strip(),
+            da_id=optional_int('da'),
+            village_id=optional_int('village'),
+            committee_type=request.args.get('committee', '').strip(),
+        )
+    except (ValueError, TypeError):
+        return jsonify(error='Invalid Analytics filters.'), 422
+    return jsonify(payload)
 
 
 @bp.get("/monitoring/map")

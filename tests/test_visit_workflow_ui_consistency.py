@@ -13,8 +13,8 @@ def test_analytics_renders_live_api_visuals_without_embedded_dash():
     script = read("app/static/js/visit-analytics.js")
     assert "analytics-completion" in template
     assert "/dash/" not in template
-    assert "/api/v1/monitoring/series" in script
-    assert "No attendance submitted this month" in script
+    assert "/api/v1/monitoring/visit-analytics" in script
+    assert "No attendance recorded for this selection" in script
 
 
 def test_detailed_village_report_never_auto_places_two_tiny_cards():
