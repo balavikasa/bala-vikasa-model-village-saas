@@ -18,15 +18,13 @@ def test_monitoring_is_operational_only():
     assert "dash-embed-card" not in source
 
 
-def test_analytics_page_uses_live_visit_series_without_nested_dash_frame():
+def test_analytics_page_owns_dash_embed():
     source = (ROOT / "app" / "templates" / "analytics.html").read_text(
         encoding="utf-8"
     )
 
-    assert "Village attendance analytics" in source
-    assert 'src="/dash/"' not in source
-    assert 'id="analytics-completion"' in source
-    assert 'id="analytics-gender"' in source
+    assert "Program analytics" in source
+    assert 'src="/dash/"' in source
     assert "pages.monitoring" in source
 
 
@@ -48,7 +46,7 @@ def test_desktop_nav_is_role_aware_and_bounded():
 
     assert '<span class="nav-label">Analytics</span>' in desktop_nav
     assert '<span class="nav-label">Monitoring</span>' in desktop_nav
-    assert '"Master Data" if current_user.role.value == "admin"' in desktop_nav
+    assert '<span class="nav-label">Master Data</span>' in desktop_nav
 
     # Recycle Bin stays available elsewhere, but not as a permanent desktop
     # slot. That keeps the Admin rail at eight links.

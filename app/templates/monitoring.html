@@ -9,7 +9,7 @@
     <div>
       <p class="eyebrow">Program monitoring</p>
       <h1>Cluster delivery pulse</h1>
-      <p class="lede">Live attendance, completion and participation from DA village visits.</p>
+      <p class="lede">Role-scoped field evidence, deadlines and committee participation.</p>
     </div>
     <div class="monitor-actions">
       <span class="status-chip" id="monitor-updated">Loading…</span>
@@ -23,18 +23,17 @@
       <strong data-monitor-kpi="villages">—</strong>
     </article>
     <article class="metric-card">
-      <span>Villages done</span>
-      <strong data-monitor-kpi="villages_done">—</strong>
+      <span>Action plans</span>
+      <strong data-monitor-kpi="action_plans">—</strong>
     </article>
     <article class="metric-card">
-      <span>Villages not done</span>
-      <strong data-monitor-kpi="villages_pending">—</strong>
+      <span>Failures</span>
+      <strong data-monitor-status="Failure">—</strong>
     </article>
     <article class="metric-card">
-      <span>People attended</span>
-      <strong data-monitor-kpi="people_attended">—</strong>
+      <span>On-time</span>
+      <strong data-monitor-status="On-time">—</strong>
     </article>
-    <article class="metric-card"><span>New members</span><strong data-monitor-kpi="new_members">—</strong></article>
   </section>
 
   <section class="monitor-grid">
@@ -42,26 +41,25 @@
       <div class="panel-heading">
         <div>
           <p class="eyebrow">Village evidence map</p>
-          <h2>Latest evidence &amp; village visits</h2>
+          <h2>Last visit &amp; current risk</h2>
         </div>
         <div class="map-legend">
-          <span><i class="legend-dot success"></i>Done</span>
-          <span><i class="legend-dot warning"></i>Not visited</span>
-          <span class="monitor-legend-note">Villages without GPS listed below</span>
+          <span><i class="legend-dot success"></i>On track</span>
+          <span><i class="legend-dot warning"></i>Attention</span>
+          <span><i class="legend-dot danger"></i>Failure</span>
         </div>
       </div>
       <div id="village-map" class="village-map" aria-label="Map of visible villages"></div>
       <div class="map-no-coordinates hidden" id="map-no-coordinates">
         No village coordinates are available in this scope.
       </div>
-      <div id="monitor-unmapped" class="monitor-unmapped hidden" aria-live="polite"></div>
     </article>
 
     <article class="panel-card status-summary-panel">
       <div class="panel-heading">
         <div>
-          <p class="eyebrow">This month</p>
-          <h2>Village visit completion</h2>
+          <p class="eyebrow">Deadline status</p>
+          <h2>Action-plan breakdown</h2>
         </div>
       </div>
       <div id="monitor-status-list" class="status-breakdown"></div>

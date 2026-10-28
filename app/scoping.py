@@ -136,13 +136,9 @@ def scoped_select(
         if model is ActionPlan:
             return stmt.join(ActionPlan.committee).join(Committee.village).where(Village.da_id == da_id)
         if model is AttendanceEntry:
-            return stmt.join(AttendanceEntry.village).where(
-                (Village.da_id == da_id) | (AttendanceEntry.submitted_by_user_id == user.id)
-            )
+            return stmt.join(AttendanceEntry.village).where(Village.da_id == da_id)
         if model is VillageAttendanceVisit:
-            return stmt.join(VillageAttendanceVisit.village).where(
-                (Village.da_id == da_id) | (VillageAttendanceVisit.submitted_by_user_id == user.id)
-            )
+            return stmt.join(VillageAttendanceVisit.village).where(Village.da_id == da_id)
         if model is SpecialsEntry:
             return stmt.join(SpecialsEntry.village).where(Village.da_id == da_id)
         if model is User:

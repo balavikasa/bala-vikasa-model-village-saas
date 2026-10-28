@@ -7,7 +7,7 @@
   const statusKind = (status) => {
     if (["Failure", "Postponed"].includes(status)) return "danger";
     if (["Early", "Pending"].includes(status)) return "warning";
-    if (["Visited", "On-time"].includes(status)) return "success";
+    if (status === "On-time") return "success";
     return "";
   };
 
@@ -27,7 +27,7 @@
         <label>${window.MV.escapeHtml(status)}</label>
         <span class="status-track"><i class="status-fill" data-status="${window.MV.escapeHtml(status)}" style="width:${Math.max(4, Number(value) / max * 100)}%"></i></span>
         <strong>${Number(value).toLocaleString()}</strong>
-      </div>`).join("") : '<div class="empty-state"><p>No villages in scope.</p></div>';
+      </div>`).join("") : '<div class="empty-state"><p>No action plans in this scope.</p></div>';
     document.querySelector("#monitor-updated").textContent = `Updated ${new Intl.DateTimeFormat(undefined, { timeStyle: "short" }).format(new Date())}`;
   };
 
@@ -40,39 +40,15 @@
       <a href="/directory/village/${Number(item.id)}">Village details</a>
     </div>`;
 
-  const hasCoordinates = (item) => {
-    if (item.latitude === null || item.latitude === undefined || item.latitude === "" ||
-        item.longitude === null || item.longitude === undefined || item.longitude === "") return false;
-    const lat = Number(item.latitude);
-    const lon = Number(item.longitude);
-    return Number.isFinite(lat) && Number.isFinite(lon) &&
-      Math.abs(lat) <= 90 && Math.abs(lon) <= 180 &&
-      !(Math.abs(lat) < 0.000001 && Math.abs(lon) < 0.000001);
-  };
-
   const renderMap = (items) => {
     const host = document.querySelector("#village-map");
     const fallback = document.querySelector("#map-no-coordinates");
-    const located = items.filter(hasCoordinates);
-    const missing = items.filter((item) => !hasCoordinates(item));
-    const missingHost = document.querySelector("#monitor-unmapped");
-    if (missingHost) {
-      missingHost.classList.toggle("hidden", !missing.length);
-      missingHost.innerHTML = missing.length ? `
-        <strong>${missing.length.toLocaleString()} village${missing.length === 1 ? "" : "s"} without GPS</strong>
-        <p>These villages have no valid field or master GPS yet. They remain visible in the list view.</p>
-        <ul>${missing.slice(0, 6).map((item) => `<li><a href="/directory/village/${Number(item.id)}">${window.MV.escapeHtml(item.name)}</a></li>`).join("")}</ul>
-        ${missing.length > 6 ? `<small>And ${missing.length - 6} more · <a href="/map?mode=list">See all villages</a></small>` : `<a href="/map?mode=list">See the full village list</a>`}
-      ` : "";
-    }
+    const located = items.filter((item) => Number.isFinite(Number(item.latitude)) && Number.isFinite(Number(item.longitude)));
     if (!located.length || !window.L) {
       host.classList.add("hidden");
       fallback.classList.remove("hidden");
-      fallback.textContent = !window.L ? "Map tiles are unavailable. Open the village list." : "No villages have valid GPS coordinates yet.";
       return;
     }
-    host.classList.remove("hidden");
-    fallback.classList.add("hidden");
     map = window.L.map(host, { zoomControl: true, scrollWheelZoom: false });
     window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,

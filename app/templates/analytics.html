@@ -1,44 +1,27 @@
 {% extends "base.html" %}
-{% block title %}Village Analytics · Bala Vikasa{% endblock %}
+{% block title %}Analytics · Model Village{% endblock %}
 {% block content %}
-<section class="page-shell analytics-page" id="visit-analytics">
-  <header class="page-heading split-heading">
+<section class="page-shell analytics-page">
+  <header class="page-heading split-heading analytics-heading">
     <div>
-      <p class="eyebrow">Program intelligence · DA-led visits</p>
-      <h1>Model Village Analytics</h1>
-      <p class="lede">Understand village coverage, community participation and field progress with verified submissions.</p>
+      <p class="eyebrow">Program analytics</p>
+      <h1>Model village analytics</h1>
+      <p class="lede">
+        Role-scoped trends, participation, action-plan status and program distributions.
+      </p>
     </div>
-    <a class="button ghost" href="{{ url_for('pages.monitoring') }}">↗ Open monitoring</a>
+    <div class="analytics-heading-actions">
+      <a class="button ghost" href="{{ url_for('pages.monitoring') }}">Back to monitoring</a>
+    </div>
   </header>
-  <form id="analytics-filters" class="analytics-filterbar" aria-label="Filter analytics">
-    <label class="field"><span>Report month</span><input type="month" id="analytics-month" aria-label="Report month"></label>
-    <label class="field"><span>Cluster</span><select id="analytics-cluster" aria-label="Cluster"><option value="">All clusters</option></select></label>
-    <label class="field"><span>Development Associate</span><select id="analytics-da" aria-label="Development Associate"><option value="">All DAs</option></select></label>
-    <label class="field"><span>Village</span><select id="analytics-village" aria-label="Village"><option value="">All villages</option></select></label>
-    <label class="field"><span>Committee type</span><select id="analytics-committee" aria-label="Committee type"><option value="">All committees</option></select></label>
-    <button type="button" class="button ghost" id="analytics-reset">Reset</button>
-    <button type="button" class="button primary" id="analytics-export">↓ Export CSV</button>
-  </form>
-  <div id="analytics-alert" class="form-alert hidden" role="alert"></div>
-  <p id="analytics-period" class="analytics-filter-caption" role="status" aria-live="polite">Loading live analytics…</p>
-  <section class="kpi-grid analytics-kpis" aria-label="Live program metrics">
-    <article class="metric-card"><span>Villages in scope</span><strong data-analytics-kpi="villages">—</strong><small>Based on your role and filters</small></article>
-    <article class="metric-card"><span>Villages visited</span><strong data-analytics-kpi="villages_done">—</strong><small>Recorded in selected month</small></article>
-    <article class="metric-card"><span>Villages pending</span><strong data-analytics-kpi="villages_pending">—</strong><small>Without a recorded visit</small></article>
-    <article class="metric-card"><span>People attended</span><strong data-analytics-kpi="people_attended">—</strong><small>Across recorded committees</small></article>
-    <article class="metric-card"><span>New members</span><strong data-analytics-kpi="new_members">—</strong><small>One total per village visit</small></article>
-  </section>
-  <section class="analytics-panels" aria-label="Program analytics charts">
-    <article class="panel-card analytics-panel"><p class="eyebrow">Village coverage</p><h2>Visited vs pending</h2><div id="analytics-completion" class="analytics-visual" aria-live="polite"></div></article>
-    <article class="panel-card analytics-panel"><p class="eyebrow">Participation</p><h2>Male & female attendance</h2><div id="analytics-gender" class="analytics-visual" aria-live="polite"></div></article>
-    <article class="panel-card analytics-panel analytics-wide"><p class="eyebrow">Six-month overview</p><h2>Monthly people & visits trend</h2><div id="analytics-trend" class="analytics-visual" aria-live="polite"></div></article>
-    <article class="panel-card analytics-panel analytics-narrow"><p class="eyebrow">Committee coverage</p><h2>Attendance by committee</h2><div id="analytics-committees" class="analytics-visual" aria-live="polite"></div></article>
-    <article class="panel-card analytics-panel"><p class="eyebrow">Cluster results</p><h2>Villages completed by cluster</h2><div id="analytics-clusters" class="analytics-visual" aria-live="polite"></div></article>
-    <article class="panel-card analytics-panel"><p class="eyebrow">Field team</p><h2>DA participation</h2><div id="analytics-das" class="analytics-visual" aria-live="polite"></div></article>
-    <article class="panel-card analytics-panel analytics-wide"><div class="panel-heading"><div><p class="eyebrow">Follow-up</p><h2>Villages not yet visited this month</h2></div><a href="{{ url_for('pages.map_page') }}" class="text-button">Open map ↗</a></div><div id="analytics-pending" class="analytics-visual" aria-live="polite"></div></article>
-    <article class="panel-card analytics-panel analytics-narrow"><p class="eyebrow">How to read this</p><h2>Live data insights</h2><ul id="analytics-insights" class="analytics-insight-list"><li>Metrics will appear after the selected month loads.</li></ul></article>
-  </section>
-  <p class="analytics-footnote">Source: approved village attendance submissions. Historical Action Plans and Specials are excluded. Counts are filtered to your permitted program scope. No sample values are displayed.</p>
+
+  <article class="panel-card analytics-frame-card">
+    <iframe
+      class="analytics-frame"
+      title="Role-scoped Model Village analytics"
+      src="/dash/"
+      loading="eager"
+    ></iframe>
+  </article>
 </section>
 {% endblock %}
-{% block scripts %}{{ super() }}<script src="{{ url_for('static', filename='js/visit-analytics.js') }}" defer></script>{% endblock %}

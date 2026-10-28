@@ -5,17 +5,16 @@
   <header class="hero-overview">
     <div class="hero-copy">
       <p class="eyebrow">Bala Vikasa · Model Village Program</p>
-      <h1>{{ 'Welcome back' if current_user.role.value != 'da' else 'Good day' }}, {{ current_user.display_name.split()[0] }}.</h1>
+      <h1>Good {{ 'morning' if now_hour|default(12) < 12 else 'day' }}, {{ current_user.display_name.split()[0] }}.</h1>
       <p>
         {% if current_user.role.value == 'da' %}
         Capture village visits even without a signal. Your queue will synchronize when the network returns.
         {% elif current_user.role.value == 'pc' %}
-        Monitor completed and pending village visits in your cluster.
+        Track your cluster, assign committee action plans and resolve overdue visits.
         {% else %}
         Monitor delivery across CSRB and PDTC from one role-scoped view.
         {% endif %}
       </p>
-      <div class="renewal-hero-detail"><span>◉ Live village visits</span><span>● Current month</span><span>◌ Role-scoped data</span></div>
       <div class="hero-actions">
         {% if current_user.role.value == 'da' %}
         <a class="button primary" href="{{ url_for('pages.attendance') }}">Record attendance</a>
@@ -33,7 +32,7 @@
     {% else %}
     <div class="hero-role-bento">
       <span class="role-orb">{{ current_user.role.value|upper }}</span>
-      <strong>{{ 'Village attendance' if current_user.role.value == 'da' else 'Village monitoring' }}</strong>
+      <strong>{{ 'Field execution' if current_user.role.value == 'da' else 'Cluster operations' if current_user.role.value == 'pc' else 'Program monitoring' }}</strong>
       <small>{{ 'Mobile-first · Offline-ready' if current_user.role.value == 'da' else 'Role-scoped · Current month' }}</small>
     </div>
     {% endif %}
@@ -42,20 +41,17 @@
   <section class="kpi-grid" aria-label="Program summary">
     <article class="metric-card"><span>Villages</span><strong data-kpi="villages">—</strong><small>Your visible scope</small></article>
     <article class="metric-card"><span>Committees</span><strong data-kpi="committees">—</strong><small>Active master records</small></article>
-    <article class="metric-card"><span>Villages done</span><strong data-kpi="villages_done">—</strong><small>Recorded this month</small></article>
-    <article class="metric-card"><span>Villages not done</span><strong data-kpi="villages_pending">—</strong><small>Awaiting a visit</small></article>
-    <article class="metric-card"><span>People attended</span><strong data-kpi="people_attended">—</strong><small>Selected committee members</small></article>
-    <article class="metric-card"><span>New members</span><strong data-kpi="new_members">—</strong><small>Village totals</small></article>
-    {% if current_user.role.value == 'da' %}<article class="metric-card"><span>Other villages visited</span><strong data-kpi="other_villages_visited">—</strong><small>Visits outside your assigned villages</small></article>{% endif %}
+    <article class="metric-card"><span>Action plans</span><strong data-kpi="action_plans">—</strong><small>Assigned committee work</small></article>
+    <article class="metric-card"><span>Entries</span><strong data-kpi="entries">—</strong><small>Committee attendance records</small></article>
   </section>
 
   <section class="overview-grid">
     <article class="panel-card quick-panel">
-      <div class="panel-heading"><div><p class="eyebrow">Quick actions</p><h2>What would you like to do?</h2></div></div>
+      <div class="panel-heading"><div><p class="eyebrow">Shortcuts</p><h2>Continue your work</h2></div></div>
       <div class="action-card-grid">
-
+        <a class="action-card" href="{{ url_for('planning.action_plans_page') }}"><span class="action-icon navy">▦</span><span><strong>Action Plans</strong><small>{{ 'Your assigned monthly work' if current_user.role.value == 'da' else 'Monthly planning & history' }}</small></span><b>›</b></a>
         {% if current_user.role.value == 'da' %}
-        <a class="action-card" href="{{ url_for('pages.attendance') }}"><span class="action-icon saffron">✓</span><span><strong>Attendance entry</strong><small>DA-selected village and one photo</small></span><b>›</b></a>
+        <a class="action-card" href="{{ url_for('pages.attendance') }}"><span class="action-icon saffron">✓</span><span><strong>Attendance entry</strong><small>Action-plan visit and photo</small></span><b>›</b></a>
         {% endif %}
         <a class="action-card" href="{{ url_for('reports.reports_page') }}"><span class="action-icon clay">▤</span><span><strong>Reports</strong><small>Open each report with evidence & map</small></span><b>›</b></a>
         <a class="action-card" href="{{ url_for('pages.directory') }}"><span class="action-icon navy">⌂</span><span><strong>{{ 'My villages' if current_user.role.value == 'da' else 'Directory' }}</strong><small>People, committees and scope</small></span><b>›</b></a>
@@ -63,26 +59,13 @@
         <a class="action-card" href="{{ url_for('pages.monitoring') }}"><span class="action-icon clay">⌁</span><span><strong>Monitoring</strong><small>Map and Plotly analytics</small></span><b>›</b></a>
         {% endif %}
       </div>
-      {% if current_user.role.value in ['admin', 'pm', 'pc'] %}
-      <p class="legacy-link-note">Previous workflow? <a href="{{ url_for('planning.action_plans_page') }}">View historical Action Plans</a></p>
-      {% endif %}
     </article>
 
     <article class="panel-card status-panel">
-      <div class="panel-heading"><div><p class="eyebrow">Monthly progress</p><h2>Village coverage at a glance</h2></div></div>
+      <div class="panel-heading"><div><p class="eyebrow">Action-plan pulse</p><h2>Status distribution</h2></div></div>
       <div id="status-breakdown" class="status-breakdown">
         <div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div>
       </div>
-    </article>
-  </section>
-  <section class="renewal-dashboard-lists" aria-label="Recent activity and villages pending a visit">
-    <article class="panel-card">
-      <div class="panel-heading"><div><p class="eyebrow">Village records</p><h2>Recent attendance submissions</h2></div><a class="text-button" href="{{ url_for('reports.reports_page') }}">All reports ↗</a></div>
-      <div class="renewal-activity-list" id="renewal-recent-visits" aria-live="polite"><p class="muted">Loading recent submissions…</p></div>
-    </article>
-    <article class="panel-card">
-      <div class="panel-heading"><div><p class="eyebrow">This month</p><h2>Villages awaiting a visit</h2></div><a class="text-button" href="{{ url_for('pages.directory') }}">All villages ↗</a></div>
-      <div class="renewal-pending-list" id="renewal-pending-villages" aria-live="polite"><p class="muted">Loading village coverage…</p></div>
     </article>
   </section>
 </section>

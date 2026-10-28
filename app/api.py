@@ -24,7 +24,6 @@ from .models import (
     Role,
     SpecialsEntry,
     Village,
-    VillageAttendanceVisit,
 )
 from .scoping import (
     ScopeError,
@@ -48,10 +47,8 @@ from .services.monitoring import (
     dashboard_series,
     dashboard_summary,
     map_markers,
-    recent_village_activity,
 )
-from .services.visit_analytics import visit_analytics
-from .timeutils import current_month, local_today
+from .timeutils import current_month
 
 bp = Blueprint("api", __name__, url_prefix="/api/v1")
 
@@ -163,9 +160,9 @@ def _attendance_json(entry: AttendanceEntry) -> dict[str, Any]:
         "committee_id": entry.committee_id,
         "committee_name": entry.committee.name,
         "action_plan_id": entry.action_plan_id,
-        "action_plan_title": entry.action_plan.title if entry.action_plan else None,
+        "action_plan_title": entry.action_plan.title,
         "visit_date": entry.visit_date.isoformat(),
-        "assigned_date": _iso(entry.action_plan.assigned_date) if entry.action_plan else None,
+        "assigned_date": _iso(entry.action_plan.assigned_date),
         "male_count": entry.male_count,
         "female_count": entry.female_count,
         "total_count": entry.total_count,
@@ -265,62 +262,6 @@ def villages():
         stmt = stmt.where(Village.name.ilike(f"%{q}%"))
     rows = db.session.scalars(stmt).unique().all()
     return jsonify(items=[_village_json(row) for row in rows], total=len(rows))
-
-
-@bp.get("/attendance/villages")
-@login_required
-@json_role_required(Role.DA)
-def attendance_villages():
-    """Minimal village picker; cross-assignment access is DA-only on this endpoint."""
-    rows = db.session.scalars(
-        db.select(Village).where(Village.is_enabled.is_(True), Village.is_deleted.is_(False))
-        .order_by(Village.name, Village.id)
-    ).all()
-    return jsonify(items=[
-        {"id": row.id, "name": row.name, "assigned": row.da_id == current_user.da_id,
-         "district": row.district or "", "mandal": row.mandal or ""}
-        for row in rows
-    ])
-
-
-@bp.get("/attendance/villages/<int:village_id>/details")
-@login_required
-@json_role_required(Role.DA)
-def attendance_village_details(village_id: int):
-    """DA may attend a village outside their usual assignment, with submission audit."""
-    village = db.session.scalar(db.select(Village).where(
-        Village.id == village_id, Village.is_enabled.is_(True), Village.is_deleted.is_(False)
-    ))
-    if village is None:
-        return jsonify(error="Village not found."), 404
-    today = local_today()
-    month = today.replace(day=1)
-    existing = db.session.scalar(db.select(VillageAttendanceVisit).where(
-        VillageAttendanceVisit.village_id == village.id,
-        VillageAttendanceVisit.visit_date >= month,
-        VillageAttendanceVisit.visit_date <= today,
-        VillageAttendanceVisit.is_deleted.is_(False),
-    ))
-    committees = db.session.scalars(db.select(Committee).where(
-        Committee.village_id == village.id, Committee.is_enabled.is_(True),
-        Committee.is_deleted.is_(False)
-    ).order_by(Committee.name)).all()
-    ids = [c.id for c in committees]
-    members = db.session.scalars(db.select(CommitteeMember).where(
-        CommitteeMember.committee_id.in_(ids or [-1]),
-        CommitteeMember.is_enabled.is_(True), CommitteeMember.is_deleted.is_(False)
-    ).order_by(CommitteeMember.designation, CommitteeMember.full_name)).all()
-    by_committee = {}
-    for member in members:
-        by_committee.setdefault(member.committee_id, []).append({
-            "id": member.id, "name": member.full_name,
-            "designation": member.designation, "gender": member.gender,
-        })
-    return jsonify(assigned=village.da_id == current_user.da_id,
-                   submitted=bool(existing),
-                   submitted_date=existing.visit_date.isoformat() if existing else None,
-                   items=[{"id": c.id, "name": c.name, "members": by_committee.get(c.id, [])}
-                          for c in committees])
 
 
 @bp.get("/villages/<int:village_id>/committees")
@@ -646,34 +587,6 @@ def monitoring_summary():
 @json_role_required(Role.ADMIN, Role.PM, Role.PC)
 def monitoring_series_route():
     return jsonify(dashboard_series(current_user._get_current_object()))
-
-
-@bp.get("/monitoring/recent")
-@login_required
-def monitoring_recent_visits():
-    return jsonify(recent_village_activity(current_user._get_current_object()))
-
-
-@bp.get("/monitoring/visit-analytics")
-@login_required
-@json_role_required(Role.ADMIN, Role.PM, Role.PC)
-def monitoring_visit_analytics():
-    """Live role-scoped analysis of DA-led visits, with optional filters."""
-    try:
-        def optional_int(key):
-            raw = request.args.get(key, '').strip()
-            return int(raw) if raw else None
-        payload = visit_analytics(
-            current_user._get_current_object(),
-            month=request.args.get('month') or None,
-            cluster=request.args.get('cluster', '').strip(),
-            da_id=optional_int('da'),
-            village_id=optional_int('village'),
-            committee_type=request.args.get('committee', '').strip(),
-        )
-    except (ValueError, TypeError):
-        return jsonify(error='Invalid Analytics filters.'), 422
-    return jsonify(payload)
 
 
 @bp.get("/monitoring/map")

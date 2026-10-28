@@ -332,16 +332,11 @@ class VillageAttendanceVisit(LifecycleMixin, db.Model):
     __tablename__ = "village_attendance_visits"
     __table_args__ = (
         UniqueConstraint("client_submission_id", name="uq_village_visit_submission"),
-        Index("uq_active_village_visit_month", "village_id", "visit_month", unique=True,
-              postgresql_where=text("is_deleted = false"), sqlite_where=text("is_deleted = 0")),
         Index("ix_village_attendance_visit_date", "village_id", "visit_date"),
     )
 
     village_id: Mapped[int] = mapped_column(ForeignKey("villages.id", ondelete="RESTRICT"), nullable=False, index=True)
     visit_date: Mapped[date] = mapped_column(Date, nullable=False)
-    visit_month: Mapped[date | None] = mapped_column(Date, nullable=True)
-    new_members_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
-    outside_assignment: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
     photo_path: Mapped[str] = mapped_column(String(500), nullable=False)
     latitude: Mapped[float] = mapped_column(Float, nullable=False)
     longitude: Mapped[float] = mapped_column(Float, nullable=False)
@@ -367,7 +362,7 @@ class AttendanceEntry(LifecycleMixin, db.Model):
 
     village_id: Mapped[int] = mapped_column(ForeignKey("villages.id", ondelete="RESTRICT"), nullable=False, index=True)
     committee_id: Mapped[int] = mapped_column(ForeignKey("committees.id", ondelete="RESTRICT"), nullable=False, index=True)
-    action_plan_id: Mapped[int | None] = mapped_column(ForeignKey("action_plans.id", ondelete="RESTRICT"), nullable=True, index=True)
+    action_plan_id: Mapped[int] = mapped_column(ForeignKey("action_plans.id", ondelete="RESTRICT"), nullable=False, index=True)
     visit_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     village_visit_id: Mapped[int | None] = mapped_column(ForeignKey("village_attendance_visits.id", ondelete="RESTRICT"), nullable=True, index=True)
     male_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -389,7 +384,7 @@ class AttendanceEntry(LifecycleMixin, db.Model):
     village: Mapped[Village] = relationship(back_populates="attendance_entries")
     village_visit: Mapped[VillageAttendanceVisit | None] = relationship(back_populates="entries")
     committee: Mapped[Committee] = relationship(back_populates="attendance_entries")
-    action_plan: Mapped[ActionPlan | None] = relationship(back_populates="attendance_entry")
+    action_plan: Mapped[ActionPlan] = relationship(back_populates="attendance_entry")
     submitted_by: Mapped[User] = relationship(foreign_keys=[submitted_by_user_id])
     visited_members: Mapped[list[AttendanceVisitMember]] = relationship(
         back_populates="attendance_entry",

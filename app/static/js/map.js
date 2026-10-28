@@ -16,7 +16,7 @@
   const kind = (status) => {
     if (["Failure", "Postponed"].includes(status)) return "danger";
     if (["Early", "Due today"].includes(status)) return "warning";
-    if (["Visited", "On-time"].includes(status)) return "success";
+    if (status === "On-time") return "success";
     return "neutral";
   };
 
@@ -47,7 +47,6 @@
       <small>${esc(item.cluster)} · ${esc(item.da_name)}</small>
       ${item.photo_url ? `<img loading="lazy" src="${esc(item.photo_url)}" alt="Village field visit evidence">` : ""}
       <div class="mv-map-quick-info"><span>${Number(item.committee_count || 0)} committees</span><span>${esc(item.last_visit_date || "No visit")}</span></div>
-      ${item.outside_assignment ? '<div class="mv-map-source">Other village · visited by you</div>' : ''}
       <div class="mv-map-source">${esc(locationLabel(item))}</div>
       <a href="/directory/village/${Number(item.id)}">Village details</a>
     </div>`;
@@ -117,9 +116,7 @@
           </div>
           <div class="ledger-card-meta">
             <span>${Number(item.committee_count || 0)} committees</span>
-            <span>${esc(item.last_visit_date || "No attendance recorded")}</span>
-            <span>${hasCoordinates(item) ? esc(locationLabel(item)) : "GPS unavailable"}</span>
-            ${item.outside_assignment ? '<span>Other village · visited by you</span>' : ''}
+            <span>${esc(item.last_visit_date || "No evidence")}</span>
           </div>
           <a class="button ghost wide" href="/directory/village/${Number(item.id)}">View</a>
         </article>`)
@@ -145,10 +142,6 @@
   });
 
   search?.addEventListener("input", renderList);
-
-  if (new URLSearchParams(window.location.search).get("mode") === "list") {
-    document.querySelector('[data-map-mode="list"]')?.click();
-  }
 
   (async () => {
     try {

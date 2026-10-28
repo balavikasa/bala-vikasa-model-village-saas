@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#00666B">
+  <meta name="theme-color" content="#1F4E5F">
   <meta name="color-scheme" content="light">
   <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -50,9 +50,7 @@
     rel="stylesheet"
     href="{{ url_for('static', filename='css/da-field.css') }}"
   >
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/workflow-review.css') }}">
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/village-renewal.css') }}">
   {% block head %}{% endblock %}
 </head>
 
@@ -80,14 +78,19 @@
   <header class="da-field-appbar">
     <a
       class="da-field-brand"
-      href="{{ url_for('pages.attendance') }}"
-      aria-label="Open attendance entry"
+      href="{{ url_for('planning.action_plans_page') }}"
+      aria-label="Model Village action plans"
     >
-      <span class="brand-mark brand-symbol brand-bv-concept" aria-hidden="true"><span class="bv-leaf">✦</span>BV</span>
+      <span
+        class="brand-mark"
+        aria-hidden="true"
+      >
+        BV
+      </span>
 
       <span>
-        <strong>Bala Vikasa</strong>
-        <small>Model Village · Field App</small>
+        <strong>Model Village</strong>
+        <small>Field App</small>
       </span>
     </a>
 
@@ -134,11 +137,16 @@
       href="{{ url_for('pages.home') }}"
       aria-label="Model Village home"
     >
-      <span class="brand-mark brand-symbol brand-bv-concept" aria-hidden="true"><span class="bv-leaf">✦</span>BV</span>
+      <span
+        class="brand-mark"
+        aria-hidden="true"
+      >
+        BV
+      </span>
 
       <span>
-        <strong>Bala Vikasa</strong>
-        <small>Model Village · 2026–27</small>
+        <strong>Model Village</strong>
+        <small>2026–27</small>
       </span>
     </a>
 
@@ -222,12 +230,18 @@
       class="brand-lockup"
       href="{{ url_for('pages.home') }}"
     >
-      
-      <span class="brand-mark brand-symbol brand-bv-concept" aria-hidden="true"><span class="bv-leaf">✦</span>BV</span>
+      <span
+        class="brand-mark"
+        aria-hidden="true"
+      >
+        BV
+      </span>
 
       <span class="brand-copy">
         <strong>Bala Vikasa</strong>
-        <small>Model Village · 2026–27</small>
+        <small>
+          Model Village · 2026–27
+        </small>
       </span>
     </a>
 
@@ -249,6 +263,19 @@
         <span class="nav-label">Attendance</span>
       </a>
 
+      <a
+        href="{{ url_for('planning.action_plans_page') }}"
+        class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}"
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#9638;
+        </span>
+
+        <span class="nav-label">Action Plans</span>
+      </a>
 
       <a
         href="{{ url_for('reports.reports_page') }}"
@@ -305,9 +332,22 @@
           &#9635;
         </span>
 
-        <span class="nav-label">Dashboard</span>
+        <span class="nav-label">Overview</span>
       </a>
 
+      <a
+        href="{{ url_for('planning.action_plans_page') }}"
+        class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}"
+      >
+        <span
+          class="nav-glyph"
+          aria-hidden="true"
+        >
+          &#9638;
+        </span>
+
+        <span class="nav-label">Action Plans</span>
+      </a>
 
       <a
         href="{{ url_for('reports.reports_page') }}"
@@ -334,7 +374,7 @@
           &#8962;
         </span>
 
-        <span class="nav-label">Villages &amp; teams</span>
+        <span class="nav-label">{{ 'Team' if current_user.role.value == 'pc' else 'People' if current_user.role.value == 'pm' else 'Directory' }}</span>
       </a>
 
       <a
@@ -396,7 +436,7 @@
           &#9881;
         </span>
 
-        <span class="nav-label">{{ "Master Data" if current_user.role.value == "admin" else "Data Transfers" }}</span>
+        <span class="nav-label">Master Data</span>
       </a>
 
       {% endif %}
@@ -406,7 +446,6 @@
     </nav>
 
     <div class="rail-footer">
-      <div class="brand-landscape"><span>Stronger Villages<br>Brighter Futures</span></div>
       <div
         class="rail-account-strip"
         aria-label="Signed-in account"
@@ -477,21 +516,6 @@
   {% endif %}
 
 
-  {% if current_user.is_authenticated %}
-  <header class="renewal-topbar" aria-label="Application toolbar">
-    <form class="renewal-global-search" action="{{ url_for('pages.directory') }}" method="get" role="search">
-      <span aria-hidden="true">⌕</span>
-      <input type="search" name="q" aria-label="Find a village or field team" placeholder="Search villages, coordinators or field teams…" autocomplete="off">
-      <button type="submit">Search</button>
-    </form>
-    <div class="renewal-topbar-tools">
-      <span class="renewal-today" id="renewal-today" aria-label="Today"></span>
-      <span class="renewal-user-avatar" aria-hidden="true">{{ current_user.display_name[:1]|upper }}</span>
-      <span class="renewal-user-label"><strong>{{ current_user.display_name }}</strong><small>{{ {'da':'Development Associate','pc':'Program Coordinator','pm':'Program Manager','admin':'Administrator'}.get(current_user.role.value, current_user.role.value) }}</small></span>
-    </div>
-  </header>
-  {% endif %}
-
   {# ======================================================
      MAIN CONTENT
      ====================================================== #}
@@ -553,8 +577,8 @@
     </button>
 
     <a
-      href="{{ url_for('pages.directory') }}"
-      class="{% if request.endpoint == 'pages.directory' or (request.endpoint and 'profile_page' in request.endpoint) %}is-active{% endif %}"
+      href="{{ url_for('planning.action_plans_page') }}"
+      class="{% if request.endpoint and request.endpoint.startswith('planning.') %}is-active{% endif %}"
     >
       <span
         class="nav-glyph"
@@ -563,7 +587,7 @@
         &#9638;
       </span>
 
-      <small>Villages</small>
+      <small>Plans</small>
     </a>
 
     <a
@@ -700,7 +724,7 @@
         &#9638;
       </span>
 
-      <small>History</small>
+      <small>Plans</small>
     </a>
 
     <a
@@ -786,7 +810,7 @@
         &#9638;
       </span>
 
-      <small>History</small>
+      <small>Plans</small>
     </a>
 
     <a
@@ -844,7 +868,7 @@
         &#9638;
       </span>
 
-      <small>History</small>
+      <small>Plans</small>
     </a>
 
     <a
@@ -941,9 +965,6 @@
 
         {% if current_user.role.value == 'da' %}
 
-        <a href="{{ url_for('pages.overview') }}" data-mobile-menu-link>
-          <span class="nav-glyph" aria-hidden="true">▦</span><strong>Dashboard</strong><small>This month</small>
-        </a>
         <a
           href="{{ url_for('pages.attendance') }}"
           data-mobile-menu-link
@@ -962,7 +983,23 @@
           </small>
         </a>
 
+        <a
+          href="{{ url_for('planning.action_plans_page') }}"
+          data-mobile-menu-link
+        >
+          <span
+            class="nav-glyph"
+            aria-hidden="true"
+          >
+            &#9638;
+          </span>
 
+          <strong>Action Plans</strong>
+
+          <small>
+            Assigned monthly work
+          </small>
+        </a>
 
         <a
           href="{{ url_for('reports.reports_page') }}"
@@ -1031,7 +1068,7 @@
             &#9635;
           </span>
 
-          <strong>Dashboard</strong>
+          <strong>Overview</strong>
 
           <small>
             Role-scoped home
@@ -1049,10 +1086,10 @@
             &#9638;
           </span>
 
-          <strong>Historical plans</strong>
+          <strong>Action Plans</strong>
 
           <small>
-            Previous planning records
+            Monthly planning
           </small>
         </a>
 
@@ -1086,7 +1123,7 @@
           </span>
 
           <strong>
-            Villages &amp; teams
+            {{ 'Team' if current_user.role.value == 'pc' else 'People' if current_user.role.value == 'pm' else 'Directory' }}
           </strong>
 
           <small>
@@ -1346,7 +1383,6 @@
   </dialog>
   <script src="{{ url_for('static', filename='js/da-location.js') }}" defer></script>
   {% endif %}
-  <script src="{{ url_for('static', filename='js/village-renewal.js') }}" defer></script>
   {% block scripts %}{% endblock %}
 
 </body>

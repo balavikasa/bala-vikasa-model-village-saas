@@ -30,15 +30,5 @@ def test_attendee_tiles_keep_accessible_selection_and_count_metadata():
 
 def test_offline_shell_precaches_new_theme():
     worker = (ROOT / "app/static/sw.js").read_text()
+    assert 'const VERSION = "2026.27.24-attendance-theme"' in worker
     assert '"/static/css/attendance-theme.css"' in worker
-    assert '"/static/css/attendance-theme.css"' in worker
-
-
-def test_village_summary_only_shows_committee_count():
-    template = (ROOT / "app/templates/village_attendance.html").read_text()
-    script = (ROOT / "app/static/js/village-attendance.js").read_text()
-    assert 'id="summary-committees"' in template
-    assert 'id="summary-pending"' not in template
-    assert 'id="summary-submitted"' not in template
-    assert "#summary-pending" not in script
-    assert "#summary-submitted" not in script

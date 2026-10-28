@@ -60,8 +60,6 @@
     });
   });
   search.addEventListener("input", render);
-  const initialQuery = new URLSearchParams(window.location.search).get("q");
-  if (initialQuery) search.value = initialQuery;
 
   (async () => {
     try {

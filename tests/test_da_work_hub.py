@@ -28,7 +28,7 @@ def _create_da_user(app) -> None:
         db.session.commit()
 
 
-def test_da_home_redirects_to_dashboard(client, app):
+def test_da_home_redirects_to_action_plan_work_hub(client, app):
     _create_da_user(app)
 
     response = client.post(
@@ -45,10 +45,10 @@ def test_da_home_redirects_to_dashboard(client, app):
     response = client.get("/", follow_redirects=False)
 
     assert response.status_code in {302, 303}
-    assert response.headers["Location"].endswith("/overview")
+    assert response.headers["Location"].endswith("/action-plans")
 
 
-def test_da_overview_renders_visit_dashboard(client, app):
+def test_da_overview_redirects_to_action_plan_work_hub(client, app):
     _create_da_user(app)
 
     client.post(
@@ -62,8 +62,8 @@ def test_da_overview_renders_visit_dashboard(client, app):
 
     response = client.get("/overview", follow_redirects=False)
 
-    assert response.status_code == 200
-    assert "Villages done" in response.get_data(as_text=True)
+    assert response.status_code in {302, 303}
+    assert response.headers["Location"].endswith("/action-plans")
 
 
 def test_da_action_plans_page_renders_work_hub(client, app):
@@ -320,7 +320,7 @@ def test_base_template_contains_da_field_shell_contract():
     assert "data-da-entry-menu" in source
     assert "data-da-more-menu" in source
 
-    for label in ("Entry", "Villages", "Reports", "More"):
+    for label in ("Entry", "Plans", "Reports", "More"):
         assert f">{label}<" in source
 
 def test_da_primary_action_uses_one_time_attention_effect():

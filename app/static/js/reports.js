@@ -37,16 +37,15 @@
 
   const adminActions = (row, mobile = false) => {
     if (!isAdmin) return "";
-    const editUrl = row.plan_id ? `/admin?resource=action-plans&edit=${encodeURIComponent(row.plan_id)}` : null;
-    const edit = editUrl ? `<a class="button ghost compact-action" href="${editUrl}">Edit legacy plan</a>` : "";
+    const editUrl = `/admin?resource=action-plans&edit=${encodeURIComponent(row.plan_id)}`;
     const deleteId = row.village_visit_id ? `data-village-delete="${Number(row.village_visit_id)}"` : `data-report-delete="${Number(row.plan_id)}"`;
     if (mobile) {
       return `<div class="report-row-admin-actions">
-        ${edit}
+        <a class="button ghost" href="${editUrl}">Edit</a>
         <button class="button danger" type="button" ${deleteId}>Delete</button>
       </div>`;
     }
-    return `${edit}
+    return `<a class="button ghost compact-action" href="${editUrl}">Edit</a>
       <button class="button danger compact-action" type="button" ${deleteId}>Delete</button>`;
   };
 
@@ -60,7 +59,7 @@
     list.innerHTML = `
       <div class="ledger-table-wrap desktop-ledger">
         <table class="ledger modern-ledger">
-          <thead><tr><th>Date</th><th>DA</th><th>Village</th><th>Coverage</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Date</th><th>DA</th><th>Village</th><th>Committee</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>${data.map((row) => `<tr>
             <td>${esc(row.date || "\u2014")}</td>
             <td>${esc(row.da)}</td>

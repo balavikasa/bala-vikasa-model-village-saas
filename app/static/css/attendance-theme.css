@@ -421,35 +421,3 @@ body[data-role="da"]:has(.attendance-fresh-theme) {
 @media (prefers-reduced-motion: reduce) {
   .attendance-fresh-theme *, .attendance-fresh-theme *::before, .attendance-fresh-theme *::after { scroll-behavior: auto !important; transition-duration: 0s !important; }
 }
-
-/* DA-led village selection: compact search and immutable date field */
-.attendance-fresh-theme #visit-date[readonly] { background:#f1f8f9; color:#19566a; font-weight:700; cursor:default; }
-.attendance-fresh-theme .attendance-other-village { margin-top:10px; }
-.attendance-fresh-theme #other-village-toggle { width:100%; justify-content:center; border:1px dashed #93c8d0; background:#f1fafb; color:#136775; font-weight:650; }
-.attendance-fresh-theme #other-village-panel { margin-top:10px; padding:10px; border:1px solid #d9e9ee; border-radius:14px; background:#f9fcfc; }
-.attendance-fresh-theme .other-village-results { display:grid; gap:5px; max-height:215px; overflow-y:auto; margin-top:8px; }
-.attendance-fresh-theme .other-village-choice { display:flex; gap:6px; flex-direction:column; align-items:flex-start; min-height:45px; padding:9px 12px; background:white; color:#24566a; border:1px solid #d2e3e7; border-radius:10px; text-align:left; cursor:pointer; }
-.attendance-fresh-theme .other-village-choice small { font-size:11px; color:#6a7d85; }
-.attendance-fresh-theme .new-members-field input { max-width:180px; font-size:18px; font-weight:700; color:#136775; }
-
-/* 2026.27.30 · Field-first app, based on approved visual concept */
-.attendance-fresh-theme { max-width:700px; margin:0 auto; }
-.attendance-page-heading { background:#f6faf7 url('/static/brand/village-landscape.svg') right bottom / 48% auto no-repeat; padding:16px 12px 22px; border-radius:16px; }
-.attendance-page-heading h1 { font:700 clamp(2rem,7vw,2.65rem)/1.09 'Fraunces',Georgia,serif; }
-.attendance-step-card { background:#fff; border:1px solid #e6eeeb!important; box-shadow:0 5px 20px rgba(3,72,77,.055); border-radius:19px!important; padding:clamp(16px,4vw,24px)!important; margin-bottom:14px; }
-.attendance-step-card .form-section-heading>span { background:#135664!important; color:#fff; width:38px; height:38px; border-radius:50%; }
-.attendance-step-card .form-section-heading h2 { font:700 1.25rem/1.3 'Fraunces',Georgia,serif; }
-.attendance-steps input,.attendance-steps select,.attendance-steps textarea { border:1px solid #d8e5e5!important; background:#fff; border-radius:12px!important; min-height:47px; }
-.village-committee-list>*,.committee-accordion { border-radius:13px!important; }
-.attendance-summary-pills span { background:#e7f6f3!important; color:#13736f!important; }
-.attendance-fresh-theme .button.primary { background:linear-gradient(120deg,#006c73,#008982); border:0; }
-.attendance-submit-bar { background:#fffdfb; border:1px solid #e6eceb; border-radius:14px; padding:11px; }
-@media(max-width:600px){
- .da-field-appbar { background:#fff!important; box-shadow:0 2px 14px rgba(10,70,74,.06); }
- .attendance-fresh-theme { padding:9px 10px 110px; }
- .attendance-page-heading { padding:15px 9px 17px; background-size:54% auto; }
- .attendance-step-card { padding:16px!important; }
- .attendance-visit-fields { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,.9fr); gap:8px; }
- .attendance-visit-fields .field { min-width:0; }
- .attendance-visit-fields input,.attendance-visit-fields select { width:100%; min-width:0; padding:9px; font-size:.85rem; }
-}
