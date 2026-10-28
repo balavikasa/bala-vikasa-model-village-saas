@@ -59,6 +59,6 @@ def test_map_does_not_turn_null_coordinates_into_zero_zero():
     assert "value === undefined" in map_js
     assert "Math.abs(lat) < 0.000001" in map_js
     assert "map.setView(bounds[0], 13)" in map_js
-    assert "selectinload(Village.specials_entries)" in monitoring
+    assert "Archived Specials are kept for historical reports" in monitoring
     assert '"location_source": location_source' in monitoring
     assert '"field-evidence"' in monitoring

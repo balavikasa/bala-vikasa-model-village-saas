@@ -2,7 +2,7 @@
 "use strict";
 importScripts("/static/js/idb-queue.js");
 
-const VERSION = "2026.27.23-staff-login-sync";
+const VERSION = "2026.27.31-reference-layout";
 // Explicit DA location permission and Camera / Photo Album / Files choices
 const STATIC_CACHE = `mv-static-${VERSION}`;
 const DATA_PREFIX = "mv-data-";
@@ -30,17 +30,34 @@ const networkFirstStatic = async (request) => {
 };
 
 const STATIC_ASSETS = [
+  "/static/css/reference-ui.css?v=2026.27.31",
+  "/static/js/reference-ui.js?v=2026.27.31",
+  "/static/js/overview.js?v=2026.27.31",
+  "/static/js/visit-analytics.js?v=2026.27.31",
+  "/static/js/village-attendance.js?v=2026.27.31",
+  "/static/js/admin.js?v=2026.27.31",
+  "/static/reference/brand-lockup.png",
+  "/static/reference/sidebar-village.png",
+  "/static/reference/hero-village.png",
+  "/static/reference/hero-dashboard.png",
   "/offline",
   "/manifest.json",
   "/static/css/app.css",
+  "/static/css/village-renewal.css",
+  "/static/brand/bala-vikasa-official.png",
+  "/static/brand/bala-vikasa-symbol.png",
+  "/static/brand/village-landscape.svg",
   "/static/css/da-field.css",
   "/static/css/attendance-theme.css",
+  "/static/css/workflow-review.css",
   "/static/js/app.js",
+  "/static/js/village-renewal.js",
   "/static/js/idb-queue.js",
   "/static/js/pwa.js",
   "/static/js/village-attendance.js",
   "/static/js/da-location.js",
   "/static/js/overview.js",
+  "/static/js/visit-analytics.js",
   "/static/js/directory.js",
   "/static/js/monitoring.js",
   "/static/js/map.js",

@@ -6,10 +6,10 @@ from pathlib import Path
 def test_public_health_check_exposes_release_for_deployment_verification(client):
     response = client.get("/healthz")
     assert response.status_code == 200
-    assert response.json == {"status": "ok", "release": "2026.27.24"}
-    assert response.headers["X-MV-Release"] == "2026.27.24"
+    assert response.json == {"status": "ok", "release": "2026.27.31"}
+    assert response.headers["X-MV-Release"] == "2026.27.31"
 
 
 def test_pwa_cache_version_matches_release():
     sw = (Path(__file__).resolve().parents[1] / "app/static/sw.js").read_text()
-    assert 'const VERSION = "2026.27.24-attendance-theme"' in sw
+    assert 'const VERSION = "2026.27.31-reference-layout"' in sw

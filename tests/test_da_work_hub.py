@@ -28,7 +28,7 @@ def _create_da_user(app) -> None:
         db.session.commit()
 
 
-def test_da_home_redirects_to_action_plan_work_hub(client, app):
+def test_da_home_redirects_to_attendance(client, app):
     _create_da_user(app)
 
     response = client.post(
@@ -45,10 +45,10 @@ def test_da_home_redirects_to_action_plan_work_hub(client, app):
     response = client.get("/", follow_redirects=False)
 
     assert response.status_code in {302, 303}
-    assert response.headers["Location"].endswith("/action-plans")
+    assert response.headers["Location"].endswith("/field/attendance")
 
 
-def test_da_overview_redirects_to_action_plan_work_hub(client, app):
+def test_da_optional_dashboard_renders_visit_dashboard(client, app):
     _create_da_user(app)
 
     client.post(
@@ -60,10 +60,10 @@ def test_da_overview_redirects_to_action_plan_work_hub(client, app):
         follow_redirects=False,
     )
 
-    response = client.get("/overview", follow_redirects=False)
+    response = client.get("/dashboard", follow_redirects=False)
 
-    assert response.status_code in {302, 303}
-    assert response.headers["Location"].endswith("/action-plans")
+    assert response.status_code == 200
+    assert "Visited This Month" in response.get_data(as_text=True)
 
 
 def test_da_action_plans_page_renders_work_hub(client, app):
@@ -308,20 +308,14 @@ def test_base_template_contains_da_field_shell_contract():
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[1]
-    source = (
-        root
-        / "app"
-        / "templates"
-        / "base.html"
-    ).read_text(encoding="utf-8")
+    source = (root / "app/templates/base.html").read_text(encoding="utf-8")
+    assert 'ref-mobile-brand' in source
+    assert 'da-field-bottom-nav' in source
+    assert 'id="mobile-menu"' in source
+    assert 'data-mobile-menu-open' in source
+    for label in ("Attendance", "Villages", "Reports", "More"):
+        assert label in source
 
-    assert 'class="da-field-appbar"' in source
-    assert 'class="da-field-bottom-nav"' in source
-    assert "data-da-entry-menu" in source
-    assert "data-da-more-menu" in source
-
-    for label in ("Entry", "Plans", "Reports", "More"):
-        assert f">{label}<" in source
 
 def test_da_primary_action_uses_one_time_attention_effect():
     from pathlib import Path
@@ -352,63 +346,24 @@ def test_da_primary_action_uses_one_time_attention_effect():
     assert "@keyframes mv-attention-pulse" in css
 
 
-def test_da_entry_chooser_contract():
+def test_da_entry_is_direct_and_preserves_offline_services():
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[1]
-
-    base = (
-        root
-        / "app"
-        / "templates"
-        / "base.html"
-    ).read_text(encoding="utf-8")
-
-    js = (
-        root
-        / "app"
-        / "static"
-        / "js"
-        / "da-field-shell.js"
-    )
-
-    css = (
-        root
-        / "app"
-        / "static"
-        / "css"
-        / "da-field.css"
-    )
-
-    assert 'id="da-entry-menu"' in base
-    assert "data-da-entry-menu" in base
-    assert "data-da-entry-close" in base
-
-    assert "da-field-shell.js" in base
-    assert "da-field.css" in base
-
-    assert js.exists()
-    assert css.exists()
+    base = (root / "app/templates/base.html").read_text(encoding="utf-8")
+    assert "url_for('pages.attendance') if da" in base
+    assert 'id="da-entry-menu"' not in base
+    for script in ("idb-queue.js", "pwa.js", "da-location.js"):
+        assert script in base
+    assert 'id="sync-dialog"' in base
 
 
-def test_da_entry_button_does_not_open_more_menu():
+def test_da_entry_link_does_not_open_more_menu():
     import re
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[1]
-
-    source = (
-        root
-        / "app"
-        / "templates"
-        / "base.html"
-    ).read_text(encoding="utf-8")
-
-    match = re.search(
-        r"<button[^>]*data-da-entry-menu[^>]*>",
-        source,
-        flags=re.DOTALL,
-    )
-
+    source = (root / "app/templates/base.html").read_text(encoding="utf-8")
+    match = re.search(r"<a href=\"\{\{ url_for\('pages.attendance'\) if da.*?>", source)
     assert match is not None
     assert "data-mobile-menu-open" not in match.group(0)

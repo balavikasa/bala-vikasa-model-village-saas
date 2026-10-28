@@ -14,16 +14,19 @@ def test_analytics_renders_live_api_visuals_without_embedded_dash():
     assert "analytics-completion" in template
     assert "/dash/" not in template
     assert "/api/v1/monitoring/visit-analytics" in script
-    assert "No attendance recorded for this selection" in script
+    assert "No attendance in this selection." in script
 
 
-def test_detailed_village_report_never_auto_places_two_tiny_cards():
+def test_detailed_village_report_keeps_responsive_metadata_columns():
     template = read("app/templates/village_attendance_report.html")
-    css = read("app/static/css/workflow-review.css")
-    for name in ("summary", "photo", "ledger", "gps", "notes"):
-        assert f"village-report-{name}" in template
-        assert f".village-report-{name}" in css
-    assert "grid-column: span 6" in css
+    css = read("app/static/css/reference-ui.css")
+    for name in ("ref-report-kpis", "ref-report-photo", "ref-report-ledger", "ref-report-bottom"):
+        assert name in template
+        assert "." + name in css
+    assert 'data-single-map' in template
+    assert 'Village-level Remarks' in template
+    assert 'minmax(0,1fr)' in css
+    assert '@media(max-width:860px)' in css
 
 
 def test_village_profile_shows_visits_and_attendance_not_draft_plan_columns():
@@ -39,10 +42,10 @@ def test_village_profile_shows_visits_and_attendance_not_draft_plan_columns():
 def test_navigation_is_da_led_and_historical_plans_remain_accessible():
     base = read("app/templates/base.html")
     overview = read("app/templates/overview.html")
-    rail = base.split('<nav class="rail-nav">', 1)[1].split('</nav>', 1)[0]
-    assert 'Past plans</span>' not in rail
-    assert 'Action Plans</span>' not in rail
-    assert '<small>Villages</small>' in base
+    nav = base.split("{% set nav =", 1)[1].split("%}", 1)[0]
+    assert "Past plans" not in nav
+    assert "Action Plans" not in nav
+    assert "My Villages" in nav
     assert "planning.action_plans_page" in overview
 
 

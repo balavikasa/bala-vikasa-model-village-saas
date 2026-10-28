@@ -20,6 +20,19 @@ from .services.reports import (
 bp = Blueprint("reports", __name__)
 
 
+def _requested_village() -> int | None:
+    value = (request.args.get("village") or "").strip()
+    if not value:
+        return None
+    try:
+        village_id = int(value)
+    except ValueError as exc:
+        raise PlanningError("Village must be a positive record ID.") from exc
+    if village_id < 1:
+        raise PlanningError("Village must be a positive record ID.")
+    return village_id
+
+
 @bp.get("/reports")
 @login_required
 def reports_page():
@@ -66,7 +79,7 @@ def report_data():
         status = (request.args.get("status") or "").strip() or None
         if plan_type not in {None, "Attendance", "Specials"}:
             raise PlanningError("Type must be Attendance or Specials.")
-        rows = report_rows(current_user._get_current_object(), selected, plan_type=plan_type, status=status)
+        rows = report_rows(current_user._get_current_object(), selected, plan_type=plan_type, status=status, village_id=_requested_village())
         return jsonify(
             month=month_key(selected),
             label=month_label(selected),
@@ -92,7 +105,7 @@ def delete_village_report(visit_id: int):
         for entry in visit.entries:
             if not entry.is_deleted:
                 soft_delete(entry, actor, retention)
-                if not entry.action_plan.is_deleted:
+                if entry.action_plan is not None and not entry.action_plan.is_deleted:
                     soft_delete(entry.action_plan, actor, retention)
         soft_delete(visit, actor, retention)
         db.session.commit()
@@ -155,6 +168,7 @@ def export_reports():
             selected,
             plan_type=plan_type,
             status=status,
+            village_id=_requested_village(),
         )
         buffer = BytesIO()
         workbook.save(buffer)

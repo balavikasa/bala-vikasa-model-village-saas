@@ -27,27 +27,12 @@ def test_admin_report_mutation_controls_are_role_guarded():
 
 
 def test_mobile_shell_has_direct_logout_and_global_recycle_access():
-    source = (ROOT / "app" / "templates" / "base.html").read_text(
-        encoding="utf-8"
-    )
-
-    assert "mobile-quick-logout" in source
-    assert 'aria-label="Sign out"' in source
-
-    mobile_menu = source.split(
-        '<nav class="mobile-menu-nav" aria-label="All navigation">',
-        1,
-    )[1].split("</nav>", 1)[0]
-
-    assert "url_for('pages.admin', tab='recycle')" in mobile_menu
-    assert "<strong>Recycle Bin</strong>" in mobile_menu
-
-    desktop_nav = source.split(
-        '<nav class="rail-nav">',
-        1,
-    )[1].split("</nav>", 1)[0]
-
-    # Recycle Bin remains available globally through the Admin/Master Data
-    # experience and mobile all-navigation menu, but intentionally does not
-    # consume a permanent desktop rail slot.
-    assert '<span class="nav-label">Recycle Bin</span>' not in desktop_nav
+    source = (ROOT / "app/templates/base.html").read_text()
+    menu = source.split('<dialog id="mobile-menu"', 1)[1].split('</dialog>', 1)[0]
+    assert 'aria-label="Sign out"' in menu
+    assert "url_for('auth.logout')" in menu
+    assert 'name="csrf_token"' in menu
+    assert "url_for('pages.admin', tab='recycle')" in menu
+    assert "current_user.role.value=='admin'" in menu
+    desktop = source.split('<nav class="ref-nav">', 1)[1].split('</nav>', 1)[0]
+    assert "Recycle Bin" not in desktop

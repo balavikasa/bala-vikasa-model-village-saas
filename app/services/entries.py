@@ -367,12 +367,15 @@ def create_specials(
 def create_village_attendance(
     payload: dict[str, Any], photo: FileStorage | None, user: User,
 ) -> tuple[VillageAttendanceVisit, bool]:
-    """Submit all pending scheduled committees together, atomically.
+    """Record one DA-chosen village visit for the current local calendar month.
 
-    One stored photo, one device fix, and one idempotency ID are shared by
-    committee-level AttendanceEntry rows. Existing per-committee reports continue
-    to operate; no old attendance or Specials history is altered.
+    Attendance is independent of committee Action Plans; server assigns date.
+    The actor is recorded even when they attend an unassigned village.
     """
+    from sqlalchemy import text
+
+    from ..timeutils import local_today
+
     client_id = _submission_id(payload.get("client_submission_id"))
     existing = db.session.scalar(db.select(VillageAttendanceVisit).where(
         VillageAttendanceVisit.client_submission_id == client_id
@@ -381,101 +384,100 @@ def create_village_attendance(
         if existing.submitted_by_user_id != user.id:
             raise ScopeError("That submission belongs to another DA.")
         return existing, False
-
-    village = require_scoped(Village, _integer(payload.get("village_id"), "village_id", minimum=1), user)
-    if not can_submit_for_village(user, village):
-        raise ScopeError("You cannot submit attendance for this village.")
-    visit_date = _date(payload.get("visit_date"), "visit_date")
+    if user.role != Role.DA or not user.is_active or user.da_id is None:
+        raise ScopeError("Only an active DA may record attendance.")
+    village_id = _integer(payload.get("village_id"), "village_id", minimum=1)
+    village = db.session.scalar(db.select(Village).where(
+        Village.id == village_id, Village.is_enabled.is_(True), Village.is_deleted.is_(False)
+    ))
+    if village is None:
+        raise ScopeError("This village is not available.")
+    visit_date = local_today()
+    if payload.get("visit_date") and str(payload["visit_date"]) != visit_date.isoformat():
+        raise EntryValidationError("The attendance date is automatic and cannot be changed.")
+    visit_month = visit_date.replace(day=1)
+    outside_assignment = village.da_id != user.da_id
+    if outside_assignment and str(payload.get("other_village")) != "1":
+        raise ScopeError("Select the Other village option for a village outside your assignment.")
     latitude, longitude, source = _coordinates(payload, village)
     raw = payload.get("committees")
     try:
         items = json.loads(raw) if isinstance(raw, str) else raw
     except (TypeError, ValueError) as exc:
         raise EntryValidationError("Committee attendance must be a valid list.") from exc
-    if not isinstance(items, list) or not items:
-        raise EntryValidationError("Add attendance for all available committees in the village.")
-
-    from .monthly_plans import monthly_plans
-    plans = monthly_plans(user, current_month())
-    available = {
-        c.id: c for c in db.session.scalars(db.select(Committee).where(
-            Committee.village_id == village.id, Committee.is_enabled.is_(True), Committee.is_deleted.is_(False)
-        ))
-    }
-    # Do not fabricate PC assignments; only collect for executable Attendance
-    # action plans. A committee with no current plan must be scheduled by PC.
-    eligible = {cid: plans[cid] for cid in available if cid in plans
-                and plans[cid].is_executable and plans[cid].plan_type == ActionPlanType.ATTENDANCE
-                and plans[cid].attendance_entry is None}
-    supplied_ids = []
+    if not isinstance(items, list):
+        raise EntryValidationError("Committee attendance must be a list.")
+    available = {c.id: c for c in db.session.scalars(db.select(Committee).where(
+        Committee.village_id == village.id, Committee.is_enabled.is_(True),
+        Committee.is_deleted.is_(False)
+    ))}
+    if not available:
+        raise EntryValidationError("This village has no active committees.")
     prepared = []
+    seen = set()
     for item in items:
         if not isinstance(item, dict):
             raise EntryValidationError("Each committee must contain attendance details.")
         cid = _integer(item.get("committee_id"), "committee_id", minimum=1)
-        if cid in supplied_ids:
-            raise EntryValidationError("A committee appears more than once.")
-        supplied_ids.append(cid)
-        if cid not in eligible:
-            raise EntryValidationError("A committee is completed, unscheduled, or outside this village. Refresh your plan.")
-        plan = eligible[cid]
-        new_members = _integer(item.get("new_members_count", 0), "new_members_count")
+        if cid in seen or cid not in available:
+            raise EntryValidationError("Duplicate or invalid committee for this village.")
+        seen.add(cid)
         selected = _selected_members(available[cid], item.get("visit_member_ids"))
-        if item.get("counts_mode") == "selected_members":
-            # The selected name cards, not manually entered numbers, define
-            # attendance. Gender stays private in the interface and persists
-            # in the existing member records for accurate reporting.
-            unknown = [m.full_name for m in selected if str(m.gender or "").strip().casefold() not in {"male", "female"}]
-            if unknown:
-                raise EntryValidationError(
-                    f"Update gender in Master Data before attendance for {available[cid].name}: " + ", ".join(unknown)
-                )
-            male = sum(str(m.gender or "").strip().casefold() == "male" for m in selected)
-            female = len(selected) - male
-        else:
-            # Legacy queued offline submissions remain valid.
-            male = _integer(item.get("male_count"), "male_count")
-            female = _integer(item.get("female_count"), "female_count")
-        status = attendance_status(plan.assigned_date, visit_date)
-        reason = str(item.get("reason") or "").strip() or None
-        if status in {AttendanceStatus.EARLY, AttendanceStatus.POSTPONED} and not reason:
-            raise EntryValidationError(f"Reason required for {available[cid].name}: {status.value}.")
-        prepared.append((cid, plan, male, female, new_members, selected, status, reason, str(item.get("remarks") or "").strip() or None))
-    if set(supplied_ids) != set(eligible):
-        missing = [available[cid].name for cid in eligible if cid not in supplied_ids]
-        raise EntryValidationError("Complete every pending scheduled committee: " + ", ".join(missing))
-    if not prepared:
-        raise EntryValidationError("No pending scheduled attendance plans for this village.")
+        unknown = [m.full_name for m in selected if str(m.gender or "").strip().casefold() not in {"male", "female"}]
+        if unknown:
+            raise EntryValidationError(f"Correct missing gender in Master Data for {available[cid].name}: " + ", ".join(unknown))
+        male = sum(str(m.gender).strip().casefold() == "male" for m in selected)
+        female = len(selected) - male
+        prepared.append((cid, male, female, selected))
+    if set(available) != seen:
+        raise EntryValidationError("Complete the attendance selection for every committee in this village.")
+    new_members = _integer(payload.get("new_members_count") or 0, "new_members_count")
+    if new_members > 9999:
+        raise EntryValidationError("New members count must not exceed 9999.")
 
+    # Serialize concurrent submissions to the same village/month on PostgreSQL.
+    if db.session.get_bind().dialect.name == "postgresql":
+        db.session.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": village.id * 100000 + visit_month.year * 100 + visit_month.month})
+    already = db.session.scalar(db.select(VillageAttendanceVisit).where(
+        VillageAttendanceVisit.village_id == village.id,
+        VillageAttendanceVisit.is_deleted.is_(False),
+        ((VillageAttendanceVisit.visit_month == visit_month) |
+         ((VillageAttendanceVisit.visit_month.is_(None)) &
+          (VillageAttendanceVisit.visit_date >= visit_month) &
+          (VillageAttendanceVisit.visit_date <= visit_date)))
+    ))
+    if already:
+        raise EntryValidationError("This village already has attendance this month. Check Reports before submitting again.")
     photo_path = _required_photo(photo, "village-attendance", f"{client_id}-{uuid.uuid4().hex}")
     try:
         visit = VillageAttendanceVisit(
-            village_id=village.id, visit_date=visit_date, photo_path=photo_path,
-            latitude=latitude, longitude=longitude, geolocation_source=source,
-            remarks=str(payload.get("remarks") or "").strip() or None,
+            village_id=village.id, visit_date=visit_date, visit_month=visit_month,
+            new_members_count=new_members, outside_assignment=outside_assignment,
+            photo_path=photo_path, latitude=latitude, longitude=longitude,
+            geolocation_source=source, remarks=str(payload.get("remarks") or "").strip() or None,
             submitted_by_user_id=user.id, client_submission_id=client_id,
         )
         db.session.add(visit)
         db.session.flush()
-        for cid, plan, male, female, newcomers, members, status, reason, remarks in prepared:
+        for cid, male, female, selected in prepared:
             entry = AttendanceEntry(
-                village_id=village.id, committee_id=cid, action_plan_id=plan.id,
+                village_id=village.id, committee_id=cid, action_plan_id=None,
                 village_visit_id=visit.id, visit_date=visit_date,
                 male_count=male, female_count=female, total_count=male + female,
-                new_members_count=newcomers,
-                visit_designations=list(dict.fromkeys(m.designation for m in members if m.designation)),
-                status=status, reason=reason, remarks=remarks,
-                photo_path=photo_path, latitude=latitude, longitude=longitude,
-                geolocation_source=source, submitted_by_user_id=user.id,
-                client_submission_id=f"{client_id[:50]}:{cid}",
+                new_members_count=0, status=AttendanceStatus.ON_TIME,
+                visit_designations=list(dict.fromkeys(m.designation for m in selected if m.designation)),
+                reason=None, remarks=visit.remarks, photo_path=photo_path,
+                latitude=latitude, longitude=longitude, geolocation_source=source,
+                submitted_by_user_id=user.id, client_submission_id=f"{client_id[:50]}:{cid}",
             )
             db.session.add(entry)
             db.session.flush()
-            for member in members:
+            for member in selected:
                 db.session.add(AttendanceVisitMember(
                     attendance_entry_id=entry.id, committee_member_id=member.id,
                     member_name_snapshot=member.full_name,
-                    designation_snapshot=member.designation or "Member", gender_snapshot=member.gender,
+                    designation_snapshot=member.designation or "Member",
+                    gender_snapshot=member.gender,
                 ))
             record_audit(AuditAction.CREATE, entry, after=model_snapshot(entry), actor=user)
         db.session.flush()
@@ -483,22 +485,14 @@ def create_village_attendance(
         return visit, True
     except IntegrityError as exc:
         db.session.rollback()
-        # A concurrent retry can carry the same idempotency key; retrieve the
-        # winning submission instead of treating it as a new failed visit.
+        delete_photo(photo_path)
         duplicate = db.session.scalar(db.select(VillageAttendanceVisit).where(
             VillageAttendanceVisit.client_submission_id == client_id
         ))
-        if duplicate:
-            # Each attempt stores a unique path, so removing a losing upload
-            # does not remove the photograph of the winning submission.
-            delete_photo(photo_path)
-            if duplicate.submitted_by_user_id != user.id:
-                raise ScopeError("That submission belongs to another DA.") from exc
+        if duplicate and duplicate.submitted_by_user_id == user.id:
             return duplicate, False
-        delete_photo(photo_path)
-        raise EntryValidationError("One or more committee plans were already submitted. Refresh the form.") from exc
+        raise EntryValidationError("Village attendance is already submitted for this month.") from exc
     except Exception:
         db.session.rollback()
-        # A shared image is deleted only on failure of the entire transaction.
         delete_photo(photo_path)
         raise

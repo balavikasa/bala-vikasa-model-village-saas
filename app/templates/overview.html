@@ -1,77 +1,29 @@
-{% extends "base.html" %}
-{% block title %}Overview · Model Village{% endblock %}
+{% extends 'base.html' %}{% from 'components/reference_ui.html' import icon, metric, slogan %}
+{% block title %}Dashboard - Bala Vikasa{% endblock %}
 {% block content %}
-<section class="page-shell overview-page">
-  <header class="hero-overview">
-    <div class="hero-copy">
-      <p class="eyebrow">Bala Vikasa · Model Village Program</p>
-      <h1>Good {{ 'morning' if now_hour|default(12) < 12 else 'day' }}, {{ current_user.display_name.split()[0] }}.</h1>
-      <p>
-        {% if current_user.role.value == 'da' %}
-        Capture village visits even without a signal. Your queue will synchronize when the network returns.
-        {% elif current_user.role.value == 'pc' %}
-        Track your cluster, assign committee action plans and resolve overdue visits.
-        {% else %}
-        Monitor delivery across CSRB and PDTC from one role-scoped view.
-        {% endif %}
-      </p>
-      <div class="hero-actions">
-        {% if current_user.role.value == 'da' %}
-        <a class="button primary" href="{{ url_for('pages.attendance') }}">Record attendance</a>
-        {% elif current_user.role.value in ['admin', 'pm', 'pc'] %}
-        <a class="button primary" href="{{ url_for('pages.monitoring') }}">Open monitoring</a>
-        <a class="button paper" href="{{ url_for('pages.directory') }}">Browse directory</a>
-        {% endif %}
-      </div>
-    </div>
-    {% if current_user.role.value == 'admin' %}
-    <div class="cluster-visual" id="cluster-visual" aria-label="Interactive cluster network overview">
-      <canvas id="cluster-canvas"></canvas>
-      <div class="visual-legend"><span><i class="csrb-dot"></i>CSRB</span><span><i class="pdtc-dot"></i>PDTC</span></div>
-    </div>
-    {% else %}
-    <div class="hero-role-bento">
-      <span class="role-orb">{{ current_user.role.value|upper }}</span>
-      <strong>{{ 'Field execution' if current_user.role.value == 'da' else 'Cluster operations' if current_user.role.value == 'pc' else 'Program monitoring' }}</strong>
-      <small>{{ 'Mobile-first · Offline-ready' if current_user.role.value == 'da' else 'Role-scoped · Current month' }}</small>
-    </div>
-    {% endif %}
-  </header>
-
-  <section class="kpi-grid" aria-label="Program summary">
-    <article class="metric-card"><span>Villages</span><strong data-kpi="villages">—</strong><small>Your visible scope</small></article>
-    <article class="metric-card"><span>Committees</span><strong data-kpi="committees">—</strong><small>Active master records</small></article>
-    <article class="metric-card"><span>Action plans</span><strong data-kpi="action_plans">—</strong><small>Assigned committee work</small></article>
-    <article class="metric-card"><span>Entries</span><strong data-kpi="entries">—</strong><small>Committee attendance records</small></article>
-  </section>
-
-  <section class="overview-grid">
-    <article class="panel-card quick-panel">
-      <div class="panel-heading"><div><p class="eyebrow">Shortcuts</p><h2>Continue your work</h2></div></div>
-      <div class="action-card-grid">
-        <a class="action-card" href="{{ url_for('planning.action_plans_page') }}"><span class="action-icon navy">▦</span><span><strong>Action Plans</strong><small>{{ 'Your assigned monthly work' if current_user.role.value == 'da' else 'Monthly planning & history' }}</small></span><b>›</b></a>
-        {% if current_user.role.value == 'da' %}
-        <a class="action-card" href="{{ url_for('pages.attendance') }}"><span class="action-icon saffron">✓</span><span><strong>Attendance entry</strong><small>Action-plan visit and photo</small></span><b>›</b></a>
-        {% endif %}
-        <a class="action-card" href="{{ url_for('reports.reports_page') }}"><span class="action-icon clay">▤</span><span><strong>Reports</strong><small>Open each report with evidence & map</small></span><b>›</b></a>
-        <a class="action-card" href="{{ url_for('pages.directory') }}"><span class="action-icon navy">⌂</span><span><strong>{{ 'My villages' if current_user.role.value == 'da' else 'Directory' }}</strong><small>People, committees and scope</small></span><b>›</b></a>
-        {% if current_user.role.value in ['admin', 'pm', 'pc'] %}
-        <a class="action-card" href="{{ url_for('pages.monitoring') }}"><span class="action-icon clay">⌁</span><span><strong>Monitoring</strong><small>Map and Plotly analytics</small></span><b>›</b></a>
-        {% endif %}
-      </div>
-    </article>
-
-    <article class="panel-card status-panel">
-      <div class="panel-heading"><div><p class="eyebrow">Action-plan pulse</p><h2>Status distribution</h2></div></div>
-      <div id="status-breakdown" class="status-breakdown">
-        <div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div>
-      </div>
-    </article>
-  </section>
-</section>
-{% endblock %}
-{% block scripts %}
-{{ super() }}
-<script src="{{ url_for('static', filename='js/overview.js') }}" defer></script>
-{% if current_user.role.value == 'admin' %}<script type="module" src="{{ url_for('static', filename='js/three-overview.js') }}"></script>{% endif %}
-{% endblock %}
+<section class="page-shell ref-page ref-dashboard" id="ref-dashboard" data-month="{{ local_now.strftime('%Y-%m') }}">
+<header class="ref-hero ref-dashboard-hero"><div class="ref-hero-copy"><h1>Good {{ 'morning' if local_now.hour < 12 else 'afternoon' if local_now.hour < 17 else 'evening' }}, {{ current_user.display_name }}</h1><p class="lede">{{ 'Your village visits, community participation and field progress.' if current_user.role.value=='da' else 'A clear view of village coverage and community participation.' }}</p><div class="ref-hero-meta"><span>{{ icon('calendar') }}{{ local_now.strftime('%a, %d %b %Y') }}</span><span>{{ icon('pin') }}{{ 'My assigned villages' if current_user.role.value=='da' else 'Role-scoped program view' }}</span></div></div>{{ slogan() }}</header>
+<div class="ref-kpis">
+{{ metric('Assigned Villages' if current_user.role.value=='da' else 'Total Villages','\u2014','home','Within your scope','villages') }}
+{{ metric('Visited This Month','\u2014','check','Completed village submissions','villages_done') }}
+{{ metric('People Attended','\u2014','users','Across recorded committees','people_attended') }}
+{{ metric('Pending Villages','\u2014','clock','Not recorded this month','villages_pending') }}
+{{ metric('Other Village Visits' if current_user.role.value=='da' else 'New Members','\u2014','pin' if current_user.role.value=='da' else 'addperson','Outside assigned villages' if current_user.role.value=='da' else 'Village-wide totals','other_villages_visited' if current_user.role.value=='da' else 'new_members') }}
+</div>
+<div id="dashboard-error" class="form-alert hidden" role="alert"></div>
+<div class="ref-dashboard-grid">
+<article class="ref-card ref-dash-card ref-dash-progress"><div class="ref-card-title"><h2>Village Coverage This Month</h2><a href="{{ url_for('pages.directory') }}">View all &rarr;</a></div><div id="dashboard-coverage" class="ref-chart"></div><div id="dashboard-coverage-note" class="ref-progress-note"></div></article>
+<article class="ref-card ref-dash-card ref-dash-trend"><div class="ref-card-title"><h2>Attendance Trend <small>(7 days)</small></h2><div class="ref-chart-legend"><span><i></i>Visits</span><span><i class="coral"></i>People</span></div></div><div id="dashboard-trend" class="ref-chart"></div></article>
+<article class="ref-card ref-dash-card ref-dash-actions"><div class="ref-card-title"><h2>Quick Actions</h2></div><div class="ref-quick-actions">
+<a class="ref-quick-action" href="{{ url_for('pages.attendance') if current_user.role.value=='da' else url_for('pages.monitoring') }}"><span>{{ icon('check') }}</span><span><strong>{{ 'Start Attendance' if current_user.role.value=='da' else 'Open Monitoring' }}</strong><small>{{ 'Record today\'s village attendance' if current_user.role.value=='da' else 'Review village attendance coverage' }}</small></span>{{ icon('chevron') }}</a>
+<a class="ref-quick-action" href="{{ url_for('reports.reports_page') }}"><span>{{ icon('report') }}</span><span><strong>Open Reports</strong><small>View attendance and visit reports</small></span>{{ icon('chevron') }}</a>
+<a class="ref-quick-action" href="{{ url_for('pages.directory') }}"><span>{{ icon('home') }}</span><span><strong>{{ 'View My Villages' if current_user.role.value=='da' else 'View Villages' }}</strong><small>See village details and progress</small></span>{{ icon('chevron') }}</a></div></article>
+<article class="ref-card ref-dash-card ref-dash-map"><div class="ref-card-title"><h2>Village Visit Map</h2><a href="{{ url_for('pages.map_page') }}">View Full Map &rarr;</a></div><div id="dashboard-map" class="ref-map"></div></article>
+<article class="ref-card ref-dash-card ref-dash-recent"><div class="ref-card-title"><h2>Recent Attendance Submissions</h2><a href="{{ url_for('reports.reports_page') }}">View All &rarr;</a></div><div id="renewal-recent-visits" class="ref-list" aria-live="polite"></div></article>
+<article class="ref-card ref-dash-card ref-dash-team"><div class="ref-card-title"><h2>Cluster Coverage</h2></div><div id="dashboard-clusters" class="ref-chart"></div></article>
+<article class="ref-card ref-dash-card ref-dash-clusters"><div class="ref-card-title"><h2>Community Attendance</h2></div><div id="dashboard-gender" class="ref-chart"></div></article>
+<article class="ref-card ref-dash-card ref-dash-pending"><div class="ref-card-title"><h2>Pending Villages</h2><a href="{{ url_for('pages.directory') }}">View All &rarr;</a></div><div id="renewal-pending-villages" class="ref-list"></div></article>
+</div>
+{% if current_user.role.value!='da' %}<details class="ref-legacy"><summary>Historical data</summary><a href="{{ url_for('planning.action_plans_page') }}">Open archived Action Plans</a></details>{% endif %}
+</section>{% endblock %}
+{% block scripts %}{{ super() }}<script src="{{ url_for('static',filename='js/overview.js') }}?v=2026.27.31" defer></script>{% endblock %}

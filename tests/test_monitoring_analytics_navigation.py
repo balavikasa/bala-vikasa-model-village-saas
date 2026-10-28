@@ -18,14 +18,13 @@ def test_monitoring_is_operational_only():
     assert "dash-embed-card" not in source
 
 
-def test_analytics_page_owns_dash_embed():
-    source = (ROOT / "app" / "templates" / "analytics.html").read_text(
-        encoding="utf-8"
-    )
-
-    assert "Program analytics" in source
-    assert 'src="/dash/"' in source
-    assert "pages.monitoring" in source
+def test_analytics_page_uses_live_visit_series_without_nested_dash_frame():
+    source = (ROOT / "app/templates/analytics.html").read_text()
+    assert "Model Village Analytics" in source
+    assert 'src="/dash/"' not in source
+    for name in ("analytics-completion", "analytics-gender", "analytics-trend", "analytics-export"):
+        assert 'id="' + name + '"' in source
+    assert "pages.map_page" in source
 
 
 def test_analytics_route_matches_dash_authorization():
@@ -37,52 +36,33 @@ def test_analytics_route_matches_dash_authorization():
 
 
 def test_desktop_nav_is_role_aware_and_bounded():
-    source = (ROOT / "app" / "templates" / "base.html").read_text(
-        encoding="utf-8"
-    )
-    desktop_nav = source.split('<nav class="rail-nav">', 1)[1].split(
-        "</nav>", 1
-    )[0]
-
-    assert '<span class="nav-label">Analytics</span>' in desktop_nav
-    assert '<span class="nav-label">Monitoring</span>' in desktop_nav
-    assert '<span class="nav-label">Master Data</span>' in desktop_nav
-
-    # Recycle Bin stays available elsewhere, but not as a permanent desktop
-    # slot. That keeps the Admin rail at eight links.
-    assert '<span class="nav-label">Recycle Bin</span>' not in desktop_nav
-
-    # DA remains field-focused; analytics/monitoring are in the non-DA branch.
-    da_branch = desktop_nav.split("{% else %}", 1)[0]
-    assert "pages.analytics" not in da_branch
-    assert "pages.monitoring" not in da_branch
+    source = (ROOT / "app/templates/base.html").read_text()
+    nav = source.split("{% set nav =", 1)[1].split("%}", 1)[0]
+    da, management = nav.split("if da else", 1)
+    assert "pages.analytics" not in da
+    assert "pages.monitoring" not in da
+    assert "pages.analytics" in management
+    assert "pages.monitoring" in management
+    desktop = source.split('<nav class="ref-nav">', 1)[1].split('</nav>', 1)[0]
+    assert "Administration" in desktop
+    assert "Recycle Bin" not in desktop
 
 
-def test_mobile_bottom_nav_remains_unchanged():
-    source = (ROOT / "app" / "templates" / "base.html").read_text(
-        encoding="utf-8"
-    )
-
-    bottom_nav = source.split(
-        '<nav class="bottom-nav" aria-label="Mobile navigation">',
-        1,
-    )[1].split("</nav>", 1)[0]
-    assert "pages.analytics" not in bottom_nav
-
-    mobile_menu = source.split(
-        '<nav class="mobile-menu-nav" aria-label="All navigation">',
-        1,
-    )[1].split("</nav>", 1)[0]
-    assert "pages.analytics" in mobile_menu
+def test_mobile_bottom_nav_is_field_focused_with_complete_more_menu():
+    source = (ROOT / "app/templates/base.html").read_text()
+    bottom = source.split('<nav class="ref-bottom-nav', 1)[1].split('</nav>', 1)[0]
+    assert "pages.analytics" not in bottom
+    assert "pages.attendance" in bottom
+    assert "data-mobile-menu-open" in bottom
+    menu = source.split('<dialog id="mobile-menu"', 1)[1].split('</dialog>', 1)[0]
+    assert "for label,glyph,href,key in nav" in menu
+    assert "data-mobile-menu-close" in menu
 
 
-def test_all_desktop_role_navs_fit_without_scrolling_contract():
-    css = (ROOT / "app" / "static" / "css" / "app.css").read_text(
-        encoding="utf-8"
-    )
-
-    assert "Monitoring / Analytics navigation split v2026.27.12" in css
-    assert "grid-auto-rows: 44px;" in css
-    assert "overflow: visible;" in css
-    assert "scrollbar-width: none;" in css
-    assert "@media (min-width: 760px) and (max-height: 620px)" in css
+def test_reference_sidebar_reserves_content_space_and_allows_short_screen_scrolling():
+    css = (ROOT / "app/static/css/reference-ui.css").read_text()
+    assert "--ref-rail:238px" in css
+    assert "width:calc(100% - var(--ref-rail))" in css
+    assert "height:100dvh" in css
+    assert "overflow-y:auto" in css
+    assert "@media(max-width:860px)" in css

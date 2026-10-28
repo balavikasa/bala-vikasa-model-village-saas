@@ -23,6 +23,9 @@
   const status = $("#admin-status");
   const resourceSelect = $("#admin-resource");
   const searchInput = $("#admin-search");
+  const roleFilter = $("#admin-role");
+  const enabledFilter = $("#admin-enabled");
+  let loadVersion = 0;
   const table = $("#admin-table");
   const empty = $("#admin-empty");
   const dialog = $("#admin-dialog");
@@ -108,6 +111,7 @@
 
   const preferredColumns = (records) => {
     const meta = resourceMeta();
+    if (state.resource === "users") return ["id", "display_name", "role", "email", "mobile", "profile_name", "last_login_at", "is_enabled"];
     const configured = meta.columns || [];
     if (configured.length) return configured;
     const keys = records.length ? Object.keys(records[0]) : fieldMeta().map((f) => f.name);
@@ -118,33 +122,53 @@
       .slice(0, 8);
   };
 
+  const roleNames = {admin:"Administrator",pm:"Program Manager",pc:"Program Coordinator",da:"Development Associate"};
+  const columnLabel = (key) => ({id:"#",display_name:"Name",full_name:"Name",last_login_at:"Last Login",is_enabled:"Status"}[key] || labelize(key));
+  const cellHtml = (record, key) => {
+    if (["display_name", "full_name"].includes(key)) {
+      const name = String(record[key] || "Unnamed");
+      const initials = name.replace(/[^a-zA-Z ]/g, " ").trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase();
+      return `<span class="ref-person-cell"><span class="ref-person-initials" data-tone="${Number(record.id)%6}">${escapeHtml(initials)}</span><strong>${escapeHtml(name)}</strong></span>`;
+    }
+    if (key === "role") return `<span class="ref-role ${["da","pc","pm","admin"].includes(record.role)?record.role:""}">${escapeHtml(roleNames[record.role] || record.role)}</span>`;
+    if (key === "is_enabled") return `<span class="ref-status ${record.is_enabled ? "" : "off"}"><i></i>${record.is_enabled ? "Enabled" : "Disabled"}</span>`;
+    return escapeHtml(displayValue(record, key));
+  };
   const renderTable = () => {
     const columns = preferredColumns(state.records);
-    table.tHead.innerHTML = `<tr>${columns.map((key) => `<th>${escapeHtml(labelize(key))}</th>`).join("")}<th>Actions</th></tr>`;
+    table.tHead.innerHTML = `<tr>${columns.map((key) => `<th>${escapeHtml(columnLabel(key))}</th>`).join("")}<th>Actions</th></tr>`;
     table.tBodies[0].innerHTML = state.records.map((record) => {
       const inactive = record.is_enabled === false ? " is-muted" : "";
+      const resetAllowed = (["pcs", "das"].includes(state.resource) && record.login_user_id) ||
+        (state.resource === "users" && ["pc", "da"].includes(record.role));
       return `<tr class="${inactive}" data-id="${escapeHtml(record.id)}">
-        ${columns.map((key) => `<td data-label="${escapeHtml(labelize(key))}">${escapeHtml(displayValue(record, key))}</td>`).join("")}
-        <td data-label="Actions">
-          <div class="row-actions">
-            <button class="text-button" type="button" data-edit="${escapeHtml(record.id)}">Edit</button>
-            ${(["pcs", "das"].includes(state.resource) && record.login_user_id) ||
-              (state.resource === "users" && ["pc", "da"].includes(record.role))
-              ? `<button class="text-button" type="button" data-password-reset="${escapeHtml(record.id)}">Reset password</button>`
-              : (["pcs", "das"].includes(state.resource) ? `<span class="muted" title="Create a linked account under Users">No login linked</span>` : "")}
-            ${Object.hasOwn(record, "is_enabled") ? `<button class="text-button" type="button" data-toggle="${escapeHtml(record.id)}">${record.is_enabled ? "Disable" : "Enable"}</button>` : ""}
-            ${Object.hasOwn(record, "is_deleted") && !record.is_deleted ? `<button class="text-button danger-text" type="button" data-delete="${escapeHtml(record.id)}">Delete</button>` : ""}
-          </div>
-        </td>
-      </tr>`;
+        ${columns.map((key) => `<td data-label="${escapeHtml(columnLabel(key))}">${cellHtml(record,key)}</td>`).join("")}
+        <td data-label="Actions"><div class="ref-row-actions">
+        <button class="text-button" type="button" data-edit="${escapeHtml(record.id)}" aria-label="Edit ${escapeHtml(record.display_name||record.full_name||record.name||'record')}">${window.BVUI?.icon('report')||''} Edit</button>
+        <details class="ref-row-menu"><summary aria-label="More actions for ${escapeHtml(record.display_name||record.full_name||record.name||'record')}">&#8942;</summary><div class="ref-row-options">
+          ${resetAllowed ? `<button class="text-button" type="button" data-password-reset="${escapeHtml(record.id)}">Reset password</button>` : ''}
+          ${Object.hasOwn(record,"is_enabled") ? `<button class="text-button" type="button" data-toggle="${escapeHtml(record.id)}">${record.is_enabled?"Disable":"Enable"}</button>` : ''}
+          ${Object.hasOwn(record,"is_deleted")&&!record.is_deleted ? `<button class="text-button danger-text" type="button" data-delete="${escapeHtml(record.id)}">Delete</button>` : ''}
+        </div></details></div></td></tr>`;
     }).join("");
-
     empty.classList.toggle("hidden", state.records.length !== 0);
     table.closest(".table-shell").classList.toggle("hidden", state.records.length === 0);
-    $("#admin-page-label").textContent = `Page ${state.page} · ${state.total} record${state.total === 1 ? "" : "s"}`;
-    $("#admin-prev").disabled = state.page <= 1;
-    $("#admin-next").disabled = state.page * state.perPage >= state.total;
+    $("#admin-page-label").textContent = `Showing ${state.total ? (state.page-1)*state.perPage+1 : 0} - ${Math.min(state.page*state.perPage,state.total)} of ${state.total} records`;
+    $("#ref-admin-page").textContent=String(state.page);
+    $("#ref-resource-title").textContent=state.resource==="users" ? "Users & Development Associates" : resourceMeta().label||labelize(state.resource);
+    $("#ref-resource-count").textContent=`${state.total} records`;
+    if(roleFilter)roleFilter.disabled=state.resource!=="users";
+    $("#admin-prev").disabled=state.page<=1;
+    $("#admin-next").disabled=state.page*state.perPage>=state.total;
 
+    $$(".ref-row-menu", table).forEach(menu => menu.addEventListener("toggle", () => {
+      if (!menu.open) return;
+      $$(".ref-row-menu[open]", table).forEach(other => { if(other !== menu) other.open=false; });
+      const rect=menu.getBoundingClientRect(),options=menu.querySelector(".ref-row-options");
+      options.style.left=`${Math.max(10,Math.min(window.innerWidth-170,rect.right-155))}px`;
+      options.style.top=`${Math.min(window.innerHeight-options.offsetHeight-12,rect.bottom+5)}px`;
+    }));
+    $$(".ref-row-options button", table).forEach(button=>button.addEventListener("click",()=>{button.closest("details").open=false;}));
     $$("[data-edit]", table).forEach((button) => button.addEventListener("click", () => openEditor(button.dataset.edit)));
     $$("[data-password-reset]", table).forEach((button) => button.addEventListener("click", () => openPasswordReset(button.dataset.passwordReset)));
     $$("[data-toggle]", table).forEach((button) => button.addEventListener("click", () => toggleRecord(button.dataset.toggle)));
@@ -164,6 +188,8 @@
     const requestedResource = deepLink.get("resource");
     if (requestedResource && state.resources[requestedResource]) {
       resourceSelect.value = requestedResource;
+    } else if (state.resources.users) {
+      resourceSelect.value = "users";
     }
     state.resource = resourceSelect.value || entries[0]?.[0] || "";
     setStatus("Ready");
@@ -171,20 +197,25 @@
 
   const loadRecords = async () => {
     if (!state.resource) return;
-    setStatus("Loading…");
+    setStatus("Loading...");
+    const version = ++loadVersion;
     const params = new URLSearchParams({
       page: String(state.page),
       per_page: String(state.perPage),
     });
     const q = searchInput.value.trim();
     if (q) params.set("q", q);
+    if (state.resource === "users" && roleFilter?.value) params.set("role",roleFilter.value);
+    if (enabledFilter?.value) params.set("enabled",enabledFilter.value);
     try {
       const payload = await api(`/api/v1/admin/${encodeURIComponent(state.resource)}?${params}`);
+      if (version !== loadVersion) return;
       state.records = payload.items || payload.records || [];
       state.total = payload.total ?? state.records.length;
       renderTable();
       setStatus("Up to date", "success");
     } catch (error) {
+      if (version !== loadVersion) return;
       state.records = [];
       state.total = 0;
       renderTable();
@@ -633,7 +664,11 @@
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => { state.page = 1; loadRecords(); }, 250);
   });
-  $("#admin-refresh").addEventListener("click", loadRecords);
+  $("#admin-refresh").addEventListener("click", () => {
+    searchInput.value=""; if(roleFilter)roleFilter.value=""; if(enabledFilter)enabledFilter.value="";
+    state.page=1; loadRecords();
+  });
+  [roleFilter,enabledFilter].filter(Boolean).forEach(input=>input.addEventListener("change",()=>{state.page=1;loadRecords();}));
   $("#admin-add").addEventListener("click", () => openEditor());
   $("#admin-prev").addEventListener("click", () => { if (state.page > 1) { state.page -= 1; loadRecords(); } });
   $("#admin-next").addEventListener("click", () => { if (state.page * state.perPage < state.total) { state.page += 1; loadRecords(); } });

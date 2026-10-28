@@ -199,7 +199,7 @@ RESOURCES: dict[str, ResourceSpec] = {
         (
             FieldSpec("village_id", "relationship", required=True, related_resource="villages"),
             FieldSpec("committee_id", "relationship", required=True, related_resource="committees"),
-            FieldSpec("action_plan_id", "relationship", required=True, related_resource="action-plans"),
+            FieldSpec("action_plan_id", "relationship", related_resource="action-plans"),
             FieldSpec("visit_date", "date", required=True),
             FieldSpec("male_count", "integer", required=True, min=0),
             FieldSpec("female_count", "integer", required=True, min=0),
@@ -369,7 +369,7 @@ def _serialize(record: Any) -> dict[str, Any]:
         data.update(
             village_name=record.village.name,
             committee_name=record.committee.name,
-            action_plan_title=record.action_plan.title,
+            action_plan_title=record.action_plan.title if record.action_plan else "DA-led visit",
             status=record.status.value,
             submitted_by=record.submitted_by.display_name,
             cluster=record.village.da.pc.cluster.value,
@@ -449,6 +449,16 @@ def collection(slug: str):
         include_disabled = request.args.get("include_disabled", "1") == "1"
         if not include_disabled:
             stmt = stmt.where(spec.model.is_enabled.is_(True))
+        enabled = request.args.get("enabled", "")
+        if enabled in {"true", "false"}:
+            stmt = stmt.where(spec.model.is_enabled.is_(enabled == "true"))
+        selected_role = request.args.get("role", "")
+        if spec.model is User and selected_role:
+            try:
+                requested_role = Role(selected_role)
+            except ValueError:
+                return jsonify(error="Unknown user role."), 422
+            stmt = stmt.where(User.role == requested_role)
         query = request.args.get("q", "").strip()
         if query and spec.search:
             stmt = stmt.where(or_(*[getattr(spec.model, name).ilike(f"%{query}%") for name in spec.search]))
@@ -976,17 +986,23 @@ def _validate_record(record: Any) -> None:
     if isinstance(record, AttendanceEntry):
         village = db.session.get(Village, record.village_id)
         committee = db.session.get(Committee, record.committee_id)
-        plan = db.session.get(ActionPlan, record.action_plan_id)
-        if not all((village, committee, plan)):
-            raise EntryValidationError("Attendance village, committee and action plan must exist.")
-        if committee.village_id != village.id or plan.committee_id != committee.id:
-            raise EntryValidationError("Attendance hierarchy is inconsistent.")
-        if plan.assigned_date is None:
-            raise EntryValidationError("Action plan must have an assigned date.")
+        plan = db.session.get(ActionPlan, record.action_plan_id) if record.action_plan_id else None
+        if not village or not committee or committee.village_id != village.id:
+            raise EntryValidationError("Attendance village/committee hierarchy is inconsistent.")
+        if plan:
+            if plan.committee_id != committee.id or plan.assigned_date is None:
+                raise EntryValidationError("The linked action plan is inconsistent.")
+            record.status = attendance_status(plan.assigned_date, record.visit_date)
+            if record.status in {AttendanceStatus.EARLY, AttendanceStatus.POSTPONED} and not record.reason:
+                raise EntryValidationError(f"A reason is required for {record.status.value} attendance.")
+        elif record.village_visit_id:
+            visit = db.session.get(VillageAttendanceVisit, record.village_visit_id)
+            if not visit or visit.village_id != village.id or visit.visit_date != record.visit_date:
+                raise EntryValidationError("The village visit/date is immutable and must match the parent record.")
+            record.status = AttendanceStatus.ON_TIME
+        else:
+            raise EntryValidationError("Legacy attendance requires an action plan.")
         record.total_count = int(record.male_count or 0) + int(record.female_count or 0)
-        record.status = attendance_status(plan.assigned_date, record.visit_date)
-        if record.status in {AttendanceStatus.EARLY, AttendanceStatus.POSTPONED} and not record.reason:
-            raise EntryValidationError(f"A reason is required for {record.status.value} attendance.")
 
     if isinstance(record, SpecialsEntry):
         village = db.session.get(Village, record.village_id)
@@ -1157,7 +1173,11 @@ def _missing_parent(record: Any) -> str | None:
     elif isinstance(record, ActionPlan):
         parents = [record.committee]
     elif isinstance(record, AttendanceEntry):
-        parents = [record.village, record.committee, record.action_plan, record.submitted_by]
+        parents = [record.village, record.committee, record.submitted_by]
+        if record.action_plan is not None:
+            parents.append(record.action_plan)
+        if record.village_visit is not None:
+            parents.append(record.village_visit)
     elif isinstance(record, VillageAttendanceVisit):
         parents = [record.village]
     elif isinstance(record, SpecialsEntry):

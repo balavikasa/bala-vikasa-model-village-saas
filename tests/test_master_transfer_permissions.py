@@ -40,5 +40,5 @@ def test_transfer_routes_allow_admin_and_pc():
 def test_pc_master_data_navigation_points_to_transfer_page():
     source = (ROOT / "app" / "templates" / "base.html").read_text(encoding="utf-8")
 
-    assert "current_user.role.value in ['admin', 'pc']" in source
+    assert "current_user.role.value == 'pc'" in source
     assert "url_for('admin_transfer.page')" in source

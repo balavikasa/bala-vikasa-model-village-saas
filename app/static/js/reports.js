@@ -20,6 +20,8 @@
 
   const params = () => {
     const p = new URLSearchParams({ month: month.value });
+    const selectedVillage = new URLSearchParams(location.search).get('village');
+    if (selectedVillage) p.set('village', selectedVillage);
     if (type.value) p.set("type", type.value);
     if (status.value) p.set("status", status.value);
     return p;
@@ -37,15 +39,16 @@
 
   const adminActions = (row, mobile = false) => {
     if (!isAdmin) return "";
-    const editUrl = `/admin?resource=action-plans&edit=${encodeURIComponent(row.plan_id)}`;
+    const editUrl = row.plan_id ? `/admin?resource=action-plans&edit=${encodeURIComponent(row.plan_id)}` : null;
+    const edit = editUrl ? `<a class="button ghost compact-action" href="${editUrl}">Edit legacy plan</a>` : "";
     const deleteId = row.village_visit_id ? `data-village-delete="${Number(row.village_visit_id)}"` : `data-report-delete="${Number(row.plan_id)}"`;
     if (mobile) {
       return `<div class="report-row-admin-actions">
-        <a class="button ghost" href="${editUrl}">Edit</a>
+        ${edit}
         <button class="button danger" type="button" ${deleteId}>Delete</button>
       </div>`;
     }
-    return `<a class="button ghost compact-action" href="${editUrl}">Edit</a>
+    return `${edit}
       <button class="button danger compact-action" type="button" ${deleteId}>Delete</button>`;
   };
 
@@ -59,7 +62,7 @@
     list.innerHTML = `
       <div class="ledger-table-wrap desktop-ledger">
         <table class="ledger modern-ledger">
-          <thead><tr><th>Date</th><th>DA</th><th>Village</th><th>Committee</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Date</th><th>DA</th><th>Village</th><th>Coverage</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>${data.map((row) => `<tr>
             <td>${esc(row.date || "\u2014")}</td>
             <td>${esc(row.da)}</td>

@@ -1,3 +1,5 @@
+> **Reference rebuild 2026.27.31:** See [implementation and validation notes](docs/REFERENCE_REBUILD_2026_27_31.md). This release replaces the six main UI compositions and preserves the DA-led workflow. Local browser/component checks passed; full backend CI and staging acceptance remain required.
+
 # Bala Vikasa Model Village SaaS — 2026–27
 
 ## Update: Village Attendance workflow (27 October 2026)

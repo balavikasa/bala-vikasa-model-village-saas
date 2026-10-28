@@ -60,6 +60,8 @@
     });
   });
   search.addEventListener("input", render);
+  const initialQuery = new URLSearchParams(window.location.search).get("q");
+  if (initialQuery) search.value = initialQuery;
 
   (async () => {
     try {
@@ -71,7 +73,10 @@
           button.classList.add("hidden");
         }
       });
-      render();
+      const requestedTab = new URLSearchParams(location.search).get('tab');
+      const button = [...document.querySelectorAll('[data-directory-tab]')].find(item => item.dataset.directoryTab === requestedTab && !item.classList.contains('hidden'));
+      if (button) button.click();
+      else render();
     } catch (error) {
       grid.innerHTML = `<div class="form-alert">${esc(error.message)}</div>`;
     }

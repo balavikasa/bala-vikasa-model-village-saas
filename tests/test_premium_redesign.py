@@ -6,20 +6,22 @@ from pathlib import Path
 from PIL import Image
 
 from app.extensions import db
-from app.models import Committee, Cluster, DA, PC, Role, User, Village
+from app.models import DA, PC, Cluster, Committee, Role, User, Village
 from app.timeutils import local_today
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_official_logo_and_pwa_icons_installed():
-    image = Image.open(ROOT / "app/static/brand/bala-vikasa-official.png")
-    assert image.size == (337, 298)
-    for name in ("icon-192.png", "icon-512.png", "icon-maskable-192.png"):
-        assert (ROOT / "app/static/icons" / name).exists()
+def test_reference_logo_and_pwa_icons_installed():
+    with Image.open(ROOT / "app/static/reference/brand-lockup.png") as image:
+        assert image.size == (204, 52)
+    for name, size in (("icon-192.png", 192), ("icon-512.png", 512), ("icon-maskable-192.png", 192)):
+        with Image.open(ROOT / "app/static/icons" / name) as image:
+            assert image.size == (size, size)
     base = (ROOT / "app/templates/base.html").read_text()
-    assert 'bala-vikasa-official.png' in base
-    assert 'village-renewal.css' in base
+    assert 'reference/brand-lockup.png' in base
+    assert 'reference-ui.css' in base
+    assert 'bala-vikasa-official.png' not in base
 
 
 def test_all_new_analytics_wiring_uses_actual_village_visits():

@@ -1,53 +1,23 @@
-{% extends "base.html" %}
-{% block title %}Village Attendance · Model Village{% endblock %}
+{% extends 'base.html' %}{% from 'components/reference_ui.html' import icon %}
+{% block title %}Village Attendance - Bala Vikasa{% endblock %}
 {% block content %}
-<section class="page-shell field-page village-attendance-page attendance-fresh-theme" data-current-month="{{ local_now.strftime('%Y-%m') }}" data-today="{{ local_now.strftime('%Y-%m-%d') }}">
-  <header class="page-heading attendance-page-heading">
-    <p class="eyebrow">DA FIELD VISIT</p>
-    <h1>Village Attendance</h1>
-  </header>
-  <div class="field-layout attendance-one-column">
-    <form id="village-attendance-form" class="entry-form attendance-steps" enctype="multipart/form-data" novalidate>
-      <section class="form-section visit-basics attendance-step-card" aria-labelledby="step-visit-heading">
-        <div class="form-section-heading"><span aria-hidden="true">1</span><div><h2 id="step-visit-heading">Your village visit</h2><p>All committees in one entry</p></div></div>
-        <div class="form-grid attendance-visit-fields">
-          <label class="field"><span>Village <b>*</b></span><select id="village-select" required><option value="">Select village</option></select></label>
-          <label class="field"><span>Date <b>*</b></span><input id="visit-date" type="date" required value="{{ local_now.strftime('%Y-%m-%d') }}"></label>
-        </div>
-        <div id="village-summary" class="attendance-summary-pills" aria-live="polite">
-          <span id="summary-committees">0 committees</span><span id="summary-pending">0 to record</span><span id="summary-submitted">0 submitted</span>
-        </div>
-        <p id="village-plan-note" class="field-help attendance-plan-note" aria-live="polite">Select a village to begin.</p>
-      </section>
-
-      <section class="form-section quick-attendance-section attendance-step-card" aria-labelledby="step-attendees-heading">
-        <div class="form-section-heading"><span aria-hidden="true">2</span><div><h2 id="step-attendees-heading">Tap who attended</h2><p>Open one committee. Tap names. No typing.</p></div></div>
-        <div class="attendance-progress" aria-live="polite"><strong id="committee-progress">0 of 0 committees with attendance</strong><span class="attendance-progress-track"><span id="committee-progress-bar"></span></span></div>
-        <div id="committee-attendance-cards" class="village-committee-list"><div class="empty-state"><p>Choose a village to begin.</p></div></div>
-      </section>
-
-      <section class="form-section village-final-section attendance-step-card" aria-labelledby="step-finish-heading">
-        <div class="form-section-heading"><span aria-hidden="true">3</span><div><h2 id="step-finish-heading">Finish village visit</h2><p>Shared information. Enter only once.</p></div></div>
-        <div class="village-totals" aria-live="polite"><div><span>Male</span><strong id="village-male">0</strong></div><div><span>Female</span><strong id="village-female">0</strong></div><div><span>Total</span><strong id="village-total">0</strong></div></div>
-        <div class="shared-date-reason hidden" id="shared-date-reason-wrap"><label class="field"><span>Early / Postponed reason <b>*</b></span><textarea id="shared-date-reason" rows="2" placeholder="One reason for the village visit"></textarea><small>Saved for every committee whose date changed.</small></label></div>
-        <details class="new-member-panel"><summary><span><strong>New members</strong><small>Optional · add counts per committee</small></span><span aria-hidden="true">+</span></summary><div id="new-members-entries" class="new-member-rows"></div></details>
-        <label class="field attendance-remarks"><span>Visit remarks <em>(optional)</em></span><textarea id="village-notes" rows="2" placeholder="One remark for the whole village"></textarea></label>
-        <div class="evidence-grid compact-evidence attendance-evidence">
-          <div class="camera-card evidence-sources"><strong>One photo <b>*</b></strong><small>Shared by all committees (max 12 MB)</small>
-            <div class="photo-source-actions"><button class="button primary attendance-camera-btn" type="button" data-photo-picker="camera"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h-4l-2 3H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-4l-2-3z"/><circle cx="12" cy="13" r="4"/></svg> Take photo</button><button class="button ghost" type="button" data-photo-picker="album">Gallery</button><button class="button ghost" type="button" data-photo-picker="files">Files</button></div>
-            <input type="file" id="camera-file" accept="image/*" capture="environment" hidden>
-            <input type="file" id="album-file" accept="image/*" hidden>
-            <input type="file" id="files-file" accept="image/*" hidden>
-          </div>
-          <figure class="photo-preview hidden" id="photo-preview"><img alt="Village visit evidence preview"><button type="button" class="text-button" id="remove-photo">Remove photo</button></figure>
-          <div class="location-card"><span class="location-icon" aria-hidden="true">⌖</span><span role="status" aria-live="polite"><strong id="location-label">Getting GPS…</strong><small id="location-detail">Automatic after permission is granted.</small></span><button class="button ghost" type="button" id="retry-location">Enable location</button></div>
-        </div>
-      </section>
-      <div id="entry-error" class="form-alert hidden" role="alert"></div>
-      <footer class="sticky-form-actions attendance-submit-bar"><span class="draft-state" id="draft-state" role="status">Select a village</span><button type="submit" id="submit-village-attendance" class="button primary">Submit village visit →</button></footer>
-    </form>
-  </div>
+<section class="page-shell ref-page ref-attendance village-attendance-page" data-current-month="{{ local_now.strftime('%Y-%m') }}" data-today="{{ local_now.strftime('%Y-%m-%d') }}">
+<header class="ref-hero"><div class="ref-hero-copy"><span class="eyebrow">DA FIELD VISIT</span><h1>Village Attendance</h1><p class="lede">Record committee attendance, new<br>members and visit details.</p></div></header>
+<form id="village-attendance-form" class="ref-attendance-form" enctype="multipart/form-data" novalidate>
+<section class="ref-step"><div class="ref-step-head"><span class="ref-step-number">1</span><div><h2>Select Village</h2><p>Choose an assigned village or search<br>for another village.</p></div><button id="other-village-toggle" type="button" class="ref-other-button" aria-expanded="false" aria-controls="other-village-panel">{{ icon('pin') }}Other village {{ icon('chevron') }}</button></div>
+<div class="ref-visit-fields"><label class="field"><span>Village <b>*</b></span><select id="village-select" required><option value="">Select assigned village</option></select></label><label class="field"><span class="ref-field-label">Visit Date <small class="ref-today">Today</small></span><input id="visit-date" type="text" readonly aria-readonly="true" value="{{ local_now.strftime('%d %b %Y') }}"></label></div>
+<div id="other-village-panel" class="hidden ref-other-results"><label class="field"><span>Search all villages</span><input id="other-village-query" type="search" autocomplete="off" placeholder="Village name, mandal or district"></label><div id="other-village-results" class="other-village-results" role="listbox" aria-label="Other villages"></div></div>
+<div id="village-summary" class="ref-committee-meta" aria-live="polite"><span id="summary-committees">Select a village to start</span></div><p id="village-plan-note" class="attendance-plan-note hidden" aria-live="polite"></p>
 </section>
-{% endblock %}
-{% block head %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/attendance-theme.css') }}?theme=2026-10-28">{% endblock %}
-{% block scripts %}{{ super() }}<script src="{{ url_for('static', filename='js/village-attendance.js') }}?theme=2026-10-28" defer></script>{% endblock %}
+<section class="ref-step"><div class="ref-step-head"><span class="ref-step-number">2</span><div><h2>Committee Attendance</h2><p>Tap each committee to mark who attended.</p></div><div class="ref-progress" aria-live="polite"><strong id="committee-progress">0 of 0 recorded</strong><span class="attendance-progress-track"><span id="committee-progress-bar"></span></span></div></div>
+<div id="committee-attendance-cards" class="village-committee-list"><div class="empty-state">Choose a village to begin.</div></div></section>
+<section class="ref-step village-final-section"><div class="ref-step-head"><span class="ref-step-number">3</span><div><h2>Visit Summary</h2><p>Shared information for this village visit.</p></div></div>
+<div class="village-totals" aria-live="polite"><div>{{ icon('person') }}<span><small>Male</small><strong id="village-male">0</strong></span></div><div>{{ icon('person') }}<span><small>Female</small><strong id="village-female">0</strong></span></div><div>{{ icon('users') }}<span><small>Total</small><strong id="village-total">0</strong></span></div></div>
+<label class="ref-new-members"><span>{{ icon('addperson') }}<span>New members<small>One total across all committees</small></span></span><input id="village-new-members" type="number" inputmode="numeric" min="0" max="9999" value="0" aria-label="New members for the whole village"></label>
+<label><span class="ref-remarks-label">{{ icon('report') }}<strong>Visit remarks <em>(optional)</em></strong></span><textarea id="village-notes" rows="2" maxlength="500" placeholder="Add key observations, issues discussed or next steps..."></textarea></label><div class="ref-charcount" id="visit-note-count">0/500</div>
+<div class="ref-field-evidence"><div class="ref-evidence-card"><div class="ref-evidence-heading">{{ icon('camera') }}<strong>Evidence photo *<small>One photo shared by all committees</small></strong></div><button type="button" class="ref-photo-take" data-photo-picker="camera">{{ icon('photo') }}<strong>Tap to take photo</strong><small>or choose from gallery</small></button><div class="ref-photo-buttons"><button class="button ghost" type="button" data-photo-picker="album">{{ icon('photo') }}Gallery</button><button class="button ghost" type="button" data-photo-picker="files">{{ icon('report') }}Files</button></div><input type="file" id="camera-file" accept="image/*" capture="environment" hidden><input type="file" id="album-file" accept="image/*" hidden><input type="file" id="files-file" accept="image/*" hidden></div>
+<div class="ref-evidence-card"><div class="ref-evidence-heading">{{ icon('pin') }}<strong>GPS Location<small>Captured automatically</small></strong></div><div class="ref-gps-state" role="status" aria-live="polite">{{ icon('gps') }}<span><strong id="location-label">Getting GPS...</strong><small id="location-detail">Allow location permission.</small></span></div><button class="button ghost ref-gps-refresh" type="button" id="retry-location">{{ icon('refresh') }}Refresh GPS</button></div>
+<figure class="photo-preview hidden" id="photo-preview"><img alt="Selected evidence photo preview"><button type="button" class="text-button" id="remove-photo">Remove photo</button></figure></div>
+<div id="entry-error" class="form-alert hidden" role="alert"></div><footer class="attendance-submit-bar"><span class="draft-state" id="draft-state" role="status">Select a village</span><button type="submit" id="submit-village-attendance" class="button primary">{{ icon('check') }}Submit Village Attendance {{ icon('chevron') }}</button></footer>
+</section></form></section>
+{% endblock %}{% block scripts %}{{ super() }}<script src="{{ url_for('static',filename='js/village-attendance.js') }}?v=2026.27.31" defer></script>{% endblock %}

@@ -1,27 +1,29 @@
-{% extends "base.html" %}
-{% block title %}Analytics · Model Village{% endblock %}
+{% extends 'base.html' %}{% from 'components/reference_ui.html' import icon, slogan %}
+{% block title %}Model Village Analytics - Bala Vikasa{% endblock %}
 {% block content %}
-<section class="page-shell analytics-page">
-  <header class="page-heading split-heading analytics-heading">
-    <div>
-      <p class="eyebrow">Program analytics</p>
-      <h1>Model village analytics</h1>
-      <p class="lede">
-        Role-scoped trends, participation, action-plan status and program distributions.
-      </p>
-    </div>
-    <div class="analytics-heading-actions">
-      <a class="button ghost" href="{{ url_for('pages.monitoring') }}">Back to monitoring</a>
-    </div>
-  </header>
-
-  <article class="panel-card analytics-frame-card">
-    <iframe
-      class="analytics-frame"
-      title="Role-scoped Model Village analytics"
-      src="/dash/"
-      loading="eager"
-    ></iframe>
-  </article>
+<section class="page-shell ref-page ref-analytics" id="visit-analytics" data-month="{{ local_now.strftime('%Y-%m') }}">
+<header class="ref-hero"><div class="ref-hero-copy"><span class="eyebrow">ANALYTICS</span><h1>Model Village Analytics</h1><p class="lede">Track progress, participation and attendance across all model villages.</p></div>{{ slogan() }}</header>
+<form id="analytics-filters" class="ref-filterbar" aria-label="Filter analytics">
+<label class="field"><span>{{ icon('calendar') }} Report month</span><input type="month" id="analytics-month" aria-label="Report month"></label>
+<label class="field"><span>{{ icon('network') }} Cluster</span><select id="analytics-cluster"><option value="">All Clusters</option></select></label>
+<label class="field"><span>{{ icon('person') }} Development Associate (DA)</span><select id="analytics-da"><option value="">All DAs</option></select></label>
+<label class="field"><span>{{ icon('pin') }} Village</span><select id="analytics-village"><option value="">All Villages</option></select></label>
+<label class="field"><span>{{ icon('users') }} Committee</span><select id="analytics-committee"><option value="">All Committees</option></select></label>
+<div class="ref-filter-actions"><button type="button" class="icon-button ref-filter-reset" id="analytics-reset" aria-label="Reset filters" title="Reset filters">{{ icon('refresh') }}</button><button type="button" class="button primary" id="analytics-export">{{ icon('download') }} Export Report</button></div>
+</form>
+<div id="analytics-alert" class="form-alert hidden" role="alert"></div><p id="analytics-period" class="sr-only" role="status" aria-live="polite">Loading analytics...</p>
+<section class="ref-kpis" aria-label="Program metrics">
+{% for key,label,glyph,hint in [('villages','Total Villages','home','Within selected scope'),('villages_done','Villages Visited','check','Recorded this month'),('visits','Attendance Submissions','report','One record per village visit'),('people_attended','People Attended','users','Committee attendance total'),('new_members','New Members','addperson','Village-wide totals')] %}
+<article class="ref-metric"><span class="ref-metric-icon">{{ icon(glyph) }}</span><div><span class="ref-metric-label">{{ label }}</span><strong data-analytics-kpi="{{ key }}">&mdash;</strong><small>{{ hint }}</small></div></article>{% endfor %}
 </section>
-{% endblock %}
+<section class="ref-analytics-grid" aria-label="Analytics charts">
+<article class="ref-card ref-chart-card ref-span2"><div class="ref-card-title"><h2>Villages Visited vs Pending</h2></div><div id="analytics-completion" class="ref-chart" aria-live="polite"></div></article>
+<article class="ref-card ref-chart-card ref-span2"><div class="ref-card-title"><h2>Male vs Female Attendance</h2></div><div id="analytics-gender" class="ref-chart" aria-live="polite"></div></article>
+<article class="ref-card ref-chart-card ref-span2"><div class="ref-card-title"><h2>Committee Participation</h2></div><div id="analytics-committees" class="ref-chart" aria-live="polite"></div></article>
+<article class="ref-card ref-chart-card ref-trend-card ref-span3"><div class="ref-card-title"><h2>Monthly Visit Trend</h2><div class="ref-chart-legend"><span><i></i>Visits</span><span><i class="coral"></i>People</span></div></div><div id="analytics-trend" class="ref-chart"></div></article>
+<article class="ref-card ref-chart-card ref-trend-card ref-span3"><div class="ref-card-title"><h2>DA Participation Comparison</h2><div class="ref-chart-legend"><span><i></i>Villages</span><span><i class="coral"></i>People</span></div></div><div id="analytics-das" class="ref-chart"></div></article>
+<article class="ref-card ref-chart-card ref-span3"><div class="ref-card-title"><h2>Village Coverage Map</h2><a href="{{ url_for('pages.map_page') }}">Open map &rarr;</a></div><div id="analytics-map" class="ref-map" aria-label="Village locations"></div><p class="ref-map-caption" id="analytics-map-note">Latest field coordinates. Only villages with a valid location are shown.</p></article>
+<article class="ref-card ref-chart-card ref-span3"><div class="ref-card-title"><h2>{{ icon('light') }} Key Insights</h2><a href="{{ url_for('reports.reports_page') }}">View Detailed Report &rarr;</a></div><ul id="analytics-insights" class="ref-insights"></ul><div id="analytics-pending" class="ref-pending-summary"></div></article>
+</section><p class="ref-analytics-footnote">Actual submitted attendance only. Counts are scoped to your permissions. Attendance is not a count of unique people across different committees.</p>
+</section>{% endblock %}
+{% block scripts %}{{ super() }}<script src="{{ url_for('static',filename='js/visit-analytics.js') }}?v=2026.27.31" defer></script>{% endblock %}

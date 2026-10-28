@@ -39,11 +39,14 @@ def test_action_plan_transfer_has_preview_confirm_and_prepare_next_month():
 
 def test_mobile_role_navigation_is_explicit():
     base = read("app/templates/base.html")
-    for label in ("Home", "Plans", "Reports", "Map"):
-        assert f"<small>{label}</small>" in base
-    assert "<small>Entry</small>" in base
-    assert "<small>Team</small>" in base
-    assert "<small>People</small>" in base
+    nav = base.split("{% set nav =", 1)[1].split("%}", 1)[0]
+    da, management = nav.split("if da else", 1)
+    for label in ("Attendance", "Dashboard", "My Villages", "Reports", "Map"):
+        assert label in da
+    assert "Administration" not in da
+    assert "Analytics" in management
+    assert 'aria-label="Mobile navigation"' in base
+    assert "data-mobile-menu-open" in base
 
 
 def test_admin_master_transfer_is_preview_first_and_non_destructive():

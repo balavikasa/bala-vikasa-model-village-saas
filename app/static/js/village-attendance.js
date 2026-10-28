@@ -6,7 +6,7 @@
   const esc = window.MV.escapeHtml;
   const form = $('#village-attendance-form');
   const village = $('#village-select');
-  const date = $('#visit-date');
+
   const cards = $('#committee-attendance-cards');
   const planNote = $('#village-plan-note');
   const error = $('#entry-error');
@@ -16,7 +16,13 @@
   const locationDetail = $('#location-detail');
   const locationButton = $('#retry-location');
   const preview = $('#photo-preview');
-  const month = root.dataset.currentMonth;
+  const otherToggle = $('#other-village-toggle');
+  const otherPanel = $('#other-village-panel');
+  const otherQuery = $('#other-village-query');
+  const otherResults = $('#other-village-results');
+  const newMembersField = $('#village-new-members');
+  let availableVillages = [];
+  let selectedOutside = false;
   const params = new URLSearchParams(location.search);
   let submissionId = crypto.randomUUID();
   let allCommittees = [];
@@ -25,10 +31,19 @@
   let requestId = 0;
   let coords = null;
   let busy = false;
+  let visitSubmitted = false;
+  // Browser-facing date is read-only; server clock remains authoritative.
+  function refreshToday() {
+    const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric',
+    }).formatToParts(new Date()).map(piece => [piece.type, piece.value]));
+    $('#visit-date').value = `${parts.day} ${parts.month} ${parts.year}`;
+  }
+  refreshToday();
+  window.setInterval(refreshToday, 60_000);
   send.disabled = true;
 
-  const pending = () => allCommittees.filter(i => i.plan && !i.plan.attendance_entry_id && !i.plan.has_recycled_attendance);
-  const missing = () => allCommittees.filter(i => !i.plan || i.plan.has_recycled_attendance);
+  const pending = () => allCommittees;
   const showError = (text) => { error.textContent = text; error.classList.remove('hidden'); error.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); };
   const clearError = () => { error.textContent = ''; error.classList.add('hidden'); };
   async function get(url) {
@@ -38,6 +53,7 @@
     return payload;
   }
   function validCoords(p) {
+    if (p?.latitude == null || p?.longitude == null || String(p.latitude).trim() === '' || String(p.longitude).trim() === '') return false;
     const lat = Number(p?.latitude), lon = Number(p?.longitude);
     return Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180 && (Math.abs(lat) > 0.000001 || Math.abs(lon) > 0.000001);
   }
@@ -90,7 +106,7 @@
       ids: selected.map(node => Number(node.dataset.visitMember)),
     };
   }
-  function setSubmitState() { send.disabled = busy || !village.value || missing().length > 0 || pending().length === 0; }
+  function setSubmitState() { send.disabled = busy || !village.value || pending().length === 0 || visitSubmitted; }
   function updateCounts() {
     let male = 0, female = 0, active = 0;
     for (const item of pending()) {
@@ -99,7 +115,7 @@
       const count = selectedCounts(row);
       male += count.male; female += count.female;
       if (count.ids.length) active += 1;
-      row.querySelector('[data-committee-total]').textContent = count.ids.length ? `${count.ids.length} present` : '';
+      row.querySelector('[data-committee-total]').textContent = `${count.ids.length} / ${(item.members || []).length}`;
       const rowCounts = row.querySelector('[data-committee-counts]');
       if (rowCounts) rowCounts.textContent = `Male ${count.male} · Female ${count.female} · Total ${count.ids.length}`;
       row.classList.toggle('has-selection', count.ids.length > 0);
@@ -108,53 +124,32 @@
     $('#village-male').textContent = String(male);
     $('#village-female').textContent = String(female);
     $('#village-total').textContent = String(male + female);
-    $('#committee-progress').textContent = `${active} of ${pending().length} committees with attendance`;
+    $('#committee-progress').textContent = `${active} of ${pending().length} recorded`;
     $('#committee-progress-bar').style.width = `${pending().length ? Math.round(100 * active / pending().length) : 0}%`;
   }
-  function dateStatus() {
-    const needsReason = pending().some(item => date.value && item.plan?.assigned_date && date.value !== item.plan.assigned_date);
-    $('#shared-date-reason-wrap').classList.toggle('hidden', !needsReason);
-    $('#shared-date-reason').required = needsReason;
-  }
   function render() {
-    const eligible = pending(), unavailable = missing();
-    const completed = allCommittees.filter(item => item.plan?.attendance_entry_id);
-    const needsScheduling = unavailable.length > 0;
+    const eligible = pending();
     $('#summary-committees').textContent = `${allCommittees.length} committees`;
-    $('#summary-pending').textContent = `${eligible.length} to record`;
-    $('#summary-submitted').textContent = `${completed.length} submitted`;
-    planNote.classList.toggle('form-alert', needsScheduling);
-    planNote.classList.toggle('hidden', !needsScheduling);
-    planNote.textContent = needsScheduling
-      ? `${unavailable.length} committee(s) need PC scheduling or Admin restoration. ${eligible.length} scheduled · ${completed.length} completed.`
-      : `${allCommittees.length} committees · ${eligible.length} to record · ${completed.length} already submitted`;
-    status.textContent = needsScheduling ? 'Scheduling required' : eligible.length ? 'Ready to record' : 'No pending committees';
+    planNote.classList.toggle('form-alert', visitSubmitted);
+    planNote.classList.toggle('hidden', !visitSubmitted);
+    planNote.textContent = visitSubmitted ? 'This village already has an attendance entry this month. Choose another village.' : '';
+    status.textContent = visitSubmitted ? 'Already recorded this month' : eligible.length ? 'Ready to record' : 'No committees in this village';
     setSubmitState();
     if (!allCommittees.length) {
-      cards.innerHTML = '<div class="empty-state">No committees available in this village.</div>';
-      $('#new-members-entries').innerHTML = '';
+      cards.innerHTML = '<div class="empty-state">No active committees in this village.</div>';
       updateCounts(); return;
     }
-    const firstReady = allCommittees.find(item => eligible.includes(item))?.id;
-    cards.innerHTML = allCommittees.map((item, idx) => {
-      const plan = item.plan;
-      const done = Boolean(plan?.attendance_entry_id);
-      const recycled = Boolean(plan?.has_recycled_attendance);
-      const ready = Boolean(plan) && !done && !recycled;
-      const label = ready ? `Scheduled ${esc(plan.assigned_date)}` : done ? 'Attendance already submitted' : recycled ? 'Restore from Recycle Bin' : 'PC scheduling required';
-      return `<details class="mv-committee-card" data-committee-id="${item.id}" data-ready="${ready}" ${ready && item.id === firstReady ? 'open' : ''}>
-        <summary><span class="mv-committee-number">${idx + 1}</span><span class="mv-committee-name"><strong>${esc(item.name)}</strong><small>${label}</small></span><span class="committee-selected-count" data-committee-total>${ready ? '0 present' : done ? 'Done' : 'Waiting'}</span><span class="committee-chevron" aria-hidden="true">⌄</span></summary>
-        ${ready ? `<div class="mv-committee-details"><div class="attendee-help">Tap a name to mark present. Tap again to undo.</div><div class="mv-member-list">${roleGroups(item.members)}</div><div data-gender-alert class="form-alert hidden">One or more selected members have missing gender in Master Data. Ask Admin/PC to correct it before submission.</div><button type="button" class="button ghost next-committee" data-next-committee>Next committee ↓</button></div>` : ''}
-      </details>`;
-    }).join('');
-    $('#new-members-entries').innerHTML = eligible.map(item => `<label class="new-member-row"><span>${esc(item.name)}</span><input type="number" inputmode="numeric" min="0" max="9999" value="0" data-new-count="${item.id}" aria-label="New member count for ${esc(item.name)}"></label>`).join('') || '<small>No pending committees.</small>';
+    cards.innerHTML = allCommittees.map((item, idx) => `
+      <details class="mv-committee-card" data-committee-id="${item.id}" data-ready="true" >
+        <summary><span class="ref-committee-icon">${window.BVUI.icon(/water/i.test(item.name)?'water':/health/i.test(item.name)?'heart':/youth/i.test(item.name)?'gear':/vdc/i.test(item.name)?'building':/environment|farm/i.test(item.name)?'leaf':'users')}</span><span class="mv-committee-number">${idx + 1}</span><span class="mv-committee-name"><strong>${esc(item.name)}</strong><small>${(item.members || []).length} registered members</small></span><span class="committee-selected-count" data-committee-total>0 present</span><span class="committee-chevron" aria-hidden="true">⌄</span></summary>
+        <div class="mv-committee-details"><div class="attendee-help">Tap a name to mark present. Tap again to undo.</div><div class="mv-member-list">${roleGroups(item.members)}</div><div data-gender-alert class="form-alert hidden">A selected member is missing gender in Master Data. Ask Admin to correct it before submitting.</div><button type="button" class="button ghost next-committee" data-next-committee>Next committee ↓</button></div>
+      </details>`).join('');
     cards.querySelectorAll('.mv-committee-card').forEach(row => {
       row.addEventListener('toggle', () => {
-        if (!row.open) return;
-        cards.querySelectorAll('.mv-committee-card[open]').forEach(other => { if (other !== row) other.open = false; });
+        if (row.open) cards.querySelectorAll('.mv-committee-card[open]').forEach(other => { if (other !== row) other.open = false; });
       });
     });
-    updateCounts(); dateStatus();
+    updateCounts();
   }
   cards.addEventListener('click', event => {
     const chip = event.target.closest('[data-visit-member]');
@@ -174,33 +169,62 @@
     if (following) { following.open = true; following.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
     else $('.village-final-section').scrollIntoView({ block: 'start', behavior: 'smooth' });
   });
-  date.addEventListener('change', dateStatus);
   async function loadVillage(id) {
     const stamp = ++requestId;
-    cards.innerHTML = '<div class="empty-state">Loading committee members…</div>';
-    allCommittees = []; setSubmitState();
+    cards.innerHTML = '<div class="empty-state">Loading committees and members…</div>';
+    allCommittees = []; visitSubmitted = false; setSubmitState();
     if (!id) { cards.innerHTML = '<div class="empty-state">Select a village.</div>'; return; }
     try {
-      const base = await get(`/api/v1/villages/${encodeURIComponent(id)}/committees`);
-      const batches = await Promise.all((base.items || []).map(async committee => {
-        const [plans, members] = await Promise.all([
-          get(`/api/v1/committees/${committee.id}/action-plans?type=Attendance&executable=1&month=${encodeURIComponent(month)}`),
-          get(`/api/v1/committees/${committee.id}/members`),
-        ]);
-        const plan = (plans.items || []).find(p => !p.attendance_entry_id) || (plans.items || [])[0] || null;
-        return { ...committee, plan, members: members.items || [] };
-      }));
+      const data = await get(`/api/v1/attendance/villages/${encodeURIComponent(id)}/details`);
       if (stamp !== requestId) return;
-      allCommittees = batches; render();
+      allCommittees = data.items || []; visitSubmitted = Boolean(data.submitted);
+      render();
     } catch (e) { if (stamp === requestId) showError(e.message); }
   }
-  village.addEventListener('change', () => { clearError(); loadVillage(village.value); });
+  const assignedOptions = () => {
+    const assigned = availableVillages.filter(v => v.assigned);
+    village.innerHTML = '<option value="">Select assigned village</option>' + assigned.map(v => `<option value="${v.id}">${esc(v.name)}</option>`).join('');
+    if (selectedOutside) {
+      const other = availableVillages.find(v => v.id === Number(village.dataset.otherId));
+      if (other) village.insertAdjacentHTML('beforeend', `<option value="${other.id}">${esc(other.name)} (Other)</option>`);
+    }
+  };
+  function renderOtherResults() {
+    const query = otherQuery.value.trim().toLowerCase();
+    const matched = availableVillages.filter(v => !v.assigned && (!query || `${v.name} ${v.mandal} ${v.district}`.toLowerCase().includes(query))).slice(0, 30);
+    otherResults.innerHTML = matched.length ? matched.map(v => `<button type="button" role="option" class="other-village-choice" data-other-id="${v.id}">${esc(v.name)} <small>${esc([v.mandal, v.district].filter(Boolean).join(' · '))}</small></button>`).join('') : '<p class="field-help">No matching village.</p>';
+  }
+  otherToggle.addEventListener('click', () => {
+    const open = otherPanel.classList.toggle('hidden') === false;
+    otherToggle.setAttribute('aria-expanded', String(open));
+    if (open) { renderOtherResults(); otherQuery.focus(); }
+  });
+  otherQuery.addEventListener('input', renderOtherResults);
+  otherResults.addEventListener('click', event => {
+    const option = event.target.closest('[data-other-id]');
+    if (!option) return;
+    const id = Number(option.dataset.otherId);
+    selectedOutside = true; village.dataset.otherId = String(id); assignedOptions();
+    village.value = String(id); otherPanel.classList.add('hidden');
+    otherToggle.setAttribute('aria-expanded','false'); otherToggle.textContent = 'Other village selected';
+    clearError(); loadVillage(id);
+  });
+  village.addEventListener('change', () => {
+    selectedOutside = availableVillages.find(v => v.id === Number(village.value))?.assigned === false;
+    otherToggle.textContent = 'Other village';
+    clearError(); loadVillage(village.value);
+  });
   (async () => {
     try {
-      const data = await get('/api/v1/villages');
-      village.innerHTML = '<option value="">Select village</option>' + (data.items || []).map(v => `<option value="${v.id}">${esc(v.name)}</option>`).join('');
+      const data = await get('/api/v1/attendance/villages');
+      availableVillages = data.items || []; assignedOptions();
       const selectedVillage = params.get('village');
-      if (selectedVillage && [...village.options].some(opt => opt.value === selectedVillage)) { village.value = selectedVillage; loadVillage(village.value); }
+      if (selectedVillage && availableVillages.some(v => String(v.id) === selectedVillage)) {
+        const target = availableVillages.find(v => String(v.id) === selectedVillage);
+        selectedOutside = !target.assigned;
+        if (selectedOutside) village.dataset.otherId = selectedVillage;
+        assignedOptions(); village.value = selectedVillage; loadVillage(village.value);
+      }
     } catch (e) { showError(e.message); }
   })();
 
@@ -238,34 +262,27 @@
     previewUrl = null; for (const input of Object.values(inputs)) input.value = '';
   });
   function body() {
-    const eligible = pending(), unavailable = missing();
-    if (!eligible.length) throw new Error('There are no pending scheduled Attendance committees for this village.');
-    if (unavailable.length) throw new Error(`Ask your PC to schedule these committees or ask Admin to restore recycled records: ${unavailable.map(c => c.name).join(', ')}.`);
-    const sharedReason = $('#shared-date-reason').value.trim();
+    const eligible = pending();
+    if (!eligible.length) throw new Error('This village has no active committees.');
+    if (visitSubmitted) throw new Error('Attendance is already recorded for this village this month.');
     const sharedRemarks = $('#village-notes').value.trim();
-    const reasonRequired = eligible.some(item => date.value !== item.plan.assigned_date);
-    if (reasonRequired && !sharedReason) throw new Error('Enter one Early/Postponed reason for the village visit.');
+    const newMembers = Number(newMembersField.value || 0);
+    if (!Number.isInteger(newMembers) || newMembers < 0 || newMembers > 9999) throw new Error('Enter a valid village-wide new members number.');
     const entries = eligible.map(item => {
       const row = cards.querySelector(`[data-committee-id="${item.id}"]`);
       const people = selectedCounts(row);
-      if (people.unknown) throw new Error(`Gender is missing in Master Data for a selected member of ${item.name}. Please ask Admin/PC to correct it.`);
-      const countInput = $(`[data-new-count="${item.id}"]`);
-      const newMembers = Number(countInput?.value || 0);
-      if (!Number.isInteger(newMembers) || newMembers < 0) throw new Error(`Enter a valid new members count for ${item.name}.`);
-      return {
-        committee_id: item.id, counts_mode: 'selected_members',
-        male_count: people.male, female_count: people.female,
-        new_members_count: newMembers, visit_member_ids: people.ids,
-        reason: date.value !== item.plan.assigned_date ? sharedReason : '', remarks: sharedRemarks,
-      };
+      if (people.unknown) throw new Error(`Selected members in ${item.name} have missing gender. Ask Admin to correct Master Data.`);
+      return { committee_id: item.id, counts_mode: 'selected_members', visit_member_ids: people.ids };
     });
     if (!photo) throw new Error('Attach one evidence photo for the village.');
-    if (!validCoords(coords)) { window.MVLocation?.capture(true); throw new Error('Current device location is required. Enable location and try again.'); }
-    if (Date.now() - coords.capturedAt > 2 * 60 * 1000) { window.MVLocation?.capture(true); throw new Error('GPS fix is older than 2 minutes. It is refreshing; submit again once captured.'); }
+    if (!validCoords(coords)) { window.MVLocation?.capture(true); throw new Error('Current GPS location is required.'); }
+    if (Date.now() - coords.capturedAt > 2 * 60 * 1000) { window.MVLocation?.capture(true); throw new Error('GPS fix is older than 2 minutes. Refreshing now.'); }
     const data = new FormData();
     data.append('client_submission_id', submissionId);
     data.append('village_id', village.value);
-    data.append('visit_date', date.value);
+    // Entry date is assigned by the server; it cannot be altered from this form.
+    data.append('other_village', selectedOutside ? '1' : '0');
+    data.append('new_members_count', String(newMembers));
     data.append('latitude', coords.latitude.toFixed(6));
     data.append('longitude', coords.longitude.toFixed(6));
     data.append('remarks', sharedRemarks);
@@ -274,15 +291,17 @@
     return data;
   }
   function reset() {
-    submissionId = crypto.randomUUID(); form.reset(); date.value = root.dataset.today;
-    village.value = ''; allCommittees = []; busy = false; setSubmitState();
-    planNote.classList.remove('form-alert'); planNote.classList.remove('hidden');
+    submissionId = crypto.randomUUID(); form.reset();
+    $('#village-notes').dispatchEvent(new Event('input'));
+    otherPanel.classList.add('hidden');
+    otherToggle.setAttribute('aria-expanded', 'false');
+    otherToggle.textContent = 'Other village';
+    refreshToday();
+    village.value = ''; selectedOutside = false; delete village.dataset.otherId; assignedOptions();
+    allCommittees = []; visitSubmitted = false; busy = false; setSubmitState();
+    planNote.classList.remove('form-alert'); planNote.classList.add('hidden');
     $('#summary-committees').textContent = '0 committees';
-    $('#summary-pending').textContent = '0 to record';
-    $('#summary-submitted').textContent = '0 submitted';
     cards.innerHTML = '<div class="empty-state">Select a village to begin.</div>';
-    planNote.textContent = 'Select a village to begin.';
-    $('#new-members-entries').innerHTML = ''; $('#shared-date-reason-wrap').classList.add('hidden');
     $('#village-male').textContent = '0'; $('#village-female').textContent = '0'; $('#village-total').textContent = '0';
     $('#committee-progress').textContent = '0 of 0 committees'; $('#committee-progress-bar').style.width = '0%';
     photo = null; preview.classList.add('hidden');
@@ -290,8 +309,8 @@
     previewUrl = null; status.textContent = 'Select a village';
   }
   form.addEventListener('submit', async event => {
-    event.preventDefault(); clearError();
-    if (!village.value || !date.value) return showError('Choose a village and visit date.');
+    event.preventDefault(); clearError(); refreshToday();
+    if (!village.value) return showError('Choose a village.');
     let data; try { data = body(); } catch (e) { return showError(e.message); }
     busy = true; setSubmitState(); status.textContent = navigator.onLine ? 'Submitting village visit…' : 'Saving visit offline…';
     try {

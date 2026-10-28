@@ -21,16 +21,21 @@ bp = Blueprint("pages", __name__)
 @bp.get("/")
 @login_required
 def home():
-    if current_user.role == Role.DA:
-        return redirect(url_for("planning.action_plans_page"))
-    return redirect(url_for("pages.overview"))
+    return redirect(url_for("pages.attendance" if current_user.role == Role.DA else "pages.overview"))
 
 
 @bp.get("/overview")
 @login_required
 def overview():
     if current_user.role == Role.DA:
-        return redirect(url_for("planning.action_plans_page"))
+        return redirect(url_for("pages.attendance"))
+    return render_template("overview.html")
+
+
+@bp.get("/dashboard")
+@login_required
+def dashboard():
+    """Optional dashboard. The DA home/login route remains Attendance."""
     return render_template("overview.html")
 
 
@@ -38,9 +43,6 @@ def overview():
 @login_required
 @role_required(Role.DA)
 def attendance():
-    from .services.monthly_plans import ensure_recurring_attendance
-    from .timeutils import current_month
-    ensure_recurring_attendance(current_user._get_current_object(), current_month())
     return render_template("village_attendance.html")
 
 
