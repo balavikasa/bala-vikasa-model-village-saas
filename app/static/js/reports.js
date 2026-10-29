@@ -19,7 +19,8 @@
   const currentMonth = root.dataset.currentMonth || month.value;
 
   const params = () => {
-    const p = new URLSearchParams({ month: month.value });
+    const p = window.BVReporting ? window.BVReporting.params() : new URLSearchParams({ month: month.value });
+    if(search.value.trim())p.set("q",search.value.trim());
     const selectedVillage = new URLSearchParams(location.search).get('village');
     if (selectedVillage) p.set('village', selectedVillage);
     if (type.value) p.set("type", type.value);
@@ -27,13 +28,7 @@
     return p;
   };
 
-  const filtered = () => {
-    const q = search.value.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((row) =>
-      `${row.da} ${row.village} ${row.committee} ${row.type} ${row.status}`.toLowerCase().includes(q)
-    );
-  };
+  const filtered = () => rows;
 
   const badge = (value) => `<span class="badge" data-status="${esc(value)}">${esc(value)}</span>`;
 
@@ -55,21 +50,21 @@
   const render = () => {
     const data = filtered();
     if (!data.length) {
-      list.innerHTML = `<div class="empty-state"><strong>No reports match.</strong><span>Change month or filters.</span></div>`;
+      list.innerHTML = `<div class="empty-state"><strong>No reports match.</strong><span>Change the reporting period or filters.</span></div>`;
       return;
     }
 
     list.innerHTML = `
       <div class="ledger-table-wrap desktop-ledger">
         <table class="ledger modern-ledger">
-          <thead><tr><th>Date</th><th>DA</th><th>Village</th><th>Coverage</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Date</th><th>DA</th><th>Village</th><th>Coverage</th><th>Type</th><th>Status</th><th>Male</th><th>Female</th><th>Total</th><th>New members</th><th>Actions</th></tr></thead>
           <tbody>${data.map((row) => `<tr>
             <td>${esc(row.date || "\u2014")}</td>
             <td>${esc(row.da)}</td>
             <td>${esc(row.village)}</td>
-            <td>${esc(row.committee)}</td>
+            <td>${esc(row.committee)}<small>${esc(row.history_kind||"")}</small></td>
             <td>${esc(row.type)}</td>
-            <td>${badge(row.status)}</td>
+            <td>${badge(row.status)}</td><td>${Number(row.male||0)}</td><td>${Number(row.female||0)}</td><td>${Number(row.people_attended||0)}</td><td>${Number(row.new_members||0)}</td>
             <td><div class="row-actions">
               <a class="button ghost compact-action" href="${esc(row.view_url)}">View</a>
               ${adminActions(row)}
@@ -80,7 +75,7 @@
       <div class="mobile-ledger">${data.map((row) => `<article class="ledger-card report-card">
         <div class="ledger-card-top"><div><strong>${esc(row.committee)}</strong><small>${esc(row.village)} \u00b7 ${esc(row.da)}</small></div>${badge(row.status)}</div>
         <div class="ledger-card-meta"><span>${esc(row.type)}</span><span>${esc(row.date || "\u2014")}</span></div>
-        <a class="button ghost wide" href="${esc(row.view_url)}">View</a>
+        <p>Male ${Number(row.male||0)} + Female ${Number(row.female||0)} = <strong>${Number(row.people_attended||0)} attendances</strong> &middot; New members ${Number(row.new_members||0)}</p><small>${esc(row.history_kind||"")}</small><a class="button ghost wide" href="${esc(row.view_url)}">View</a>
         ${adminActions(row, true)}
       </article>`).join("")}</div>`;
   };
@@ -106,13 +101,17 @@
     }
   };
 
+  let loadId=0;
   const load = async () => {
+    const id=++loadId, requestParams=params();
+    exportLink.removeAttribute("href");exportLink.setAttribute("aria-disabled","true");
+    try {
     list.innerHTML = `<div class="skeleton-card">Loading reports...</div>`;
-    const response = await window.MV.api(`/api/v1/reports?${params()}`);
+    const response = await window.MV.api(`/api/v1/reports?${requestParams}`);
     const payload = await response.json();
+    if(id!==loadId)return;
     if (!response.ok) {
-      list.innerHTML = `<div class="form-alert">${esc(payload.error || "Could not load reports.")}</div>`;
-      return;
+      throw new Error(payload.error || "Could not load reports.");
     }
     rows = payload.items || [];
     label.textContent = payload.label;
@@ -120,11 +119,14 @@
       const key = node.dataset.reportMetric;
       node.textContent = payload.summary?.[key] ?? 0;
     });
-    exportLink.href = `/reports/export.xlsx?${params()}`;
+    exportLink.href = `/reports/export.xlsx?${requestParams}`;
+    exportLink.setAttribute("aria-disabled","false");
     const url = new URL(window.location.href);
-    url.searchParams.set("month", month.value);
+    ["q","type","status","period","date","month","year","from","to"].forEach(key=>url.searchParams.delete(key));
+    requestParams.forEach((value,key)=>url.searchParams.set(key,value));
     history.replaceState({}, "", url);
     render();
+    }catch(error){if(id!==loadId)return;rows=[];list.innerHTML=`<div class="form-alert">${esc(error.message||"Reports unavailable. Retry this selection.")}</div>`;document.querySelectorAll('[data-report-metric]').forEach(n=>n.textContent='—');}
   };
 
   list.addEventListener("click", (event) => {
@@ -138,19 +140,22 @@
     const value = monthDate(month.value);
     value.setMonth(value.getMonth() + delta);
     month.value = monthValue(value);
-    load();
+    window.BVReporting?.set({period:"month",month:month.value});
   };
 
   document.querySelectorAll("[data-month-step]").forEach((button) =>
     button.addEventListener("click", () => step(Number(button.dataset.monthStep)))
   );
-  document.querySelector("[data-current-month]")?.addEventListener("click", () => {
+  document.querySelector("button[data-current-month]")?.addEventListener("click", () => {
     month.value = currentMonth;
-    load();
+    window.BVReporting.set({period:"this_month"});
   });
-  month.addEventListener("change", load);
+  month.addEventListener("change", ()=>window.BVReporting.set({period:"month",month:month.value}));
   type.addEventListener("change", load);
   status.addEventListener("change", load);
-  search.addEventListener("input", render);
+  let searchTimer;
+  search.addEventListener("input", ()=>{++loadId;exportLink.removeAttribute("href");exportLink.setAttribute("aria-disabled","true");document.querySelectorAll("[data-report-metric]").forEach(n=>n.textContent="\u2014");clearTimeout(searchTimer);searchTimer=setTimeout(load,250);});
+  document.addEventListener("bv:period-change",load);
+  search.value=new URLSearchParams(location.search).get("q")||"";
   load();
 })();

@@ -7,6 +7,7 @@ from flask_login import current_user, login_required
 
 from .extensions import db
 from .models import ActionPlan, Role, VillageAttendanceVisit
+from .reporting_core import resolve_period
 from .scoping import ScopeError, require_scoped
 from .services.audit import soft_delete
 from .services.monthly_plans import PlanningError, month_key, month_label, month_start
@@ -16,6 +17,7 @@ from .services.reports import (
     report_rows,
     report_summary,
 )
+from .timeutils import local_today
 
 bp = Blueprint("reports", __name__)
 
@@ -36,7 +38,10 @@ def _requested_village() -> int | None:
 @bp.get("/reports")
 @login_required
 def reports_page():
-    selected = month_start(request.args.get("month"))
+    try:
+        selected = month_start(request.args.get("month"))
+    except (ValueError, PlanningError):
+        selected = local_today().replace(day=1)
     return render_template(
         "reports.html",
         selected_month=month_key(selected),
@@ -74,15 +79,17 @@ def report_detail_page(plan_id: int):
 @login_required
 def report_data():
     try:
-        selected = month_start(request.args.get("month"))
+        period = resolve_period(request.args, local_today())
+        selected = (period.start or local_today()).replace(day=1)
         plan_type = (request.args.get("type") or "").strip() or None
         status = (request.args.get("status") or "").strip() or None
         if plan_type not in {None, "Attendance", "Specials"}:
             raise PlanningError("Type must be Attendance or Specials.")
-        rows = report_rows(current_user._get_current_object(), selected, plan_type=plan_type, status=status, village_id=_requested_village())
+        rows = report_rows(current_user._get_current_object(), selected, plan_type=plan_type, status=status, village_id=_requested_village(), period=period, q=request.args.get("q", "").strip()[:200])
         return jsonify(
             month=month_key(selected),
-            label=month_label(selected),
+            label=period.label,
+            period=period.as_dict(),
             items=rows,
             summary=report_summary(rows),
         )
@@ -158,7 +165,8 @@ def delete_report_plan(plan_id: int):
 @login_required
 def export_reports():
     try:
-        selected = month_start(request.args.get("month"))
+        period = resolve_period(request.args, local_today())
+        selected = (period.start or local_today()).replace(day=1)
         plan_type = (request.args.get("type") or "").strip() or None
         status = (request.args.get("status") or "").strip() or None
         if plan_type not in {None, "Attendance", "Specials"}:
@@ -169,6 +177,7 @@ def export_reports():
             plan_type=plan_type,
             status=status,
             village_id=_requested_village(),
+            period=period, q=request.args.get("q", "").strip()[:200],
         )
         buffer = BytesIO()
         workbook.save(buffer)

@@ -47,7 +47,7 @@ def test_da_default_is_attendance_and_dashboard_is_optional(client, app):
 def test_dashboard_series_remains_da_scoped(client, app):
     _accounts(app)
     _login(client, "da")
-    response = client.get("/api/v1/dashboard/series")
+    response = client.get("/api/v1/dashboard/series?period=this_week")
     assert response.status_code == 200
     assert response.json["counts"]["villages"] == 1
     assert len(response.json["daily_trend"]) == 7

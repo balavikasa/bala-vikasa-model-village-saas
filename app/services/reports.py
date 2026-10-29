@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
-from sqlalchemy import func
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import selectinload
 
 from ..extensions import db
@@ -23,6 +23,7 @@ from ..models import (
     Village,
     VillageAttendanceVisit,
 )
+from ..reporting_core import ReportingPeriod
 from ..scoping import inherited_cluster, scoped_select
 from .monthly_plans import action_plan_status, month_key, month_label
 
@@ -42,11 +43,11 @@ def report_plans(
     plan_type: str | None = None,
     status: str | None = None,
     village_id: int | None = None,
+    period: ReportingPeriod | None = None,
 ) -> list[ActionPlan]:
     stmt = (
         scoped_select(ActionPlan, user)
         .where(
-            ActionPlan.plan_month == month,
             ActionPlan.plan_type.is_not(None),
             ActionPlan.assigned_date.is_not(None),
         )
@@ -61,11 +62,22 @@ def report_plans(
         )
         .order_by(ActionPlan.assigned_date.desc(), ActionPlan.id.desc())
     )
+    if period is None:
+        stmt = stmt.where(ActionPlan.plan_month == month)
+    else:
+        attendance_bounds = [AttendanceEntry.visit_date <= period.end, AttendanceEntry.is_enabled.is_(True), AttendanceEntry.is_deleted.is_(False)]
+        special_bounds = [SpecialsEntry.event_date <= period.end, SpecialsEntry.is_enabled.is_(True), SpecialsEntry.is_deleted.is_(False)]
+        if period.start:
+            attendance_bounds.append(AttendanceEntry.visit_date >= period.start)
+            special_bounds.append(SpecialsEntry.event_date >= period.start)
+        stmt = stmt.where(or_(ActionPlan.attendance_entry.has(and_(*attendance_bounds)),
+                              ActionPlan.specials_entry.has(and_(*special_bounds))))
     if village_id is not None:
         stmt = stmt.where(ActionPlan.committee.has(Committee.village_id == village_id))
     if plan_type:
         stmt = stmt.where(ActionPlan.plan_type == ActionPlanType(plan_type))
-    plans = list(db.session.scalars(stmt).unique())
+    plans = [p for p in db.session.scalars(stmt).unique()
+             if p.committee.village.is_enabled and not p.committee.village.is_deleted]
     if status:
         plans = [plan for plan in plans if action_plan_status(plan) == status]
     return plans
@@ -93,16 +105,22 @@ def report_row(plan: ActionPlan) -> dict[str, Any]:
         "has_entry": bool(entry and not entry.is_deleted),
         "people_attended": entry.total_count if isinstance(entry, AttendanceEntry) and not entry.is_deleted else 0,
         "new_members": entry.new_members_count if isinstance(entry, AttendanceEntry) and not entry.is_deleted else 0,
+        "male": entry.male_count if isinstance(entry, AttendanceEntry) and not entry.is_deleted else 0,
+        "female": entry.female_count if isinstance(entry, AttendanceEntry) and not entry.is_deleted else 0,
+        "history_kind": "Historical committee attendance",
         "view_url": f"/reports/plan/{plan.id}",
     }
 
 
-def report_rows(user: User, month: date, *, plan_type: str | None = None, status: str | None = None, village_id: int | None = None):
+def report_rows(user: User, month: date, *, plan_type: str | None = None, status: str | None = None, village_id: int | None = None, period: ReportingPeriod | None = None, q: str = ""):
     """Group new village visits into one visible report, retain legacy rows."""
     rows: list[dict[str, Any]] = []
     grouped: dict[int, list[ActionPlan]] = {}
-    for plan in report_plans(user, month, plan_type=plan_type, status=None, village_id=village_id):
+    for plan in report_plans(user, month, plan_type=plan_type, status=None, village_id=village_id, period=period):
         entry = plan.attendance_entry
+        if entry and (not entry.is_enabled or entry.is_deleted or
+                      (entry.village_visit and (not entry.village_visit.is_enabled or entry.village_visit.is_deleted))):
+            continue
         if plan.plan_type == ActionPlanType.ATTENDANCE and (entry is None or entry.is_deleted):
             continue  # Unexecuted legacy plans are not DA attendance reports.
         if entry and not entry.is_deleted and entry.village_visit_id is not None:
@@ -112,30 +130,32 @@ def report_rows(user: User, month: date, *, plan_type: str | None = None, status
     for visit_id, plans in grouped.items():
         representative = report_row(plans[0])
         # A village visit appears once in the ledger: sum its underlying committee rows.
-        attendance = [
-            p.attendance_entry
-            for p in plans
-            if p.attendance_entry and not p.attendance_entry.is_deleted
-        ]
-        parent_visit = attendance[0].village_visit if attendance else None
+        parent_visit = plans[0].attendance_entry.village_visit
+        if period and not period.contains(parent_visit.visit_date):
+            continue
+        attendance = [e for e in parent_visit.entries if e.is_enabled and not e.is_deleted]
         group_new_members = (
             parent_visit.new_members_count
             if parent_visit and parent_visit.visit_month
             else sum(e.new_members_count for e in attendance)
         )
         representative.update(
+            date=parent_visit.visit_date.isoformat(),
             people_attended=sum(e.total_count for e in attendance),
+            male=sum(e.male_count for e in attendance), female=sum(e.female_count for e in attendance),
+            history_kind="Village submission",
             new_members=group_new_members,
             village_visit_id=visit_id,
-            committee=f"{len(plans)} committees · Village attendance",
+            committee=f"{len(attendance)} committees · Village attendance",
             type="Attendance",
             view_url=f"/reports/village/{visit_id}",
-            status=("Postponed" if any(action_plan_status(p) == "Postponed" for p in plans)
+            status=("Recorded" if parent_visit.visit_month is not None else "Postponed" if any(action_plan_status(p) == "Postponed" for p in plans)
                     else "Early" if any(action_plan_status(p) == "Early" for p in plans) else "On-time"),
         )
         rows.append(representative)
     # Newly submitted DA-led visits have no action-plan foreign key.
-    start, end = _month_bounds(month)
+    start, end = ((period.start or date(2000, 1, 1), period.end + timedelta(days=1))
+                  if period else _month_bounds(month))
     visits = db.session.scalars(
         scoped_select(VillageAttendanceVisit, user)
         .where(VillageAttendanceVisit.visit_date >= start,
@@ -148,6 +168,8 @@ def report_rows(user: User, month: date, *, plan_type: str | None = None, status
     existing_ids = {row.get("village_visit_id") for row in rows}
     if plan_type in (None, "Attendance"):
         for visit in visits:
+            if not visit.village.is_enabled or visit.village.is_deleted:
+                continue
             if village_id is not None and visit.village_id != village_id:
                 continue
             if visit.id in existing_ids:
@@ -163,12 +185,18 @@ def report_rows(user: User, month: date, *, plan_type: str | None = None, status
                 "village": visit.village.name, "village_id": visit.village_id,
                 "committee": f"{len(entries)} committees · Village attendance",
                 "type": "Attendance", "status": "Recorded", "has_entry": True,
+                "male": sum(e.male_count for e in entries), "female": sum(e.female_count for e in entries),
+                "history_kind": "Village submission",
                 "people_attended": sum(e.total_count for e in entries),
                 "new_members": visit.new_members_count if visit.visit_month else sum(e.new_members_count for e in entries),
                 "view_url": f"/reports/village/{visit.id}",
             })
     if status:
         rows = [row for row in rows if row["status"] == status]
+    if q.strip():
+        search = q.strip().casefold()
+        rows = [row for row in rows if search in " ".join(str(row.get(k) or "") for k in
+                ("date", "da", "village", "committee", "type", "status")).casefold()]
     return sorted(rows, key=lambda row: row.get("date") or "", reverse=True)
 
 
@@ -279,9 +307,11 @@ def _village_visit_export_rows(visit: VillageAttendanceVisit, submitter_name: st
     village = visit.village
     entries = sorted(
         (entry for entry in visit.entries
-         if entry.is_enabled and not entry.is_deleted and entry.action_plan_id is None),
+         if entry.is_enabled and not entry.is_deleted),
         key=lambda entry: (entry.committee.name.casefold(), entry.id),
     )
+    new_members = (visit.new_members_count if visit.visit_month is not None
+                   else sum(entry.new_members_count for entry in entries))
     rows: list[list[Any]] = []
     for committee_index, entry in enumerate(entries):
         members = [member for member in entry.visited_members
@@ -298,7 +328,7 @@ def _village_visit_export_rows(visit: VillageAttendanceVisit, submitter_name: st
                 entry.male_count if first_committee_row else None,
                 entry.female_count if first_committee_row else None,
                 entry.total_count if first_committee_row else None,
-                visit.new_members_count if first_village_row else None,
+                new_members if first_village_row else None,
                 member.member_name_snapshot if member else "",
                 member.designation_snapshot if member else "",
                 None, None, None,
@@ -309,8 +339,11 @@ def _village_visit_export_rows(visit: VillageAttendanceVisit, submitter_name: st
     return rows
 
 
-def export_report_workbook(user: User, month: date, *, plan_type: str | None = None, status: str | None = None, village_id: int | None = None) -> Workbook:
-    plans = [plan for plan in report_plans(user, month, plan_type=plan_type, status=status, village_id=village_id)
+def export_report_workbook(user: User, month: date, *, plan_type: str | None = None, status: str | None = None, village_id: int | None = None, period: ReportingPeriod | None = None, q: str = "") -> Workbook:
+    selected_rows = report_rows(user, month, plan_type=plan_type, status=status, village_id=village_id, period=period, q=q)
+    selected_plans = {row.get('plan_id') for row in selected_rows if not row.get('village_visit_id')}
+    selected_visits = {row.get('village_visit_id') for row in selected_rows if row.get('village_visit_id')}
+    plans = [plan for plan in report_plans(user, month, plan_type=plan_type, status=None, village_id=village_id, period=period)
              if plan.plan_type != ActionPlanType.ATTENDANCE or
              (plan.attendance_entry is not None and not plan.attendance_entry.is_deleted)]
     wb = Workbook()
@@ -324,6 +357,9 @@ def export_report_workbook(user: User, month: date, *, plan_type: str | None = N
     ]
     ws.append(headers)
     for plan in plans:
+        parent_id = plan.attendance_entry.village_visit_id if plan.attendance_entry else None
+        if parent_id is not None or plan.id not in selected_plans:
+            continue
         detail = report_detail(plan)
         entry = detail["entry"] or {}
         visit_members = entry.get("visit_members") or {}
@@ -367,8 +403,9 @@ def export_report_workbook(user: User, month: date, *, plan_type: str | None = N
         cell.font = Font(color="FFFFFF", bold=True)
     # DA-led visits: export committee-wise attendance and recorded member names.
     # A village-wide New Members count is written exactly once per visit.
-    start, end = _month_bounds(month)
-    if plan_type in (None, "Attendance") and status in (None, "Recorded"):
+    start, end = ((period.start or date(2000, 1, 1), period.end + timedelta(days=1))
+                  if period else _month_bounds(month))
+    if plan_type in (None, "Attendance"):
         visits = db.session.scalars(scoped_select(VillageAttendanceVisit, user).where(
             VillageAttendanceVisit.visit_date >= start,
             VillageAttendanceVisit.visit_date < end,
@@ -383,6 +420,8 @@ def export_report_workbook(user: User, month: date, *, plan_type: str | None = N
             .selectinload(AttendanceEntry.visited_members),
         )).unique().all()
         for visit in visits:
+            if visit.id not in selected_visits:
+                continue
             if village_id is not None and visit.village_id != village_id:
                 continue
             submitter = db.session.get(User, visit.submitted_by_user_id)
@@ -390,6 +429,19 @@ def export_report_workbook(user: User, month: date, *, plan_type: str | None = N
                 visit, submitter.display_name if submitter else "DA",
             ):
                 ws.append(row)
+    # Sanitize all exported text. Never let a user-supplied name become an Excel formula.
+    from ..reporting_exports import safe_cell
+    for row in ws.iter_rows(min_row=2):
+        for cell in row:
+            cell.value = safe_cell(cell.value)
+    summary_sheet = wb.create_sheet("Selection summary")
+    summary_sheet.append(["Metric", "Value"])
+    summary_sheet.append(["Period", period.label if period else month_label(month)])
+    summary_sheet.append(["Search", safe_cell(q)])
+    for key, value in report_summary(selected_rows).items():
+        summary_sheet.append([key, value])
+    summary_sheet.column_dimensions['A'].width = 26
+    summary_sheet.column_dimensions['B'].width = 60
     ws.freeze_panes = "A2"
     ws.auto_filter.ref = ws.dimensions
     ws.sheet_view.showGridLines = False

@@ -3,9 +3,11 @@ from __future__ import annotations
 from flask import (
     Blueprint,
     current_app,
+    jsonify,
     make_response,
     redirect,
     render_template,
+    request,
     send_from_directory,
     url_for,
 )
@@ -13,7 +15,13 @@ from flask_login import current_user, login_required
 
 from .models import Role
 from .scoping import role_required
-from .services.profiles import da_profile, pc_profile, pm_profile, village_profile
+from .services.profiles import (
+    da_profile,
+    pc_profile,
+    pm_profile,
+    profile_reporting,
+    village_profile,
+)
 
 bp = Blueprint("pages", __name__)
 
@@ -73,6 +81,10 @@ def da_profile_page(da_id: int):
     profile = da_profile(current_user._get_current_object(), da_id)
     if profile is None:
         return render_template("403.html"), 404
+    try:
+        profile = profile_reporting(profile, current_user._get_current_object(), request.args)
+    except ValueError as exc:
+        return jsonify(error=str(exc)), 422
     return render_template("profile.html", profile=profile)
 
 
@@ -82,6 +94,10 @@ def village_profile_page(village_id: int):
     profile = village_profile(current_user._get_current_object(), village_id)
     if profile is None:
         return render_template("403.html"), 404
+    try:
+        profile = profile_reporting(profile, current_user._get_current_object(), request.args)
+    except ValueError as exc:
+        return jsonify(error=str(exc)), 422
     return render_template("profile.html", profile=profile)
 
 
@@ -91,6 +107,10 @@ def pc_profile_page(pc_id: int):
     profile = pc_profile(current_user._get_current_object(), pc_id)
     if profile is None:
         return render_template("403.html"), 404
+    try:
+        profile = profile_reporting(profile, current_user._get_current_object(), request.args)
+    except ValueError as exc:
+        return jsonify(error=str(exc)), 422
     return render_template("profile.html", profile=profile)
 
 
@@ -100,6 +120,10 @@ def pm_profile_page(pm_id: int):
     profile = pm_profile(current_user._get_current_object(), pm_id)
     if profile is None:
         return render_template("403.html"), 404
+    try:
+        profile = profile_reporting(profile, current_user._get_current_object(), request.args)
+    except ValueError as exc:
+        return jsonify(error=str(exc)), 422
     return render_template("profile.html", profile=profile)
 
 

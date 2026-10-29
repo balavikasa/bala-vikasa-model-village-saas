@@ -1,14 +1,14 @@
 # Validation report
 
-Generated: `2026-10-28T11:21:23+00:00`
+Generated: `2026-10-29T07:27:36+00:00`
 
 This report distinguishes executed checks from checks skipped because the build environment lacks runtime dependencies. A skip is not represented as a pass.
 
 | Check | Result | Detail |
 |---|---:|---|
 | Python bytecode compilation | **PASS** |  |
-| JavaScript syntax | **PASS** | 23 files checked |
-| Jinja template syntax | **PASS** | 19 templates checked |
+| JavaScript syntax | **PASS** | 25 files checked |
+| Jinja template syntax | **PASS** | 20 templates checked |
 | PWA manifest contract | **PASS** |  |
 | Install icon dimensions | **PASS** |  |
 | Centralized scoping | **PASS** |  |

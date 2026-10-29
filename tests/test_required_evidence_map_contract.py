@@ -53,12 +53,13 @@ def test_photo_and_location_are_required_in_field_ui_and_server():
 
 def test_map_does_not_turn_null_coordinates_into_zero_zero():
     map_js = read("app/static/js/map.js")
-    monitoring = read("app/services/monitoring.py")
+    monitoring = read("app/services/coverage.py")
 
     assert "value === null" in map_js
     assert "value === undefined" in map_js
     assert "Math.abs(lat) < 0.000001" in map_js
     assert "map.setView(bounds[0], 13)" in map_js
-    assert "Archived Specials are kept for historical reports" in monitoring
-    assert '"location_source": location_source' in monitoring
-    assert '"field-evidence"' in monitoring
+    assert "VillageAttendanceVisit" in monitoring
+    assert "SpecialsEntry" not in monitoring
+    assert "'location_source': 'field-evidence' if visit else 'village-master'" in monitoring
+    assert "'field-evidence'" in monitoring

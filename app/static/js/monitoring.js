@@ -73,6 +73,7 @@
     }
     host.classList.remove("hidden");
     fallback.classList.add("hidden");
+    if(map){map.remove();map=null;}
     map = window.L.map(host, { zoomControl: true, scrollWheelZoom: false });
     window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
@@ -96,20 +97,26 @@
     window.setTimeout(() => map.invalidateSize(), 150);
   };
 
-  (async () => {
+  let loadId=0;
+  async function loadMonitoring() {
+    const id=++loadId, params=window.BVReporting.params();
     try {
       const [summaryResponse, mapResponse] = await Promise.all([
-        window.MV.api("/api/v1/monitoring/summary"),
-        window.MV.api("/api/v1/monitoring/map"),
+        window.MV.api("/api/v1/monitoring/summary?"+params),
+        window.MV.api("/api/v1/monitoring/map?"+params),
       ]);
       if (!summaryResponse.ok || !mapResponse.ok) throw new Error("Monitoring data could not be loaded.");
-      renderSummary(await summaryResponse.json());
-      renderMap((await mapResponse.json()).items || []);
+      const data=await summaryResponse.json();if(id!==loadId)return;renderSummary(data);
+      const mapData=await mapResponse.json();if(id!==loadId)return;renderMap(mapData.items || []);
     } catch (error) {
+      if(id!==loadId)return;document.querySelectorAll("[data-monitor-kpi], [data-monitor-status]").forEach(n=>n.textContent="\u2014");if(map){map.remove();map=null;}document.querySelector("#village-map").classList.add("hidden");
       statusHost.innerHTML = `<div class="form-alert">${window.MV.escapeHtml(error.message)}</div>`;
       document.querySelector("#monitor-updated").textContent = "Unavailable";
     }
-  })();
+  }
+  document.addEventListener("bv:period-change",loadMonitoring);
+  loadMonitoring();
 
+  document.querySelectorAll('[data-monitor-kpi]').forEach(el=>{const card=el.closest('article');if(!card)return;card.tabIndex=0;card.setAttribute('role','link');card.style.cursor='pointer';card.onclick=()=>location.href=window.BVReporting.link('/coverage',{status:el.dataset.monitorKpi==='villages_pending'?'pending':el.dataset.monitorKpi==='villages'?'all':'done'});card.onkeydown=e=>{if(e.key==='Enter')card.click();};});
   window.addEventListener("resize", () => map?.invalidateSize());
 })();

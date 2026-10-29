@@ -13,7 +13,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from .config import CONFIGS
 from .extensions import csrf, db, login_manager, migrate
 
-APP_RELEASE = "2026.27.33"
+APP_RELEASE = "2026.27.34"
 
 
 def create_app(config: str | dict | None = None) -> Flask:
@@ -67,10 +67,12 @@ def create_app(config: str | dict | None = None) -> Flask:
     from .admin_transfer import bp as admin_transfer_bp
     from .api import bp as api_bp
     from .auth import bp as auth_bp
+    from .coverage import bp as coverage_bp
     from .pages import bp as pages_bp
     from .planning import bp as planning_bp
     from .reports import bp as reports_bp
 
+    app.register_blueprint(coverage_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(pages_bp)
     app.register_blueprint(api_bp)

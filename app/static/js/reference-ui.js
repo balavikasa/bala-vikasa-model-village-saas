@@ -42,7 +42,15 @@
     const columns=rows.map((row,i)=>{const bh=ch*num(row.visits)/mv;return `<rect x="${l+step*(i+.2)}" y="${t+ch-bh}" width="${Math.max(3,step*.57)}" height="${bh}" rx="2" fill="#168a88"><title>${esc(row.month||row.date||row.label)}: ${fmt(row.visits)} visits</title></rect>`;}).join('');
     const points=rows.map((row,i)=>`${l+step*(i+.5)},${t+ch-ch*num(row.people)/mp}`).join(' ');
     const dots=rows.map((row,i)=>`<circle cx="${l+step*(i+.5)}" cy="${t+ch-ch*num(row.people)/mp}" r="3.6" fill="#fb7b68"><title>${esc(row.month||row.date||row.label)}: ${fmt(row.people)} attendances</title></circle>`).join('');
-    const labels=rows.map((row,i)=>`<text x="${l+step*(i+.5)}" y="${h-13}" text-anchor="middle">${esc((row.label||row.month||row.date||'').split(' ')[0])}</text>`).join('');
+    const stride=Math.max(1,Math.ceil((rows.length-1)/7));
+    const monthly=rows.length>1&&rows.every(row=>/^[0-9]{4}-[0-9]{2}-01$/.test(row.date||row.month||row.label||''));
+    const labels=rows.map((row,i)=>{
+      if(i%stride!==0&&i!==rows.length-1)return '';
+      const raw=String(row.label||row.month||row.date||''),match=/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(raw);
+      const mon=match?['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(match[2])-1]:'';
+      const label=match?(monthly?`${mon} ${match[1].slice(2)}`:`${Number(match[3])} ${mon}`):raw.split(' ')[0];
+      return `<text x="${l+step*(i+.5)}" y="${h-13}" text-anchor="middle">${esc(label)}</text>`;
+    }).join('');
     return `<svg class="ref-svg-chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="Visits and attendance trend. Visits use the left axis; attendance uses the right axis.">${grid}${columns}<polyline points="${points}" fill="none" stroke="#fb7b68" stroke-width="2"/>${dots}${labels}<text x="${l}" y="10">Visits</text><text x="${w-r}" y="10" text-anchor="end">Attendances</text></svg>`;
   };
   const daChart=(rows)=>{
@@ -76,8 +84,8 @@
       }
       const markers=valid.map(row=>{const p=project(row.point.lat,row.point.lng,zoom),x=p.x-left,y=p.y-top;
         if(x < -15||x>width+15||y< -15||y>height+15)return '';
-        const visited=row.status==='Visited'||row.visited||row.last_visit_date;
-        const href=row.url||(row.id?`/directory/village/${Number(row.id)}`:`https://www.openstreetmap.org/?mlat=${row.point.lat}&mlon=${row.point.lng}#map=16/${row.point.lat}/${row.point.lng}`);
+        const visited=row.status!==undefined?['Visited','Done','Recorded'].includes(row.status):typeof row.visited==='boolean'?row.visited:Boolean(row.last_visit_date);
+        const href=(row.outside_assignment&&row.report_url)||row.url||(row.id?`/directory/village/${Number(row.id)}`:`https://www.openstreetmap.org/?mlat=${row.point.lat}&mlon=${row.point.lng}#map=16/${row.point.lat}/${row.point.lng}`);
         return `<a class="ref-map-pin ${visited?'visited':'pending'}" style="left:${x}px;top:${y}px" href="${esc(href)}" title="${esc(row.name||'Captured GPS location')}${row.last_visit_date?' - '+esc(row.last_visit_date):''}" aria-label="${esc(row.name||'Captured GPS location')}"><span></span></a>`;
       }).join('');
       element.innerHTML=`<div class="ref-tile-layer">${tiles}</div><div class="ref-map-offline" hidden>Map tiles unavailable. Captured locations remain in the reports.</div>${markers}<div class="ref-map-controls"><button type="button" data-map-zoom="1" aria-label="Zoom in">+</button><button type="button" data-map-zoom="-1" aria-label="Zoom out">&#8722;</button></div><div class="ref-map-legend"><span><i></i>Visited</span><span><i></i>Not visited</span></div><a class="ref-map-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">&copy; OpenStreetMap contributors</a>`;

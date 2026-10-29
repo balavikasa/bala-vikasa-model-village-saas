@@ -35,7 +35,7 @@ jobs:
         run: python scripts/validate_release.py --require-runtime
 
       - name: Browser-independent chart unit tests
-        run: node --test tests/js/reference-ui.test.cjs
+        run: node --test tests/js/*.cjs tests/js/*.js
 
       - name: Lint
         run: ruff check .

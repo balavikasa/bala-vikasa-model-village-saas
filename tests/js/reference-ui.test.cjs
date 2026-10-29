@@ -29,3 +29,19 @@ test('low-count charts use distinct integer count-axis ticks',()=>{
   const left=[...html.matchAll(/<text x="29"[^>]*>(\d+)<\/text>/g)].map(m=>m[1]);
   assert.equal(new Set(left).size,5);
 });
+test('a selected month remains readable without 31 overlapping axis dates',()=>{
+ const ui=load();const rows=Array.from({length:31},(_,i)=>({date:`2026-10-${String(i+1).padStart(2,'0')}`,visits:1,people:5}));
+ const svg=ui.trend(rows);const labels=[...svg.matchAll(/<text [^>]*y="177"[^>]*>(.*?)<\/text>/g)].map(m=>m[1]);
+ assert.ok(labels.length>=2&&labels.length<=9);assert.ok(labels.some(l=>l.includes('Oct')));
+ assert.ok(svg.includes('2026-10-31: 1 visits'));
+});
+test('a historical last visit does not override Pending for the selected period',()=>{
+ const ui=load();const element={clientWidth:400,clientHeight:230,innerHTML:'',querySelectorAll:()=>[]};
+ ui.map(element,[{id:7,name:'Previously visited',status:'Not visited',last_visit_date:'2026-09-20',latitude:17.98,longitude:79.52}]);
+ assert.match(element.innerHTML,/ref-map-pin pending/);assert.doesNotMatch(element.innerHTML,/ref-map-pin visited/);
+});
+test('an Other-village marker opens authorized evidence rather than a forbidden profile',()=>{
+ const ui=load();const element={clientWidth:400,clientHeight:230,innerHTML:'',querySelectorAll:()=>[]};
+ ui.map(element,[{id:7,name:'Other village',status:'Visited',outside_assignment:true,report_url:'/reports/village/9',latitude:17.98,longitude:79.52}]);
+ assert.match(element.innerHTML,/href="\/reports\/village\/9"/);
+});

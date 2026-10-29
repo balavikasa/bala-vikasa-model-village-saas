@@ -139,7 +139,7 @@
             <span>${hasCoordinates(item) ? esc(locationLabel(item)) : "GPS unavailable"}</span>
             ${item.outside_assignment ? '<span>Other village · visited by you</span>' : ''}
           </div>
-          <a class="button ghost wide" href="/directory/village/${Number(item.id)}">View</a>
+          <a class="button ghost wide" href="${item.outside_assignment && item.report_url ? esc(item.report_url) : `/directory/village/${Number(item.id)}`}">View</a>
         </article>`)
         .join("")
       : `<div class="empty-state"><strong>No matching villages.</strong></div>`;
@@ -169,14 +169,18 @@
     document.querySelector('[data-map-mode="list"]')?.click();
   }
 
+  let fetchId=0;
   async function loadData() {
+    const id=++fetchId;
     loading = true; loadError = ""; renderList();
     try {
-      const response = await window.MV.api("/api/v1/monitoring/map");
+      const response = await window.MV.api("/api/v1/monitoring/map?"+window.BVReporting.params(Object.fromEntries([...new URLSearchParams(location.search)].filter(([k])=>["village","cluster","pc","da","submitted_da","committee","status"].includes(k)))));
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload.error || "Could not load the village map.");
       }
+      if(id!==fetchId)return;
+      if(map){map.remove();map=null;}
       rows = payload.items || [];
       loading = false;
       const requestedVillage = new URLSearchParams(location.search).get('village');
@@ -191,5 +195,6 @@
       renderList();
     }
   }
+  document.addEventListener("bv:period-change",loadData);
   loadData();
 })();

@@ -28,7 +28,7 @@ def _current_month() -> date:
 
 
 def _active_entries(village: Village) -> list[AttendanceEntry]:
-    return [entry for entry in village.attendance_entries if active_attendance(entry)]
+    return [entry for entry in village.attendance_entries if active_attendance(entry) and entry.village_visit_id is not None]
 
 
 def _village_visit_summary(village: Village, month: date) -> dict[str, Any]:
@@ -354,3 +354,67 @@ def pm_profile(user: User, pm_id: int) -> dict[str, Any] | None:
         ],
         "plans": _plan_rows(plans),
     }
+
+
+def profile_reporting(profile: dict[str, Any], user: User, params) -> dict[str, Any]:
+    """Attach selected-period operational figures without reinterpreting old plans."""
+    from ..models import VillageAttendanceVisit
+    from ..reporting_core import resolve_period
+    from .coverage import coverage_report
+    args = dict(params or {})
+    args['status'] = 'all'
+    # A profile is a fixed owner scope, never a way to broaden caller permissions.
+    key = {'Village': 'village', 'DA': 'da', 'PC': 'pc'}.get(profile['kind'])
+    if key:
+        args[key] = str(profile['id'])
+    result = coverage_report(user, args)
+    period = resolve_period(args, local_today())
+    c = result['counts']
+    profile['report_period'] = result['period']
+    profile['coverage_url'] = '/coverage' + (f"?{key}={profile['id']}" if key else '')
+    profile['counts'].pop('plans', None)
+    if profile['kind'] != 'Village':
+        profile['counts'].update(villages=c['villages'], committees=c['committees'])
+    profile['counts'].update(villages_visited=c['villages_done'], villages_pending=c['villages_pending'],
+                              attendances=c['people_attended'], new_members=c['new_members'], visits=c['visits'])
+    profile['status'] = {'Visited': c['villages_done'], 'Not visited': c['villages_pending']}
+    by_id = {v['id']: v for v in result['coverage_rows']}
+    if 'villages' in profile:
+        profile['villages'] = [row for row in profile['villages'] if row['id'] in by_id]
+    for row in profile.get('villages', []):
+        match = by_id.get(row['id'])
+        if match:
+            row['visited'] = match['status'] == 'Done'
+            row['last_visit'] = match['last_visit']
+    by_da = {d['id']: d for d in result['team']}
+    if 'das' in profile:
+        profile['das'] = [row for row in profile['das'] if row['id'] in by_da]
+    for row in profile.get('das', []):
+        if row['id'] in by_da:
+            d = by_da[row['id']]
+            row.update(villages=d['assigned'], done=d['done'], pending=d['pending'])
+    if profile['kind'] == 'Village':
+        profile['counts'].update(visits=c['visits'], attended_this_month=c['people_attended'])
+        profile['trend'] = result['trend']
+        profile['recent_visits'] = [{'date': v['date'], 'people': v['people_attended'],
+                'committees': v['committees_recorded'], 'report_url': v['view_url']}
+                for v in result['submissions'][:6]]
+        stmt = scoped_select(AttendanceEntry, user).where(
+            AttendanceEntry.village_id == profile['id'], AttendanceEntry.is_enabled.is_(True),
+            AttendanceEntry.is_deleted.is_(False),
+            AttendanceEntry.village_visit_id.in_([v['id'] for v in result['submissions']]),
+            AttendanceEntry.village_visit.has(VillageAttendanceVisit.is_enabled.is_(True)),
+            AttendanceEntry.village_visit.has(VillageAttendanceVisit.is_deleted.is_(False)),
+            AttendanceEntry.visit_date <= period.end)
+        if period.start:
+            stmt = stmt.where(AttendanceEntry.visit_date >= period.start)
+        entries = list(db.session.scalars(stmt))
+        for row in profile['committees']:
+            matched = [e for e in entries if e.committee_id == row['id'] and
+                       (not result['filters_applied']['committee'] or
+                        (e.committee.committee_type or e.committee.name) == result['filters_applied']['committee'])]
+            latest = max(matched, key=lambda e: (e.visit_date, e.id), default=None)
+            row.update(attendance=sum(e.total_count for e in matched),
+                       status='Visited' if matched else 'Not visited',
+                       report_url=f'/reports/village/{latest.village_visit_id}' if latest else None)
+    return profile

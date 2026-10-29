@@ -16,14 +16,11 @@
     </div>
   </header>
 
-  <section class="month-command bento-panel">
-    <div class="month-switcher">
-      <button class="icon-button month-step" type="button" data-month-step="-1" aria-label="Previous month">←</button>
-      <label class="month-picker"><span>Report month</span><input id="report-month" type="month" value="{{ selected_month }}"></label>
-      <button class="icon-button month-step" type="button" data-month-step="1" aria-label="Next month">→</button>
-      <button class="button ghost" type="button" data-current-month>This month</button>
-    </div>
-  </section>
+  {% include 'components/reporting_period.html' %}
+  <input type="hidden" id="report-month" value="{{ selected_month }}">
+  <div class="bv-open-coverage"><a class="button ghost" href="/coverage?status=done" data-report-link>Done villages</a><a class="button ghost" href="/coverage?status=pending" data-report-link>Pending villages</a></div>
+  <p class="bv-report-note">Submitted evidence ledger. Historical standalone committee attendance is preserved here but does not complete a whole village. Use Coverage for the full Done/Pending population.</p>
+
 
   <div class="metric-bento reports-metrics">
     <article class="metric-card"><small>Total reports</small><strong data-report-metric="total">—</strong></article>
@@ -36,7 +33,7 @@
 
   <section class="panel-card">
     <div class="panel-heading filter-heading">
-      <div><p class="eyebrow">Monthly ledger</p><h2 id="report-month-label">{{ selected_month_label }}</h2></div>
+      <div><p class="eyebrow">Selected-period ledger</p><h2 id="report-month-label">{{ selected_month_label }}</h2></div>
       <div class="compact-filters">
         <select id="report-type"><option value="Attendance">Attendance</option></select>
         <select id="report-status"><option value="">All statuses</option><option>Recorded</option><option>Early</option><option>On-time</option><option>Postponed</option></select>

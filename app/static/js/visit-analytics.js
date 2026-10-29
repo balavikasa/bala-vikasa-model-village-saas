@@ -10,7 +10,7 @@
   const render=data=>{
     const c=data.counts||{};
     root.querySelectorAll('[data-analytics-kpi]').forEach(el=>el.textContent=ui.fmt(c[el.dataset.analyticsKpi]));
-    $('analytics-period').textContent=`${data.month}: ${ui.fmt(c.visits)} submitted village visits`;
+    $('analytics-period').textContent=`${data.period?.label||data.month}: ${ui.fmt(c.visits)} submitted village visits`;
     $('analytics-completion').innerHTML=ui.ring(c.villages_done,c.villages,['Visited','Pending'],'No villages in this scope.',{total:true});
     const male=ui.num(data.gender?.Male),female=ui.num(data.gender?.Female);
     $('analytics-gender').innerHTML=ui.ring(male,male+female,['Male','Female'],'No attendance in this selection.',{gender:true});
@@ -24,32 +24,25 @@
       ['users',`${ui.fmt(c.people_attended)} attendances across ${ui.fmt(c.committees_recorded)} committee records.`],
       ['check',`${ui.fmt(c.new_members)} new members entered as village-wide totals.`],
       ...(top?[['leaf',`${top[0]} recorded the highest participation (${ui.fmt(top[1])} attendances).`]]:[]),
-      ['pin',`${ui.fmt(c.villages_pending)} village${c.villages_pending===1?'':'s'} still awaiting a visit this month.`],
+      ['pin',`${ui.fmt(c.villages_pending)} village${c.villages_pending===1?'':'s'} not visited in the selected period.`],
     ];
     $('analytics-insights').innerHTML=insights.map(([glyph,text])=>`<li><span class="ref-insight-icon">${ui.icon(glyph)}</span><span>${ui.esc(text)}</span></li>`).join('');
     $('analytics-pending').innerHTML=(data.pending||[]).slice(0,3).map(v=>`<a href="/directory/village/${Number(v.id)}">${ui.esc(v.name)} &rarr;</a>`).join('');
   };
   const load=async()=>{
     const id=++token;root.setAttribute('aria-busy','true');$('analytics-alert').classList.add('hidden');$('analytics-export').disabled=true;
-    const params=new URLSearchParams();Object.entries(fields).forEach(([key,field])=>{if(field.value)params.set(key,field.value);});
+    const params=window.BVReporting.params();Object.entries(fields).forEach(([key,field])=>{if(key!=='month'&&field.value)params.set(key,field.value);});
     try{
       const response=await window.MV.api(`/api/v1/monitoring/visit-analytics?${params}`);
       if(!response.ok)throw new Error('Unable to load attendance analytics. Please retry or check your access.');
       const data=await response.json();if(id!==token)return;
       if(!result){setOptions(fields.cluster,data.filters?.clusters,'All Clusters');setOptions(fields.da,data.filters?.das,'All DAs');setOptions(fields.village,data.filters?.villages,'All Villages');setOptions(fields.committee,data.filters?.committees,'All Committees');}
       result=data;render(data);$('analytics-export').disabled=false;
-      // Map is an explicitly labelled latest-location preview, not historical GPS tracking.
-      try{
-        const mapResponse=await window.MV.api('/api/v1/monitoring/map');
-        if(!mapResponse.ok)throw new Error('Map unavailable');
-        const payload=await mapResponse.json();if(id!==token)return;
-        let items=payload.items||payload.markers||[];
-        if(fields.cluster.value)items=items.filter(v=>v.cluster===fields.cluster.value);
-        if(fields.village.value)items=items.filter(v=>String(v.id)===fields.village.value);
-        if(fields.da.value){const daName=fields.da.selectedOptions[0]?.textContent;items=items.filter(v=>v.da_name===daName);}
-        ui.map($('analytics-map'),items);
-        $('analytics-map-note').textContent='Latest captured locations; map status is current-month coverage. Charts above follow your selected period.';
-      }catch(_){if(id===token)$('analytics-map').innerHTML=ui.empty('Location preview unavailable. Open the map to retry.');}
+      ui.map($('analytics-map'),data.map_items||[]);
+      $('analytics-map-note').textContent='Map status uses the same period and filters as these charts. GPS is the captured field location or village master location.';
+      document.querySelectorAll('[data-analytics-kpi]').forEach(el=>{const card=el.closest('.ref-metric'),k=el.dataset.analyticsKpi;
+        if(card){card.tabIndex=0;card.setAttribute('role','link');card.onclick=()=>{const p=window.BVReporting.params();Object.entries(fields).forEach(([key,f])=>{if(key!=='month'&&f.value)p.set(key,f.value);});p.set('status',k==='villages'?'all':k==='villages_pending'?'pending':'done');location.href='/coverage?'+p;};card.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();card.click();}};}});
+
     }catch(error){if(id!==token)return;$('analytics-alert').textContent=error.message;$('analytics-alert').classList.remove('hidden');$('analytics-period').textContent='Data unavailable.';
       result=null;
       root.querySelectorAll('[data-analytics-kpi]').forEach(el=>el.textContent='\u2014');
@@ -62,15 +55,9 @@
   $('analytics-reset').addEventListener('click',()=>{Object.entries(fields).forEach(([key,field])=>field.value=key==='month'?root.dataset.month:'');load();});
   const csvCell=value=>{let text=String(value??'');if(/^\s*[=+\-@]/.test(text))text="'"+text;return `"${text.replaceAll('"','""')}"`;};
   $('analytics-export').addEventListener('click',()=>{
-    if(!result)return;
-    const rows=[['Section','Name','Villages','People','Visits','New members']];
-    const c=result.counts||{};rows.push(['Summary',result.month,c.villages_done,c.people_attended,c.visits,c.new_members]);
-    (result.das||[]).forEach(d=>rows.push(['DA',d.name,d.villages,d.people,d.visits,'']));
-    (result.clusters||[]).forEach(d=>rows.push(['Cluster',d.name,d.done,'','','']));
-    Object.entries(result.committees||{}).forEach(([name,people])=>rows.push(['Committee',name,'',people,'','']));
-    (result.trend||[]).forEach(d=>rows.push(['Month',d.month,d.villages,d.people,d.visits,'']));
-    const blob=new Blob(['\uFEFF'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
-    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`Bala_Vikasa_Analytics_${result.month}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    if(!result)return;const p=window.BVReporting.params();Object.entries(fields).forEach(([k,f])=>{if(k!=='month'&&f.value)p.set(k,f.value);});location.href='/coverage/export.xlsx?'+p;
   });
+  fields.month.addEventListener('change',()=>window.BVReporting.set({period:'month',month:fields.month.value}));
+  document.addEventListener('bv:period-change',load);
   load();
 })();

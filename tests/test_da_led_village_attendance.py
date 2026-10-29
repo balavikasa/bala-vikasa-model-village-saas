@@ -117,7 +117,8 @@ def test_unassigned_requires_explicit_other_and_date_is_not_editable(client, app
         assert summary["counts"]["villages_done"] == 0
         assert summary["counts"]["villages_pending"] == 1
         assert summary["counts"]["other_villages_visited"] == 1
-        assert summary["counts"]["people_attended"] == 1
+        assert summary["counts"]["people_attended"] == 0  # assigned-village total
+        assert summary["counts"]["other_people_attended"] == 1
         markers = map_markers(db.session.get(User, ids["user"]))
         assert {marker["id"] for marker in markers} == {ids["assigned"], ids["other"]}
         extra = next(marker for marker in markers if marker["id"] == ids["other"])
@@ -144,6 +145,7 @@ def test_village_export_preserves_members_without_repeating_totals():
     village = SimpleNamespace(name="Demo", da=SimpleNamespace(
         pc=SimpleNamespace(cluster=SimpleNamespace(value="CSRB"), full_name="Coordinator")))
     visit = SimpleNamespace(village=village, visit_date=date(2026, 10, 28),
+                            visit_month=date(2026, 10, 1),
                             entries=entries, new_members_count=3,
                             remarks="One shared remark", latitude=17.98, longitude=79.53)
     rows = _village_visit_export_rows(visit, "DA")

@@ -5,11 +5,14 @@
 <section class="page-shell ref-page ref-profile" data-profile-kind="Village" id="ref-village-profile">
 <div class="ref-breadcrumb"><a href="{{ url_for('pages.directory') }}">{{ 'My Villages' if current_user.role.value=='da' else 'Villages' }}</a><span>&rsaquo;</span><strong>{{ profile.name }}</strong></div>
 <header class="ref-hero ref-profile-hero"><div class="ref-hero-copy"><span class="eyebrow">VILLAGE PROFILE</span><h1>{{ profile.name }}</h1><div class="ref-profile-meta"><span>{{ icon('pin') }}{{ profile.cluster }} Cluster</span><span>{{ icon('users') }}PC &middot; {{ profile.pc.name }}</span><span>{{ icon('person') }}DA &middot; {{ profile.da.name }}</span>{% if profile.mandal %}<span>{{ icon('home') }}{{ profile.mandal }} Mandal</span>{% endif %}{% if profile.district %}<span>{{ icon('globe') }}{{ profile.district }} District</span>{% endif %}</div></div>
-<div class="ref-profile-actions">{% if current_user.role.value=='da' %}<a class="button primary" href="{{ url_for('pages.attendance') }}?village={{ profile.id }}">{{ icon('check') }}Attendance Entry</a>{% endif %}<a class="button ghost" href="{{ url_for('reports.reports_page') }}?village={{ profile.id }}">{{ icon('report') }}Open Reports</a><a class="button ghost" href="{{ url_for('pages.map_page') }}?village={{ profile.id }}">{{ icon('pin') }}View Map</a>{% if current_user.role.value=='admin' %}<a class="button primary" href="{{ url_for('pages.admin') }}?resource=villages&amp;edit={{ profile.id }}">{{ icon('edit') }}Edit Village</a>{% endif %}</div></header>
-<div class="ref-kpis">{{ metric('Total Committees',profile.counts.committees,'home','Active village committees') }}{{ metric('Total Members',profile.counts.members,'users','Registered committee members') }}{{ metric('Visits Recorded',profile.counts.visits,'check','Across available history') }}{{ metric('Attended This Month',profile.counts.attended_this_month,'users','Committee attendance total') }}{{ metric('Visit This Month','Recorded' if profile.status.Visited else 'Pending','clock',profile.latest_visit or 'No previous visit') }}</div>
-<div class="ref-profile-main"><article class="ref-card"><div class="ref-card-title"><h2>{{ icon('calendar') }}Monthly Progress</h2><div class="ref-chart-legend"><span><i></i>Visits</span><span><i class="coral"></i>People</span></div></div><div id="profile-trend" class="ref-chart"></div></article><article class="ref-card"><div class="ref-card-title"><h2>{{ icon('check') }}Committee Attendance This Month</h2></div><div id="profile-coverage" class="ref-chart"></div></article>
-<article class="ref-card ref-profile-committees"><div class="ref-card-title"><h2>{{ icon('users') }}Committees</h2><a href="{{ url_for('reports.reports_page') }}?village={{ profile.id }}">View Attendance &rarr;</a></div><div class="table-shell"><table class="ref-profile-table"><thead><tr><th>Committee</th><th>Members</th><th>Last Visit</th><th>Attendance</th><th>Status</th><th>Report</th></tr></thead><tbody>{% for row in profile.committees %}<tr><td>{{ row.name }}</td><td>{{ row.members }}</td><td>{{ row.last_visit or '\u2014' }}</td><td>{{ row.attendance }}</td><td><span class="ref-status {{ 'off' if row.status=='Not visited' else '' }}">{{ 'Recorded' if row.status=='Visited' else 'Not recorded' }}</span></td><td>{% if row.report_url %}<a href="{{ row.report_url }}" class="text-button" aria-label="View {{ row.name }} report">View &rsaquo;</a>{% else %}&mdash;{% endif %}</td></tr>{% endfor %}</tbody></table></div></article>
-<article class="ref-card"><div class="ref-card-title"><h2>{{ icon('clock') }}Recent Visits &amp; Activity</h2><a href="{{ url_for('reports.reports_page') }}?village={{ profile.id }}">View All &rarr;</a></div><div class="ref-activity-timeline">{% for row in profile.recent_visits|default([]) %}<a class="ref-timeline-row" href="{{ row.report_url or url_for('reports.reports_page') }}"><span class="ref-timeline-date">{{ row.date }}</span><strong>Village Attendance</strong><small>{{ row.committees }} committee records</small><small>{{ row.people }} people attended</small><span class="ref-status">Recorded</span></a>{% else %}{{ empty('No village visits recorded yet.') }}{% endfor %}</div></article></div>
+<div class="ref-profile-actions">{% if current_user.role.value=='da' %}<a class="button primary" href="{{ url_for('pages.attendance') }}?village={{ profile.id }}">{{ icon('check') }}Attendance Entry</a>{% endif %}<a class="button ghost" href="{{ url_for('reports.reports_page') }}?village={{ profile.id }}" data-report-link>{{ icon('report') }}Open Reports</a><a class="button ghost" href="{{ url_for('pages.map_page') }}?village={{ profile.id }}" data-report-link>{{ icon('pin') }}View Map</a>{% if current_user.role.value=='admin' %}<a class="button primary" href="{{ url_for('pages.admin') }}?resource=villages&amp;edit={{ profile.id }}">{{ icon('edit') }}Edit Village</a>{% endif %}</div></header>
+
+{% include 'components/reporting_period.html' %}
+<div class="bv-open-coverage" data-profile-period><strong>{{ profile.report_period.label }}</strong><a class="button ghost" href="{{ profile.coverage_url }}" data-report-link>Full Done / Pending register &amp; export</a></div>
+<div class="ref-kpis">{{ metric('Total Committees',profile.counts.committees,'home','Active village committees') }}{{ metric('Total Members',profile.counts.members,'users','Registered committee members') }}{{ metric('Visits Recorded',profile.counts.visits,'check','In selected period') }}{{ metric('Attended In Selected Period',profile.counts.attended_this_month,'users','Committee attendance total') }}{{ metric('Visit In Selected Period','Recorded' if profile.status.Visited else 'Pending','clock',profile.latest_visit or 'No previous visit') }}</div>
+<div class="ref-profile-main"><article class="ref-card"><div class="ref-card-title"><h2>{{ icon('calendar') }}Attendance Trend</h2><div class="ref-chart-legend"><span><i></i>Visits</span><span><i class="coral"></i>People</span></div></div><div id="profile-trend" class="ref-chart"></div></article><article class="ref-card"><div class="ref-card-title"><h2>{{ icon('check') }}Committee Attendance In Selected Period</h2></div><div id="profile-coverage" class="ref-chart"></div></article>
+<article class="ref-card ref-profile-committees"><div class="ref-card-title"><h2>{{ icon('users') }}Committees</h2><a href="{{ url_for('reports.reports_page') }}?village={{ profile.id }}" data-report-link>View Attendance &rarr;</a></div><div class="table-shell"><table class="ref-profile-table"><thead><tr><th>Committee</th><th>Members</th><th>Last Visit</th><th>Attendance</th><th>Status</th><th>Report</th></tr></thead><tbody>{% for row in profile.committees %}<tr><td>{{ row.name }}</td><td>{{ row.members }}</td><td>{{ row.last_visit or '\u2014' }}</td><td>{{ row.attendance }}</td><td><span class="ref-status {{ 'off' if row.status=='Not visited' else '' }}">{{ 'Recorded' if row.status=='Visited' else 'Not recorded' }}</span></td><td>{% if row.report_url %}<a href="{{ row.report_url }}" class="text-button" aria-label="View {{ row.name }} report">View &rsaquo;</a>{% else %}&mdash;{% endif %}</td></tr>{% endfor %}</tbody></table></div></article>
+<article class="ref-card"><div class="ref-card-title"><h2>{{ icon('clock') }}Recent Visits &amp; Activity</h2><a href="{{ url_for('reports.reports_page') }}?village={{ profile.id }}" data-report-link>View All &rarr;</a></div><div class="ref-activity-timeline">{% for row in profile.recent_visits|default([]) %}<a class="ref-timeline-row" href="{{ row.report_url or url_for('reports.reports_page') }}"><span class="ref-timeline-date">{{ row.date }}</span><strong>Village Attendance</strong><small>{{ row.committees }} committee records</small><small>{{ row.people }} people attended</small><span class="ref-status">Recorded</span></a>{% else %}{{ empty('No village visits recorded yet.') }}{% endfor %}</div></article></div>
 <script type="application/json" id="profile-visual-data">{{ {'trend': profile.trend|default([]), 'done': profile.committees|selectattr('status','equalto','Visited')|list|length, 'total': profile.committees|length}|tojson }}</script>
 </section>
 {% else %}
@@ -36,15 +39,18 @@
     </div>
   </header>
 
+
+{% include 'components/reporting_period.html' %}
+<div class="bv-open-coverage" data-profile-period><strong>{{ profile.report_period.label }}</strong><a class="button ghost" href="{{ profile.coverage_url }}" data-report-link>Full Done / Pending register &amp; export</a></div>
   <section class="metric-bento profile-metrics">
     {% for key, value in profile.counts.items() %}
     {% if key != 'plans' %}<article class="metric-card"><small>{{ key|replace('_',' ')|title }}</small><strong>{{ value }}</strong></article>{% endif %}
     {% endfor %}
   </section>
 
-  {% if profile.kind in ['DA', 'PC', 'Village'] %}
+  {% if profile.kind in ['DA', 'PC', 'PM', 'Village'] %}
   <section class="profile-visit-status panel-card">
-    <div class="panel-heading"><div><p class="eyebrow">This month</p><h2>Village visit status</h2></div>
+    <div class="panel-heading"><div><p class="eyebrow">Selected period</p><h2>Village visit status</h2></div>
     {% if profile.kind == 'Village' and current_user.role.value == 'da' %}
     <a class="button primary" href="{{ url_for('pages.attendance') }}?village={{ profile.id }}">Record attendance</a>
     {% endif %}
@@ -63,8 +69,8 @@
     <div class="panel-heading"><div><p class="eyebrow">Assignments</p><h2>Villages</h2></div></div>
     <div class="profile-card-grid">
       {% for item in profile.villages %}
-      <a class="profile-link-card" href="{{ item.url }}">
-        <div><strong>{{ item.name }}</strong><small>{{ 'Visited this month' if item.visited else 'Not visited this month' }} · {{ item.last_visit or 'No previous visit' }}</small></div>
+      <a class="profile-link-card" href="{{ item.url }}" data-report-link>
+        <div><strong>{{ item.name }}</strong><small>{{ 'Visited in selected period' if item.visited else 'Not visited in selected period' }} · {{ item.last_visit or 'No previous visit' }}</small></div>
         <div class="profile-card-stats"><span>{{ item.committee_count }}<small>Committees</small></span><span>{{ item.member_count }}<small>Members</small></span></div>
       </a>
       {% endfor %}
@@ -76,7 +82,7 @@
     <div class="responsive-ledger">
       <div class="desktop-ledger ledger-table-wrap">
         <table class="ledger modern-ledger">
-          <thead><tr><th>Committee</th><th>Members</th><th>Last visit</th><th>Attended this month</th><th>Status</th><th>Report</th></tr></thead>
+          <thead><tr><th>Committee</th><th>Members</th><th>Last visit</th><th>Attended in selected period</th><th>Status</th><th>Report</th></tr></thead>
           <tbody>
             {% for item in profile.committees %}
             <tr><td>{{ item.name }}</td><td>{{ item.members }}</td><td>{{ item.last_visit or '—' }}</td><td>{{ item.attendance }}</td><td><span class="badge" data-status="{{ item.status }}">{{ item.status }}</span></td><td>{% if item.report_url %}<a class="text-button" href="{{ item.report_url }}">View</a>{% endif %}</td></tr>
@@ -88,7 +94,7 @@
         {% for item in profile.committees %}
         <article class="ledger-card">
           <div class="ledger-card-top"><div><strong>{{ item.name }}</strong><small>{{ item.members }} committee members</small></div><span class="badge" data-status="{{ item.status }}">{{ item.status }}</span></div>
-          <div class="ledger-card-meta"><span>Last visit: {{ item.last_visit or 'No visit' }} · {{ item.attendance }} attended this month</span></div>
+          <div class="ledger-card-meta"><span>Last visit: {{ item.last_visit or 'No visit' }} · {{ item.attendance }} attended in selected period</span></div>
           {% if item.report_url %}<a class="button ghost wide" href="{{ item.report_url }}">View</a>{% endif %}
         </article>
         {% endfor %}
@@ -100,7 +106,7 @@
     <div class="panel-heading"><div><p class="eyebrow">Team</p><h2>Development Agents</h2></div></div>
     <div class="profile-card-grid">
       {% for item in profile.das %}
-      <a class="profile-link-card" href="{{ item.url }}">
+      <a class="profile-link-card" href="{{ item.url }}" data-report-link>
         <div><strong>{{ item.name }}</strong><small>{{ item.villages }} villages · {{ item.done }} visited</small></div>
         <span class="badge">{{ item.pending }} not visited</span>
       </a>
@@ -112,7 +118,7 @@
     <div class="panel-heading"><div><p class="eyebrow">Program</p><h2>Project Coordinators</h2></div></div>
     <div class="profile-card-grid">
       {% for item in profile.pcs %}
-      <a class="profile-link-card" href="{{ item.url }}">
+      <a class="profile-link-card" href="{{ item.url }}" data-report-link>
         <div><strong>{{ item.name }}</strong><small>{{ item.cluster }} · {{ item.das }} DAs · {{ item.villages }} villages</small></div><b>›</b>
       </a>
       {% endfor %}

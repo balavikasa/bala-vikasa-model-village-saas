@@ -3,27 +3,30 @@
 {% block content %}
 <section class="page-shell ref-page ref-dashboard" id="ref-dashboard" data-month="{{ local_now.strftime('%Y-%m') }}">
 <header class="ref-hero ref-dashboard-hero"><div class="ref-hero-copy"><h1>Good {{ 'morning' if local_now.hour < 12 else 'afternoon' if local_now.hour < 17 else 'evening' }}, {{ current_user.display_name }}</h1><p class="lede">{{ 'Your village visits, community participation and field progress.' if current_user.role.value=='da' else 'A clear view of village coverage and community participation.' }}</p><div class="ref-hero-meta"><span>{{ icon('calendar') }}{{ local_now.strftime('%a, %d %b %Y') }}</span><span>{{ icon('pin') }}{{ 'My assigned villages' if current_user.role.value=='da' else 'Role-scoped program view' }}</span></div></div>{{ slogan() }}</header>
+{% include 'components/reporting_period.html' %}
+<div class="bv-open-coverage"><a class="button ghost" href="/coverage?status=done" data-report-link>Done villages</a><a class="button ghost" href="/coverage?status=pending" data-report-link>Pending villages</a><a class="button ghost" href="/coverage" data-report-link>Full coverage register &amp; export</a></div>
+
 <div class="ref-kpis">
 {{ metric('Assigned Villages' if current_user.role.value=='da' else 'Total Villages','\u2014','home','Within your scope','villages') }}
-{{ metric('Visited This Month','\u2014','check','Completed village submissions','villages_done') }}
+{{ metric('Villages Done','\u2014','check','Completed village submissions','villages_done') }}
 {{ metric('People Attended','\u2014','users','Across recorded committees','people_attended') }}
-{{ metric('Pending Villages','\u2014','clock','Not recorded this month','villages_pending') }}
+{{ metric('Pending Villages','\u2014','clock','Not visited in selected period','villages_pending') }}
 {{ metric('Other Village Visits' if current_user.role.value=='da' else 'New Members','\u2014','pin' if current_user.role.value=='da' else 'addperson','Outside assigned villages' if current_user.role.value=='da' else 'Village-wide totals','other_villages_visited' if current_user.role.value=='da' else 'new_members') }}
 </div>
 <div id="dashboard-error" class="form-alert hidden" role="alert"></div>
 <div class="ref-dashboard-grid">
-<article class="ref-card ref-dash-card ref-dash-progress"><div class="ref-card-title"><h2>Village Coverage This Month</h2><a href="{{ url_for('pages.directory') }}">View all &rarr;</a></div><div id="dashboard-coverage" class="ref-chart"></div><div id="dashboard-coverage-note" class="ref-progress-note"></div></article>
-<article class="ref-card ref-dash-card ref-dash-trend"><div class="ref-card-title"><h2>Attendance Trend <small>(7 days)</small></h2><div class="ref-chart-legend"><span><i></i>Visits</span><span><i class="coral"></i>People</span></div></div><div id="dashboard-trend" class="ref-chart"></div></article>
+<article class="ref-card ref-dash-card ref-dash-progress"><div class="ref-card-title"><h2>Village Coverage</h2><a href="/coverage" data-report-link>View all &rarr;</a></div><div id="dashboard-coverage" class="ref-chart"></div><div id="dashboard-coverage-note" class="ref-progress-note"></div></article>
+<article class="ref-card ref-dash-card ref-dash-trend"><div class="ref-card-title"><h2>Attendance Trend <small>(selected period)</small></h2><div class="ref-chart-legend"><span><i></i>Visits</span><span><i class="coral"></i>People</span></div></div><div id="dashboard-trend" class="ref-chart"></div></article>
 <article class="ref-card ref-dash-card ref-dash-actions"><div class="ref-card-title"><h2>Quick Actions</h2></div><div class="ref-quick-actions">
 <a class="ref-quick-action" href="{{ url_for('pages.attendance') if current_user.role.value=='da' else url_for('pages.monitoring') }}"><span>{{ icon('check') }}</span><span><strong>{{ 'Start Attendance' if current_user.role.value=='da' else 'Open Monitoring' }}</strong><small>{{ 'Record today\'s village attendance' if current_user.role.value=='da' else 'Review village attendance coverage' }}</small></span>{{ icon('chevron') }}</a>
 <a class="ref-quick-action" href="{{ url_for('reports.reports_page') }}"><span>{{ icon('report') }}</span><span><strong>Open Reports</strong><small>View attendance and visit reports</small></span>{{ icon('chevron') }}</a>
 <a class="ref-quick-action" href="{{ url_for('pages.directory') }}"><span>{{ icon('home') }}</span><span><strong>{{ 'View My Villages' if current_user.role.value=='da' else 'View Villages' }}</strong><small>See village details and progress</small></span>{{ icon('chevron') }}</a></div></article>
 <article class="ref-card ref-dash-card ref-dash-map"><div class="ref-card-title"><h2>Village Visit Map</h2><a href="{{ url_for('pages.map_page') }}">View Full Map &rarr;</a></div><div id="dashboard-map" class="ref-map"></div></article>
-<article class="ref-card ref-dash-card ref-dash-recent"><div class="ref-card-title"><h2>Recent Attendance Submissions</h2><a href="{{ url_for('reports.reports_page') }}">View All &rarr;</a></div><div id="renewal-recent-visits" class="ref-list" aria-live="polite"></div></article>
+<article class="ref-card ref-dash-card ref-dash-recent"><div class="ref-card-title"><h2>Recent Attendance Submissions</h2><a href="/reports" data-report-link>View All &rarr;</a></div><div id="renewal-recent-visits" class="ref-list" aria-live="polite"></div></article>
 <article class="ref-card ref-dash-card ref-dash-team"><div class="ref-card-title"><h2>Cluster Coverage</h2></div><div id="dashboard-clusters" class="ref-chart"></div></article>
 <article class="ref-card ref-dash-card ref-dash-clusters"><div class="ref-card-title"><h2>Community Attendance</h2></div><div id="dashboard-gender" class="ref-chart"></div></article>
-<article class="ref-card ref-dash-card ref-dash-pending"><div class="ref-card-title"><h2>Pending Villages</h2><a href="{{ url_for('pages.directory') }}">View All &rarr;</a></div><div id="renewal-pending-villages" class="ref-list"></div></article>
+<article class="ref-card ref-dash-card ref-dash-pending"><div class="ref-card-title"><h2>Pending Villages</h2><a href="/coverage?status=pending" data-report-link>View All &rarr;</a></div><div id="renewal-pending-villages" class="ref-list"></div></article>
 </div>
 {% if current_user.role.value!='da' %}<details class="ref-legacy"><summary>Historical data</summary><a href="{{ url_for('planning.action_plans_page') }}">Open archived Action Plans</a></details>{% endif %}
 </section>{% endblock %}
-{% block scripts %}{{ super() }}<script src="{{ url_for('static',filename='js/overview.js') }}?v=2026.27.33" defer></script>{% endblock %}
+{% block scripts %}{{ super() }}<script src="{{ url_for('static',filename='js/overview.js') }}?v=2026.27.34" defer></script>{% endblock %}

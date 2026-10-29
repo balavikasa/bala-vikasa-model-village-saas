@@ -1,0 +1,17 @@
+<form class="bv-period-bar" data-reporting-period aria-label="Reporting period">
+  <label>Reporting period<select name="period" aria-label="Reporting period">
+    <option value="today">Today</option><option value="yesterday">Yesterday</option>
+    <option value="this_week">This week</option><option value="last_week">Last week</option>
+    <option value="this_month" selected>This month</option><option value="last_month">Last month</option>
+    <option value="day">Choose day</option><option value="week">Choose week</option><option value="month">Choose month</option>
+    <option value="this_year">This year</option><option value="year">Choose year</option>
+    <option value="all">All time</option><option value="custom">Custom range</option>
+  </select></label>
+  <label data-period-input="day week" hidden>Date / week containing<input name="date" type="date" value="{{ local_now.strftime('%Y-%m-%d') }}"></label>
+  <label data-period-input="month" hidden>Month<input name="month" type="month" value="{{ local_now.strftime('%Y-%m') }}"></label>
+  <label data-period-input="year" hidden>Year<input name="year" type="number" min="2000" max="2100" value="{{ local_now.year }}"></label>
+  <label data-period-input="custom" hidden>From<input name="from" type="date" value="{{ local_now.strftime('%Y-%m-01') }}"></label>
+  <label data-period-input="custom" hidden>To<input name="to" type="date" value="{{ local_now.strftime('%Y-%m-%d') }}"></label>
+  <button class="button primary" type="submit">Apply period</button>
+  <span class="bv-period-note">India time &middot; Weeks: Monday&ndash;Sunday</span>
+</form>

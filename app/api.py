@@ -638,55 +638,57 @@ def directory_data():
 @bp.get("/monitoring/summary")
 @login_required
 def monitoring_summary():
-    return jsonify(dashboard_summary(current_user._get_current_object()))
+    try:
+        return jsonify(dashboard_summary(current_user._get_current_object(), request.args))
+    except ValueError as exc:
+        return jsonify(error=str(exc)), 422
 
 
 @bp.get("/monitoring/series")
 @login_required
 @json_role_required(Role.ADMIN, Role.PM, Role.PC)
 def monitoring_series_route():
-    return jsonify(dashboard_series(current_user._get_current_object()))
+    try:
+        return jsonify(dashboard_series(current_user._get_current_object(), request.args))
+    except ValueError as exc:
+        return jsonify(error=str(exc)), 422
 
 
 @bp.get("/dashboard/series")
 @login_required
 def dashboard_series_route():
-    """Role-scoped dashboard data, including the DA's own field activity."""
-    return jsonify(dashboard_series(current_user._get_current_object()))
+    try:
+        return jsonify(dashboard_series(current_user._get_current_object(), request.args))
+    except ValueError as exc:
+        return jsonify(error=str(exc)), 422
 
 
 @bp.get("/monitoring/recent")
 @login_required
 def monitoring_recent_visits():
-    return jsonify(recent_village_activity(current_user._get_current_object()))
+    try:
+        return jsonify(recent_village_activity(current_user._get_current_object(), request.args))
+    except ValueError as exc:
+        return jsonify(error=str(exc)), 422
 
 
 @bp.get("/monitoring/visit-analytics")
 @login_required
 @json_role_required(Role.ADMIN, Role.PM, Role.PC)
 def monitoring_visit_analytics():
-    """Live role-scoped analysis of DA-led visits, with optional filters."""
     try:
-        def optional_int(key):
-            raw = request.args.get(key, '').strip()
-            return int(raw) if raw else None
-        payload = visit_analytics(
-            current_user._get_current_object(),
-            month=request.args.get('month') or None,
-            cluster=request.args.get('cluster', '').strip(),
-            da_id=optional_int('da'),
-            village_id=optional_int('village'),
-            committee_type=request.args.get('committee', '').strip(),
-        )
-    except (ValueError, TypeError):
-        return jsonify(error='Invalid Analytics filters.'), 422
-    return jsonify(payload)
+        return jsonify(visit_analytics(current_user._get_current_object(), params=request.args))
+    except ValueError as exc:
+        return jsonify(error=str(exc)), 422
 
 
 @bp.get("/monitoring/map")
 @login_required
 def monitoring_map():
-    return jsonify(items=map_markers(current_user._get_current_object()))
+    try:
+        return jsonify(items=map_markers(current_user._get_current_object(), request.args))
+    except ValueError as exc:
+        return jsonify(error=str(exc)), 422
 
 
 @bp.get("/photos/<entry_type>/<int:entry_id>")

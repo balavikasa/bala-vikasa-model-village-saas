@@ -32,7 +32,8 @@ def test_detailed_village_report_keeps_responsive_metadata_columns():
 def test_village_profile_shows_visits_and_attendance_not_draft_plan_columns():
     profile = read("app/templates/profile.html")
     service = read("app/services/profiles.py")
-    assert "Attended this month" in profile
+    assert "Attended In Selected Period" in profile
+    assert "profile.report_period.label" in profile
     assert "Last visit" in profile
     assert "On-plan pulse" not in profile
     assert '_village_visit_summary' in service

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}{% from 'components/reference_ui.html' import icon, slogan %}
+{% block title %}Village Coverage & Attendance - Bala Vikasa{% endblock %}
+{% block content %}
+<section class="page-shell ref-page bv-coverage" id="bv-coverage">
+<header class="ref-hero"><div class="ref-hero-copy"><span class="eyebrow">ACTUAL VILLAGE VISITS</span><h1>Done &amp; Pending Villages</h1><p class="lede">Every village, every period. Follow attendance from the summary to the report.</p></div>{{ slogan() }}</header>
+{% include 'components/reporting_period.html' %}
+<form id="coverage-filters" class="bv-coverage-filters" aria-label="Coverage filters">
+<label>Cluster<select name="cluster"><option value="">All clusters</option></select></label>
+<label>PC<select name="pc"><option value="">All PCs</option></select></label>
+<label>Assigned DA<select name="da"><option value="">All assigned DAs</option></select></label>
+<label>Submitted by DA<select name="submitted_da"><option value="">Any DA</option></select></label>
+<label>Village<select name="village"><option value="">All villages</option></select></label>
+<label>Committee<select name="committee"><option value="">All committees</option></select></label>
+<label class="bv-search">Search villages<input name="q" type="search" placeholder="Village, mandal, district or assigned team" autocomplete="off"></label>
+<button class="button ghost" type="reset">Reset scope</button>
+</form>
+<p id="coverage-period-label" class="bv-period-label" aria-live="polite">Loading selected period...</p>
+<div class="form-alert hidden" id="coverage-error" role="alert"></div>
+<p class="bv-report-note"><strong>Period and village-filter totals.</strong> These cards cover all villages matching the filters above. The table shows separate totals for its selected status.</p>
+<div class="bv-coverage-kpis" aria-label="Filtered scope totals">
+{% for key,title,glyph,status in [('villages','Total villages','home','all'),('villages_done','Done villages','check','done'),('villages_pending','Pending villages','clock','pending'),('people_attended','Total attendances','users','done'),('new_members','New members','addperson','done'),(('other_villages_visited','Other villages','pin','other') if current_user.role.value=='da' else ('visits','Submissions','check','done'))] %}
+<button type="button" class="ref-metric bv-kpi-link" data-coverage-status="{{ status }}"><span class="ref-metric-icon">{{ icon(glyph) }}</span><span><span class="ref-metric-label">{{ title }}</span><strong data-coverage-kpi="{{ key }}">&mdash;</strong><small>Open matching villages &rarr;</small></span></button>
+{% endfor %}
+</div>
+<div class="bv-report-note"><strong id="coverage-month-pending"></strong><p>Pending means not visited in the selected period, not overdue. Attendance counts committee participation, not unique people. New members remain a separate village-wide total.</p><p id="coverage-history-note"></p></div>
+<article class="ref-card bv-coverage-ledger">
+<div class="bv-ledger-heading"><div><h2>Village status register</h2><p id="coverage-selection-summary" aria-live="polite"></p></div><div class="bv-export-actions"><a class="button ghost" id="coverage-csv" aria-disabled="true">CSV</a><a class="button primary" id="coverage-excel" aria-disabled="true">{{ icon('download') }} Export selection</a></div></div>
+<div class="bv-status-tabs" role="group" aria-label="Filter village status">
+{% for value,label in [('all','All villages'),('done','Done'),('pending','Pending'),('other','Other villages')] %}{% if value!='other' or current_user.role.value=='da' %}<button type="button" data-coverage-status="{{ value }}" aria-pressed="{{ 'true' if value=='all' else 'false' }}">{{ label }} <span data-status-count="{{ value }}"></span></button>{% endif %}{% endfor %}</div>
+<div id="coverage-rows" aria-live="polite"></div>
+<div class="bv-pagination"><button class="button ghost" id="coverage-prev" type="button">Previous</button><span id="coverage-page-label"></span><label>Per page<select id="coverage-size"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></label><button class="button ghost" id="coverage-next" type="button">Next</button></div>
+</article>
+<article class="ref-card bv-team-panel"><div class="ref-card-title"><h2>DA coverage &amp; work performed</h2></div><p class="bv-report-note">Assigned / Done / Pending describe village responsibility. Submissions and attendance show work actually recorded by that DA within your access scope. Includes DAs with no submissions.</p><div id="coverage-team"></div></article>
+<details class="ref-card bv-months-panel"><summary>Month-by-month coverage in this range</summary><p>Based on current assignments and only the selected dates within each month. A visit in one month does not complete another month.</p><div id="coverage-months"></div></details>
+</section>
+{% endblock %}
+{% block scripts %}{{ super() }}<script src="{{ url_for('static',filename='js/coverage.js') }}?v=2026.27.34" defer></script>{% endblock %}

@@ -16,11 +16,14 @@
       <button type="button" data-map-mode="list" aria-pressed="false">List</button>
     </div>
   </header>
+{% include 'components/reporting_period.html' %}
+<div class="bv-open-coverage"><a class="button ghost" href="/coverage?status=done" data-report-link>Done villages</a><a class="button ghost" href="/coverage?status=pending" data-report-link>Pending villages</a><a class="button ghost" href="/coverage" data-report-link>Full coverage register &amp; export</a></div>
+
 
   <section class="panel-card map-workspace" data-map-panel>
     <div class="panel-heading map-toolbar">
       <div>
-        <p class="eyebrow">Current month</p>
+        <p class="eyebrow">Selected period</p>
         <h2>Monthly visits & latest evidence</h2>
       </div>
       <div class="map-legend">

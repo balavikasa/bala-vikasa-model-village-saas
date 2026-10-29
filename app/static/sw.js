@@ -2,7 +2,7 @@
 "use strict";
 importScripts("/static/js/idb-queue.js");
 
-const VERSION = "2026.27.33-village-picker-transparent-favicon";
+const VERSION = "2026.27.34-reporting-coverage";
 // Explicit DA location permission and Camera / Photo Album / Files choices
 const STATIC_CACHE = `mv-static-${VERSION}`;
 const DATA_PREFIX = "mv-data-";
@@ -30,12 +30,15 @@ const networkFirstStatic = async (request) => {
 };
 
 const STATIC_ASSETS = [
-  "/static/css/reference-ui.css?v=2026.27.33",
-  "/static/js/reference-ui.js?v=2026.27.33",
-  "/static/js/overview.js?v=2026.27.33",
-  "/static/js/visit-analytics.js?v=2026.27.33",
-  "/static/js/village-attendance.js?v=2026.27.33",
-  "/static/js/admin.js?v=2026.27.33",
+  "/static/css/coverage-reporting.css?v=2026.27.34",
+  "/static/js/reporting-period.js?v=2026.27.34",
+  "/static/js/coverage.js?v=2026.27.34",
+  "/static/css/reference-ui.css?v=2026.27.34",
+  "/static/js/reference-ui.js?v=2026.27.34",
+  "/static/js/overview.js?v=2026.27.34",
+  "/static/js/visit-analytics.js?v=2026.27.34",
+  "/static/js/village-attendance.js?v=2026.27.34",
+  "/static/js/admin.js?v=2026.27.34",
   "/static/reference/sidebar-village.png",
   "/static/reference/hero-village.png",
   "/static/reference/hero-dashboard.png",
@@ -201,7 +204,19 @@ self.addEventListener("fetch", (event) => {
     return;
   }
   if (url.pathname.startsWith("/api/v1/")) {
-    event.respondWith(networkFirstData(request));
+    // Relative presets (today/this_month) cannot safely reuse yesterday's cached
+    // report. Field reference data and the attendance outbox remain offline-ready.
+    const report = url.pathname === "/api/v1/coverage" ||
+      url.pathname === "/api/v1/reports" ||
+      url.pathname.startsWith("/api/v1/dashboard/") ||
+      url.pathname.startsWith("/api/v1/monitoring/");
+    if (report) {
+      event.respondWith(fetch(request).catch(() => new Response(JSON.stringify({
+        error: "An internet connection is required to load current reporting data.",
+      }), {status: 503, headers: {"Content-Type": "application/json", "Cache-Control": "no-store"}})));
+    } else {
+      event.respondWith(networkFirstData(request));
+    }
   }
 });
 
