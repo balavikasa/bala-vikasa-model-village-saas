@@ -45,6 +45,13 @@
   const enableAccountRow = $("#admin-enable-account-row");
   const enableAccount = $("#admin-enable-account");
   let passwordRecord = null;
+  const staffLoginBox = $("#admin-login-provision");
+  const staffLoginToggle = $("#admin-create-login");
+  const staffLoginFields = $("#admin-provision-fields");
+  const staffLoginEmail = $("#admin-provision-email");
+  const staffLoginMobile = $("#admin-provision-mobile");
+  const staffLoginPassword = $("#admin-provision-password");
+  const staffLoginConfirm = $("#admin-provision-confirm");
   const moveAckRow = $("#move-ack-row");
   const moveAck = $("#move-ack");
 
@@ -139,8 +146,8 @@
     table.tHead.innerHTML = `<tr>${columns.map((key) => `<th>${escapeHtml(columnLabel(key))}</th>`).join("")}<th>Actions</th></tr>`;
     table.tBodies[0].innerHTML = state.records.map((record) => {
       const inactive = record.is_enabled === false ? " is-muted" : "";
-      const resetAllowed = (["pcs", "das"].includes(state.resource) && record.login_user_id) ||
-        (state.resource === "users" && ["pc", "da"].includes(record.role));
+      const resetAllowed = (["pms", "pcs", "das"].includes(state.resource) && record.login_user_id) ||
+        (state.resource === "users" && ["pm", "pc", "da"].includes(record.role));
       return `<tr class="${inactive}" data-id="${escapeHtml(record.id)}">
         ${columns.map((key) => `<td data-label="${escapeHtml(columnLabel(key))}">${cellHtml(record,key)}</td>`).join("")}
         <td data-label="Actions"><div class="ref-row-actions">
@@ -158,6 +165,8 @@
     $("#ref-resource-title").textContent=state.resource==="users" ? "Users & Development Associates" : resourceMeta().label||labelize(state.resource);
     $("#ref-resource-count").textContent=`${state.total} records`;
     if(roleFilter)roleFilter.disabled=state.resource!=="users";
+    roleFilter?.closest('.field')?.classList.toggle('hidden',state.resource!=="users");
+    $('#admin-add-label').textContent=`Add ${({pms:'Program Manager',pcs:'Project Coordinator',das:'Development Agent',villages:'Village',committees:'Committee','committee-members':'Committee Member',users:'User'})[state.resource]||'record'}`;
     $("#admin-prev").disabled=state.page<=1;
     $("#admin-next").disabled=state.page*state.perPage>=state.total;
 
@@ -233,21 +242,28 @@
     user_id: "users",
   })[field.name];
 
-  const optionLabel = (item) => item.label || item.name || item.full_name || item.title ||
-    item.village_name || item.committee_name || item.email || `#${item.id}`;
+  const optionLabel = (item) => {
+    const name = item.label || item.name || item.full_name || item.title ||
+      item.village_name || item.committee_name || item.email || `Record #${item.id}`;
+    const location = item.village_name || (item.mandal ? [item.mandal,item.district].filter(Boolean).join(', ') : '');
+    const extra = location && location !== name ? location : (item.cluster || '');
+    return `${name}${extra ? ` — ${extra}` : ''} · #${item.id}${item.is_enabled === false ? ' (disabled)' : ''}`;
+  };
 
   const relationshipOptions = async (field) => {
     const resource = relatedResourceFor(field);
     if (!resource) return [];
     if (state.relationships.has(resource)) return state.relationships.get(resource);
-    try {
-      const payload = await api(`/api/v1/admin/${encodeURIComponent(resource)}?per_page=500`);
-      const values = payload.items || payload.records || [];
-      state.relationships.set(resource, values);
-      return values;
-    } catch (_) {
-      return [];
+    const values = [];
+    // Never silently truncate assignment choices at the API's 500-item page cap.
+    for (let page = 1; page <= 50; page += 1) {
+      const payload = await api(`/api/v1/admin/${encodeURIComponent(resource)}?page=${page}&per_page=500`);
+      const batch = payload.items || payload.records || [];
+      values.push(...batch);
+      if (values.length >= (payload.total ?? values.length) || batch.length < 500) break;
     }
+    state.relationships.set(resource, values);
+    return values;
   };
 
   const loadEditingRecord = async (id) => {
@@ -265,6 +281,7 @@
   const createInput = async (field, value) => {
     const wrapper = document.createElement(field.type === "boolean" ? "label" : "div");
     wrapper.className = field.type === "boolean" ? "check-row" : "field";
+    wrapper.dataset.field = field.name;
     const id = `admin-field-${field.name}`;
 
     if (field.type === "boolean") {
@@ -282,7 +299,7 @@
     if (field.choices || field.enum) {
       input = document.createElement("select");
       const choices = field.choices || field.enum;
-      if (!field.required) input.append(new Option("— Select —", ""));
+      input.append(new Option(field.required ? `Select ${field.label || labelize(field.name)}…` : "— Select —", ""));
       for (const choice of choices) {
         const optionValue = typeof choice === "object" ? choice.value : choice;
         const optionText = typeof choice === "object" ? (choice.label || choice.value) : choice;
@@ -290,9 +307,48 @@
       }
     } else if (field.type === "relationship" || field.name.endsWith("_id")) {
       input = document.createElement("select");
-      if (!field.required) input.append(new Option("— None —", ""));
       const options = await relationshipOptions(field);
-      for (const item of options) input.append(new Option(optionLabel(item), item.id));
+      const resource = relatedResourceFor(field);
+      const labelText = (state.resources[resource]?.label || labelize(resource || field.name));
+      const addOption = (item) => {
+        const option = new Option(optionLabel(item), item.id);
+        if ((item.is_deleted || item.is_enabled === false) && String(item.id) !== String(value ?? '')) option.disabled = true;
+        input.append(option);
+      };
+      const refreshOptions = query => {
+        const current = input.value;
+        input.replaceChildren(new Option(field.required ? `Select ${labelText}…` : '— Not assigned —', ''));
+        const filtered = options.filter(item => optionLabel(item).toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+        for (const item of filtered) addOption(item);
+        if ([...input.options].some(option => option.value === current)) input.value = current;
+      };
+      refreshOptions('');
+      const search = document.createElement('input');
+      search.type = 'search';
+      search.className = 'admin-relationship-search';
+      search.placeholder = `Search ${labelText.toLowerCase()}…`;
+      search.setAttribute('aria-label', `Search ${labelText}`);
+      search.dataset.relationshipSearch = field.name;
+      search.addEventListener('input', () => refreshOptions(search.value.trim()));
+      wrapper.append(search);
+      if (!options.some(item => item.is_enabled !== false && !item.is_deleted)) {
+        const hint=document.createElement('p');
+        hint.className='admin-relationship-empty';
+        hint.textContent=`No active ${labelText.toLowerCase()} records yet. Create one before assigning.`;
+        wrapper.append(hint);
+        const add=document.createElement('button');
+        add.type='button';add.className='button ghost admin-create-parent';
+        add.textContent=`Add ${labelText.replace(/s$/, '')}`;
+        add.addEventListener('click', async () => {
+          dialog.close();
+          resourceSelect.value=resource;
+          state.resource=resource;
+          state.page=1;
+          await loadRecords();
+          await openEditor();
+        });
+        wrapper.append(add);
+      }
     } else if (field.type === "textarea" || field.type === "json") {
       input = document.createElement("textarea");
       input.rows = field.type === "json" ? 6 : 3;
@@ -327,6 +383,30 @@
     return wrapper;
   };
 
+  const updateUserRoleFields = () => {
+    if (state.resource !== 'users') return;
+    const role = $('#admin-field-role', fieldsHost)?.value;
+    const requiredName = {pm:'pm_id',pc:'pc_id',da:'da_id'}[role];
+    for (const name of ['pm_id','pc_id','da_id']) {
+      const input=$(`#admin-field-${name}`, fieldsHost);
+      if (!input) continue;
+      const isRelevant = name === requiredName;
+      input.closest('[data-field]').classList.toggle('hidden', !isRelevant);
+      input.required=isRelevant;
+      if (!isRelevant) input.value='';
+    }
+  };
+
+  const toggleStaffLogin = () => {
+    const active = staffLoginToggle.checked;
+    staffLoginFields.classList.toggle('hidden',!active);
+    for (const input of [staffLoginPassword,staffLoginConfirm]) input.required=active;
+    if (active) {
+      if (!staffLoginEmail.value) staffLoginEmail.value=$('#admin-field-email',fieldsHost)?.value||'';
+      if (!staffLoginMobile.value) staffLoginMobile.value=$('#admin-field-mobile',fieldsHost)?.value||'';
+    }
+  };
+
   const openEditor = async (id = null) => {
     clearError();
     moveAck.checked = false;
@@ -335,6 +415,11 @@
     $("#admin-dialog-eyebrow").textContent = resourceMeta().label || labelize(state.resource);
     $("#admin-dialog-title").textContent = state.editing ? "Edit record" : "Add record";
     fieldsHost.replaceChildren();
+    staffLoginToggle.checked=false;
+    for (const input of [staffLoginEmail,staffLoginMobile,staffLoginPassword,staffLoginConfirm]) input.value='';
+    staffLoginBox.classList.toggle('hidden', !['pms','pcs','das'].includes(state.resource) ||
+      Boolean(state.editing?.login_user_id));
+    toggleStaffLogin();
 
     const fields = fieldMeta().filter((field) => !field.hidden &&
       !(state.resource === "users" && state.editing && field.name === "password"));
@@ -342,8 +427,12 @@
       const value = state.editing?.[field.name];
       fieldsHost.append(await createInput(field, value));
     }
+    if (state.resource === 'users') {
+      $('#admin-field-role',fieldsHost)?.addEventListener('change',updateUserRoleFields);
+      updateUserRoleFields();
+    }
 
-    const parentFields = new Set(["pc_id", "da_id", "village_id", "committee_id"]);
+    const parentFields = new Set(["pm_id", "pc_id", "da_id", "village_id", "committee_id"]);
     for (const select of $$("select", fieldsHost)) {
       if (state.editing && parentFields.has(select.name)) {
         select.addEventListener("change", () => {
@@ -386,6 +475,17 @@
       }
     }
     if (moveAckRow.classList.contains("hidden") === false) payload.acknowledge_move = moveAck.checked;
+    if (['pms','pcs','das'].includes(state.resource) && staffLoginToggle.checked) {
+      if (staffLoginPassword.value !== staffLoginConfirm.value) {
+        staffLoginConfirm.setCustomValidity('Passwords do not match.');
+        staffLoginConfirm.reportValidity();
+        throw new Error('Login password confirmation does not match.');
+      }
+      payload.create_login=true;
+      payload.login_email=staffLoginEmail.value.trim();
+      payload.login_mobile=staffLoginMobile.value.trim();
+      payload.login_password=staffLoginPassword.value;
+    }
     return payload;
   };
 
@@ -403,7 +503,7 @@
       const url = state.editing
         ? `/api/v1/admin/${encodeURIComponent(state.resource)}/${encodeURIComponent(state.editing.id)}`
         : `/api/v1/admin/${encodeURIComponent(state.resource)}`;
-      await api(url, {
+      const saved = await api(url, {
         method: state.editing ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -412,7 +512,9 @@
       state.relationships.clear();
       await loadRecords();
       setStatus("Saved", "success");
-      window.MV.toast?.("Record saved", "success");
+      const message=saved?.linked_login_created ? 'Staff record and linked login created' :
+        (!state.editing && ['pms','pcs','das'].includes(state.resource) ? 'Staff record saved. You can add login access by editing this record.' : 'Record saved');
+      window.MV.toast?.(message, "success");
     } catch (error) {
       showError(error.message);
       setStatus("Save failed", "error");
@@ -686,6 +788,9 @@
       passwordRecord = null;
     }
   });
+
+  staffLoginToggle.addEventListener('change',toggleStaffLogin);
+  staffLoginConfirm.addEventListener('input',()=>staffLoginConfirm.setCustomValidity(''));
 
   form.addEventListener("submit", (event) => {
     if (event.submitter?.value === "default") {

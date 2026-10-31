@@ -12,6 +12,7 @@
 {% block head %}{% endblock %}
 <link rel="stylesheet" href="{{ url_for('static',filename='css/reference-ui.css') }}?v=2026.27.34">
 <link rel="stylesheet" href="{{ url_for('static',filename='css/coverage-reporting.css') }}?v=2026.27.34">
+{% block page_styles %}{% endblock %}
 </head><body class="mv-reference {% if current_user.is_authenticated %}app-authenticated{% else %}app-anonymous{% endif %}" {% if current_user.is_authenticated %}data-user-id="{{ current_user.id }}" data-role="{{ current_user.role.value }}"{% endif %}>
 <a class="skip-link" href="#main-content">Skip to content</a>
 {% if current_user.is_authenticated %}

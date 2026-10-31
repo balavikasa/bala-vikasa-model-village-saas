@@ -11,14 +11,16 @@
 <button type="button" data-admin-tab="audit" aria-pressed="false">{{ icon('report') }}<span><strong>Audit Log</strong><small>Track changes and activity</small></span></button>
 </nav>
 <section class="admin-panel" id="master-data" data-admin-panel="records">
-<div class="ref-admin-filter">
-<label class="field"><span>Role</span><select id="admin-role" aria-label="Filter user role"><option value="">All roles</option><option value="admin">Administrator</option><option value="pm">Program Manager</option><option value="pc">Program Coordinator</option><option value="da">Development Associate</option></select></label>
+<div class="admin-workflow-guide" aria-label="Master Data assignment order"><strong>Admin controls the full master-data hierarchy</strong><p>Create and assign in order: Program Managers → Project Coordinators → Development Agents → Villages → Committees → Committee Members. Create staff login access here or under Users.</p></div>
+<div class="ref-admin-filter admin-master-toolbar">
+<label class="field admin-manage-field"><span>Manage data</span><select id="admin-resource" aria-label="Choose Master Data record type"></select></label>
+<label class="field admin-role-filter"><span>Role</span><select id="admin-role" aria-label="Filter user role"><option value="">All roles</option><option value="admin">Administrator</option><option value="pm">Program Manager</option><option value="pc">Program Coordinator</option><option value="da">Development Associate</option></select></label>
 <label class="field"><span>Status</span><select id="admin-enabled" aria-label="Filter enabled status"><option value="">All records</option><option value="true">Enabled</option><option value="false">Disabled</option></select></label>
 <label class="field ref-search-field"><span class="sr-only">Search</span><input id="admin-search" type="search" autocomplete="off" placeholder="Search by name, email, mobile or profile name..."></label>
-<button id="admin-refresh" class="button ghost" type="button">Reset</button><button id="admin-add" class="button primary" type="button">{{ icon('plus') }} Add Record</button>
+<button id="admin-refresh" class="button ghost" type="button">Reset</button><button id="admin-add" class="button primary" type="button">{{ icon('plus') }} <span id="admin-add-label">Add record</span></button>
 </div>
 <div class="ref-card ref-admin-records">
-<div class="ref-table-title"><span class="ref-circle">{{ icon('users') }}</span><div><h2 id="ref-resource-title">Users &amp; Development Associates</h2><p><span id="ref-resource-count">Loading records</span> &middot; Manage access, roles and profile information</p></div><div class="ref-title-end"><label class="ref-resource-select"><span class="sr-only">Master data type</span><select id="admin-resource" aria-label="Resource"></select></label><a class="button ghost" href="{{ url_for('admin_transfer.page') }}">{{ icon('download') }} Export</a></div></div>
+<div class="ref-table-title"><span class="ref-circle">{{ icon('users') }}</span><div><h2 id="ref-resource-title">Users &amp; Development Associates</h2><p><span id="ref-resource-count">Loading records</span> &middot; Manage access, roles and profile information</p></div><div class="ref-title-end"><a class="button ghost" href="{{ url_for('admin_transfer.page') }}">{{ icon('download') }} Export</a></div></div>
 <div class="table-shell" tabindex="0" aria-label="Administrative records"><table class="data-table" id="admin-table"><thead></thead><tbody></tbody></table></div>
 <div class="empty-state hidden" id="admin-empty"><h2>No matching records</h2><p>Change the filter or add a record.</p></div>
 <footer class="pagination"><span id="admin-page-label">Loading...</span><span class="ref-admin-status" id="admin-status" role="status" aria-live="polite">Ready</span><div class="ref-pager"><button class="button ghost" id="admin-prev" type="button">Previous</button><span class="ref-page-number" id="ref-admin-page">1</span><button class="button ghost" id="admin-next" type="button">Next</button></div></footer>
@@ -37,6 +39,16 @@
     </header>
     <div id="admin-form-error" class="form-alert hidden" role="alert"></div>
     <div id="admin-fields" class="form-grid"></div>
+    <section id="admin-login-provision" class="admin-provision hidden" aria-label="Create linked staff login">
+      <label class="check-row admin-provision-choice"><input id="admin-create-login" type="checkbox"><span><strong>Create login account for this staff member</strong><small>Optional. Provision their secure sign-in now, without opening Users separately.</small></span></label>
+      <div id="admin-provision-fields" class="admin-provision-grid hidden">
+        <label class="field"><span>Login email</span><input id="admin-provision-email" type="email" autocomplete="off" placeholder="name@example.org"></label>
+        <label class="field"><span>Login mobile</span><input id="admin-provision-mobile" type="tel" autocomplete="off" inputmode="tel" placeholder="10-digit mobile"></label>
+        <label class="field"><span>Temporary password</span><input id="admin-provision-password" type="password" autocomplete="new-password" minlength="12" maxlength="128"></label>
+        <label class="field"><span>Confirm temporary password</span><input id="admin-provision-confirm" type="password" autocomplete="new-password" minlength="12" maxlength="128"></label>
+        <p class="admin-provision-help">The linked user will use these login details. Staff contact information and login identifiers can differ. Give the temporary password to the employee privately.</p>
+      </div>
+    </section>
     <label class="check-row hidden" id="move-ack-row">
       <input type="checkbox" id="move-ack">
       <span>I understand this assignment change can reclassify inherited cluster visibility.</span>
@@ -100,4 +112,5 @@
   </form>
 </dialog>
 {% endblock %}
-{% block scripts %}{{ super() }}<script src="{{ url_for('static',filename='js/admin.js') }}?v=2026.27.34" defer></script>{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{{ url_for('static',filename='css/admin-master.css') }}?v=2026.27.35">{% endblock %}
+{% block scripts %}{{ super() }}<script src="{{ url_for('static',filename='js/admin.js') }}?v=2026.27.35" defer></script>{% endblock %}

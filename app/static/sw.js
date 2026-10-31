@@ -2,7 +2,7 @@
 "use strict";
 importScripts("/static/js/idb-queue.js");
 
-const VERSION = "2026.27.34-reporting-coverage";
+const VERSION = "2026.27.35-master-data";
 // Explicit DA location permission and Camera / Photo Album / Files choices
 const STATIC_CACHE = `mv-static-${VERSION}`;
 const DATA_PREFIX = "mv-data-";
@@ -38,7 +38,8 @@ const STATIC_ASSETS = [
   "/static/js/overview.js?v=2026.27.34",
   "/static/js/visit-analytics.js?v=2026.27.34",
   "/static/js/village-attendance.js?v=2026.27.34",
-  "/static/js/admin.js?v=2026.27.34",
+  "/static/js/admin.js?v=2026.27.35",
+  "/static/css/admin-master.css?v=2026.27.35",
   "/static/reference/sidebar-village.png",
   "/static/reference/hero-village.png",
   "/static/reference/hero-dashboard.png",

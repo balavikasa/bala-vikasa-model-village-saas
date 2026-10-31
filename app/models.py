@@ -100,6 +100,7 @@ class PM(LifecycleMixin, db.Model):
     notes: Mapped[str | None] = mapped_column(Text)
 
     users: Mapped[list[User]] = relationship(back_populates="pm")
+    pcs: Mapped[list[PC]] = relationship(back_populates="pm")
 
     def __repr__(self) -> str:
         return f"<PM {self.full_name!r}>"
@@ -110,10 +111,12 @@ class PC(LifecycleMixin, db.Model):
 
     full_name: Mapped[str] = mapped_column(String(160), nullable=False, index=True)
     cluster: Mapped[Cluster] = mapped_column(Enum(Cluster, **enum_options), nullable=False, index=True)
+    pm_id: Mapped[int | None] = mapped_column(ForeignKey("pms.id", ondelete="RESTRICT"), nullable=True, index=True)
     email: Mapped[str | None] = mapped_column(String(254), unique=True)
     mobile: Mapped[str | None] = mapped_column(String(24), unique=True)
     notes: Mapped[str | None] = mapped_column(Text)
 
+    pm: Mapped[PM | None] = relationship(back_populates="pcs")
     das: Mapped[list[DA]] = relationship(back_populates="pc")
     users: Mapped[list[User]] = relationship(back_populates="pc")
 

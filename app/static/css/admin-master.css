@@ -1,0 +1,45 @@
+/* Bala Vikasa Admin Master Data workflow, scoped to the existing approved theme. */
+.mv-reference .admin-workflow-guide {
+  background:linear-gradient(120deg,#e7f4f0,#f9fbf9); border:1px solid #cfdfdb;
+  border-radius:13px; padding:13px 18px; margin:0 0 12px; color:#194c58;
+}
+.mv-reference .admin-workflow-guide strong {display:block;font-size:14px;margin:0 0 3px;}
+.mv-reference .admin-workflow-guide p {font-size:12px;line-height:1.55;color:#537784;margin:0;}
+.mv-reference .ref-admin-filter.admin-master-toolbar {
+  display:grid;grid-template-columns:minmax(200px,1.1fr) minmax(125px,.6fr) minmax(130px,.6fr)
+    minmax(190px,1.5fr) auto auto;align-items:end;gap:10px;padding:14px;
+}
+.mv-reference .admin-master-toolbar .admin-manage-field {min-width:0;}
+.mv-reference .admin-master-toolbar .admin-manage-field select {font-size:13px; font-weight:700;color:#0b5460;}
+.mv-reference .admin-master-toolbar #admin-add {white-space:nowrap;}
+.mv-reference .admin-master-toolbar .field.hidden {display:none!important;}
+.mv-reference .admin-dialog .admin-relationship-search {background:#eff6f4;margin-bottom:7px;font-size:12px;min-height:36px;}
+.mv-reference .admin-dialog .field[data-field] {min-width:0;}
+.mv-reference .admin-dialog .field[data-field] select {width:100%;min-height:43px;white-space:nowrap;text-overflow:ellipsis;}
+.mv-reference .admin-dialog .field[data-field] label {font-size:12px;font-weight:700;color:#245665;display:block;margin-bottom:4px;}
+.mv-reference .admin-relationship-empty {font-size:12px;color:#996634;line-height:1.4;margin:4px 0;}
+.mv-reference .admin-create-parent {font-size:12px;min-height:33px;}
+.mv-reference .admin-provision {background:#f1f7f5;border:1px solid #d4e8e2;border-radius:12px;padding:14px 16px;margin-top:14px;}
+.mv-reference .admin-provision-choice {align-items:flex-start;cursor:pointer;}
+.mv-reference .admin-provision-choice strong{display:block;font-size:13px;color:#134e59;}
+.mv-reference .admin-provision-choice small{display:block;font-size:12px;color:#65818d;line-height:1.4;margin-top:3px;}
+.mv-reference .admin-provision-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:13px;}
+.mv-reference .admin-provision-grid .field{min-width:0;}
+.mv-reference .admin-provision-grid .field span{font-size:12px;font-weight:700;color:#2a5b66;}
+.mv-reference .admin-provision-grid input{width:100%;min-height:42px;}
+.mv-reference .admin-provision-help {grid-column:1/-1;font-size:12px;line-height:1.5;color:#68828e;margin:0;}
+.mv-reference .ref-admin .form-grid .hidden{display:none!important;}
+@media (max-width:1250px) {
+ .mv-reference .ref-admin-filter.admin-master-toolbar{grid-template-columns:repeat(3,minmax(0,1fr));}
+ .mv-reference .ref-admin-filter.admin-master-toolbar .ref-search-field{grid-column:span 2;}
+}
+@media (max-width:700px) {
+ .mv-reference .ref-admin-filter.admin-master-toolbar {grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+ .mv-reference .ref-admin-filter.admin-master-toolbar .admin-manage-field,
+ .mv-reference .ref-admin-filter.admin-master-toolbar .ref-search-field{grid-column:1/-1;}
+ .mv-reference .admin-workflow-guide{padding:11px 12px;}
+ .mv-reference .admin-workflow-guide p{font-size:11px;}
+ .mv-reference .admin-provision-grid {grid-template-columns:1fr;}
+ .mv-reference .admin-provision-help {grid-column:1;}
+ .mv-reference .admin-master-toolbar #admin-add {font-size:12px;}
+}

@@ -35,6 +35,7 @@ from .models import (
     VillageAttendanceVisit,
     utcnow,
 )
+from .services.admin_provisioning import normalize_staff_login
 from .services.audit import (
     display_name,
     model_snapshot,
@@ -103,21 +104,22 @@ RESOURCES: dict[str, ResourceSpec] = {
         (
             FieldSpec("full_name", required=True),
             FieldSpec("cluster", "select", required=True, choices=("CSRB", "PDTC")),
+            FieldSpec("pm_id", "relationship", related_resource="pms", label="Assigned Program Manager"),
             FieldSpec("email", "email"),
             FieldSpec("mobile", "tel"),
             FieldSpec("notes", "textarea"),
             *COMMON_LIFECYCLE,
         ),
         ("full_name", "email", "mobile"),
-        ("id", "full_name", "cluster", "email", "mobile", "is_enabled"),
-        ("cluster",),
+        ("id", "full_name", "cluster", "pm_name", "email", "mobile", "is_enabled"),
+        ("cluster", "pm_id"),
     ),
     "das": ResourceSpec(
         DA,
         "Development Agents",
         (
             FieldSpec("full_name", required=True),
-            FieldSpec("pc_id", "relationship", required=True, related_resource="pcs"),
+            FieldSpec("pc_id", "relationship", required=True, related_resource="pcs", label="Assigned Project Coordinator"),
             FieldSpec("email", "email"),
             FieldSpec("mobile", "tel"),
             FieldSpec("notes", "textarea"),
@@ -138,7 +140,7 @@ RESOURCES: dict[str, ResourceSpec] = {
             FieldSpec("mandal"),
             FieldSpec("latitude", "number"),
             FieldSpec("longitude", "number"),
-            FieldSpec("da_id", "relationship", required=True, related_resource="das"),
+            FieldSpec("da_id", "relationship", required=True, related_resource="das", label="Assigned Development Agent"),
             FieldSpec("notes", "textarea"),
             *COMMON_LIFECYCLE,
         ),
@@ -152,7 +154,7 @@ RESOURCES: dict[str, ResourceSpec] = {
         (
             FieldSpec("name", required=True),
             FieldSpec("committee_type"),
-            FieldSpec("village_id", "relationship", required=True, related_resource="villages"),
+            FieldSpec("village_id", "relationship", required=True, related_resource="villages", label="Village"),
             FieldSpec("notes", "textarea"),
             *COMMON_LIFECYCLE,
         ),
@@ -308,7 +310,16 @@ def resources():
 
 def _serialize(record: Any) -> dict[str, Any]:
     data = model_snapshot(record)
-    if isinstance(record, PC):
+    if isinstance(record, PM):
+        linked = next((user for user in record.users if not user.is_deleted and user.role == Role.PM), None)
+        data.update(
+            login_user_id=linked.id if linked else None,
+            login_enabled=linked.is_active if linked else None,
+            login_email=linked.email if linked else None,
+            login_mobile=linked.mobile if linked else None,
+        )
+    elif isinstance(record, PC):
+        data["pm_name"] = record.pm.full_name if record.pm else None
         linked = next((user for user in record.users if not user.is_deleted and user.role == Role.PC), None)
         data.update(
             login_user_id=linked.id if linked else None,
@@ -397,8 +408,10 @@ def _resource(slug: str) -> ResourceSpec:
 
 
 def _relationship_options(stmt, model: type):
+    if model is PM:
+        return stmt.options(selectinload(PM.users))
     if model is PC:
-        return stmt.options(selectinload(PC.users))
+        return stmt.options(selectinload(PC.users), selectinload(PC.pm))
     if model is DA:
         return stmt.options(selectinload(DA.pc), selectinload(DA.users))
     if model is Village:
@@ -478,13 +491,14 @@ def collection(slug: str):
 
     data = dict(request.get_json(silent=True) or {})
     try:
-        record = _create(spec, data)
+        record, linked_login = _create(spec, data)
         propagated = 0
         if isinstance(record, ActionPlan) and record.assigned_date:
             from .services.monthly_plans import fill_blank_village_schedules
             propagated = len(fill_blank_village_schedules(record, current_user._get_current_object()))
         db.session.commit()
-        return jsonify(item=_serialize(record), village_dates_filled=propagated), 201
+        return jsonify(item=_serialize(record), village_dates_filled=propagated,
+                       linked_login_created=linked_login), 201
     except EntryValidationError as exc:
         db.session.rollback()
         return jsonify(error=str(exc)), 422
@@ -527,6 +541,20 @@ def update(slug: str, record_id: int):
     acknowledge = bool(data.pop("acknowledge_move", False))
     before = model_snapshot(record)
     try:
+        wants_login = data.get("create_login", False)
+        if not isinstance(wants_login, bool):
+            raise EntryValidationError("Create login must be true or false.")
+        credentials = None
+        if wants_login:
+            if not isinstance(record, (PM, PC, DA)):
+                raise EntryValidationError("Only PM/PC/DA profiles may provision linked logins.")
+            relation = {PM: User.pm_id, PC: User.pc_id, DA: User.da_id}[type(record)]
+            if db.session.scalar(db.select(User).where(relation == record.id)) is not None:
+                raise EntryValidationError("This staff profile already has a login (possibly in Recycle Bin). Restore or reset it under Users.")
+            try:
+                credentials = normalize_staff_login(data)
+            except ValueError as exc:
+                raise EntryValidationError(str(exc)) from exc
         changed_parent = _apply(record, spec, data, is_create=False)
         if changed_parent:
             _validate_move(record, spec, acknowledge)
@@ -535,12 +563,15 @@ def update(slug: str, record_id: int):
         changed = before != after
         if changed:
             record_audit(AuditAction.MOVE if changed_parent else AuditAction.UPDATE, record, before=before, after=after)
+        if credentials is not None:
+            _create_linked_login(record, credentials)
         propagated = 0
         if isinstance(record, ActionPlan) and changed and record.assigned_date:
             from .services.monthly_plans import fill_blank_village_schedules
             propagated = len(fill_blank_village_schedules(record, current_user._get_current_object()))
         db.session.commit()
-        return jsonify(item=_serialize(record), village_dates_filled=propagated)
+        return jsonify(item=_serialize(record), village_dates_filled=propagated,
+                       linked_login_created=credentials is not None)
     except EntryValidationError as exc:
         db.session.rollback()
         return jsonify(error=str(exc)), 422
@@ -554,32 +585,31 @@ def update(slug: str, record_id: int):
 
 @bp.post("/<slug>/<int:record_id>/reset-password")
 def reset_password(slug: str, record_id: int):
-    """Reset the linked DA/PC login, not the personnel profile itself.
+    """Reset the linked PM/PC/DA login, not the personnel profile itself.
 
     This administrator-only operation intentionally does not return, serialize,
     or write the supplied password to audit history.
     """
-    if slug not in {"users", "pcs", "das"}:
-        return jsonify(error="Password reset is only available for DA and PC accounts."), 404
+    if slug not in {"users", "pms", "pcs", "das"}:
+        return jsonify(error="Password reset is only available for PM, PC and DA accounts."), 404
 
-    model = {"users": User, "pcs": PC, "das": DA}[slug]
+    model = {"users": User, "pms": PM, "pcs": PC, "das": DA}[slug]
     record = db.session.get(model, record_id)
     if record is None or record.is_deleted:
         return jsonify(error="Record not found."), 404
 
     if isinstance(record, User):
-        user = record if record.role in {Role.PC, Role.DA} else None
+        user = record if record.role in {Role.PM, Role.PC, Role.DA} else None
     else:
-        expected_role = Role.PC if isinstance(record, PC) else Role.DA
+        expected_role = {PM: Role.PM, PC: Role.PC, DA: Role.DA}[type(record)]
+        id_field = {PM: User.pm_id, PC: User.pc_id, DA: User.da_id}[type(record)]
         user = db.session.scalar(
-            db.select(User).where(
-                (User.pc_id == record.id) if isinstance(record, PC) else (User.da_id == record.id),
-                User.role == expected_role,
-                User.is_deleted.is_(False),
-            )
+            db.select(User).where(id_field == record.id,
+                                  User.role == expected_role,
+                                  User.is_deleted.is_(False))
         )
     if user is None:
-        return jsonify(error="No DA/PC login account is linked. Create or restore it under Users first."), 409
+        return jsonify(error="No login account is linked. Create it in this staff record or restore it under Users."), 409
 
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
@@ -861,15 +891,42 @@ def audit_logs():
     )
 
 
-def _create(spec: ResourceSpec, data: dict[str, Any]):
+def _create_linked_login(record: PM | PC | DA, credentials: dict[str, str | None]) -> User:
+    role = {PM: Role.PM, PC: Role.PC, DA: Role.DA}[type(record)]
+    relation = {PM: "pm_id", PC: "pc_id", DA: "da_id"}[type(record)]
+    login = User(display_name=record.full_name, role=role,
+                 email=credentials["email"], mobile=credentials["mobile"],
+                 is_enabled=record.is_enabled, **{relation: record.id})
+    login.set_password(credentials["password"])
+    db.session.add(login)
+    db.session.flush()
+    # The new account is audited without the password or hash.
+    record_audit(AuditAction.CREATE, login, after=model_snapshot(login))
+    return login
+
+
+def _create(spec: ResourceSpec, data: dict[str, Any]) -> tuple[Any, bool]:
+    """Create a master record and, when explicitly selected, its linked login atomically."""
     if not spec.allow_create:
         raise EntryValidationError("Creation is not available for this resource.")
     if spec.model is AttendanceEntry:
         record, _ = create_attendance(data, None, current_user._get_current_object())
-        return record
+        return record, False
     if spec.model is SpecialsEntry:
         record, _ = create_specials(data, None, current_user._get_current_object())
-        return record
+        return record, False
+
+    wants_login = data.get("create_login", False)
+    if wants_login not in (False, True) or not isinstance(wants_login, bool):
+        raise EntryValidationError("Create login must be true or false.")
+    if wants_login and spec.model not in {PM, PC, DA}:
+        raise EntryValidationError("Linked login creation is only available for PM, PC and DA profiles.")
+    credentials = None
+    if wants_login:
+        try:
+            credentials = normalize_staff_login(data)
+        except ValueError as exc:
+            raise EntryValidationError(str(exc)) from exc
 
     record = spec.model()
     _apply(record, spec, data, is_create=True)
@@ -884,7 +941,10 @@ def _create(spec: ResourceSpec, data: dict[str, Any]):
     db.session.add(record)
     db.session.flush()
     record_audit(AuditAction.CREATE, record, after=model_snapshot(record))
-    return record
+
+    if credentials is not None:
+        _create_linked_login(record, credentials)
+    return record, credentials is not None
 
 
 def _convert(field_spec: FieldSpec, value: Any) -> Any:
@@ -917,6 +977,17 @@ def _apply(record: Any, spec: ResourceSpec, data: dict[str, Any], *, is_create: 
         if field_spec is None or field_spec.readonly:
             continue
         converted = _convert(field_spec, value)
+        # Validate new/reassigned links before reaching database constraints,
+        # so admins receive a specific message instead of a generic 409/500.
+        if field_spec.related_resource and converted is not None:
+            old_related = getattr(record, name, None)
+            if is_create or old_related != converted:
+                related_spec = RESOURCES[field_spec.related_resource]
+                related = db.session.get(related_spec.model, converted)
+                if related is None or related.is_deleted or not related.is_enabled:
+                    raise EntryValidationError(
+                        f"{field_spec.label or name}: select an existing enabled {related_spec.label} record."
+                    )
         if field_spec.required and converted is None:
             raise EntryValidationError(f"{field_spec.label or name} is required.")
         if field_spec.min is not None and converted is not None and converted < field_spec.min:
@@ -943,7 +1014,7 @@ def _apply(record: Any, spec: ResourceSpec, data: dict[str, Any], *, is_create: 
         record.email = record.email.casefold() if record.email else None
         record.mobile = "".join(ch for ch in record.mobile if ch.isdigit() or ch == "+") if record.mobile else None
         password = data.get("password")
-        if password:
+        if password and not is_create:
             if len(str(password)) < 6:
                 raise EntryValidationError("Passwords must contain at least 6 characters.")
             record.set_password(str(password))
