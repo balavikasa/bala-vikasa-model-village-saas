@@ -155,3 +155,39 @@ def test_village_export_preserves_members_without_repeating_totals():
     assert sum(row[13] or 0 for row in rows) == 3
     assert sum(bool(row[22]) for row in rows) == 1
     assert all(len(row) == 23 for row in rows)
+
+
+def test_imported_member_designations_do_not_block_village_attendance(client, app):
+    """A legacy Excel designation is metadata, not attendance eligibility."""
+    ids = _setup(app)
+    with app.app_context():
+        committee = Committee(name="Youth & Technical", village_id=ids["assigned"])
+        mou = CommitteeMember(full_name="D.Mounika", committee=committee,
+                              designation=r"S\M", gender="Female")
+        typo = CommitteeMember(full_name="Example Secretary", committee=committee,
+                               designation="Secretory", gender="Male")
+        db.session.add_all([committee, mou, typo])
+        db.session.commit()
+        youth_id, mou_id, typo_id = committee.id, mou.id, typo.id
+    login = client.post("/login", data={"identifier": "da-led@example.org",
+                                        "password": "SuperSecret123"})
+    assert login.status_code in {302, 303}
+    rows = [
+        {"committee_id": ids["a"], "visit_member_ids": [ids["m1"]]},
+        {"committee_id": ids["b"], "visit_member_ids": [ids["m2"]]},
+        {"committee_id": youth_id, "visit_member_ids": [mou_id, typo_id]},
+    ]
+    response = _post(client, ids, ids["assigned"], rows, "legacy-designation-village")
+    assert response.status_code == 201, response.get_json()
+    with app.app_context():
+        visit = db.session.get(VillageAttendanceVisit, response.json["id"])
+        assert len(visit.entries) == 3
+        assert sum(e.male_count for e in visit.entries) == 2
+        assert sum(e.female_count for e in visit.entries) == 2
+        youth_entry = next(e for e in visit.entries if e.committee_id == youth_id)
+        assert {m.member_name_snapshot: m.designation_snapshot
+                for m in youth_entry.visited_members} == {
+                    "D.Mounika": r"S\M", "Example Secretary": "Secretory"
+                }
+        assert db.session.get(CommitteeMember, mou_id).designation == r"S\M"
+        assert db.session.get(CommitteeMember, typo_id).designation == "Secretory"

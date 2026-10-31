@@ -35,9 +35,6 @@ class EntryValidationError(ValueError):
     pass
 
 
-VISIT_DESIGNATIONS = {"President", "Vice President", "Secretary", "Member"}
-
-
 def _date(value: Any, field: str) -> date:
     if isinstance(value, date):
         return value
@@ -172,11 +169,11 @@ def _selected_members(committee: Committee, raw_ids: Any) -> list[CommitteeMembe
         raise EntryValidationError(
             "One or more selected committee members do not belong to this committee or are unavailable."
         )
-    for member in rows:
-        if member.designation not in VISIT_DESIGNATIONS:
-            raise EntryValidationError(
-                f"{member.full_name} has an unsupported designation in master data."
-            )
+    # Designation is descriptive master data, not an attendance eligibility rule.
+    # Imported records contain valid members with legacy titles/spellings (for
+    # example "S\\M", "Secretory" and "Wise President"). The committee,
+    # enabled and deletion checks above determine eligibility. Preserve the
+    # original designation in the visit snapshot for later Admin correction.
     return rows
 
 
